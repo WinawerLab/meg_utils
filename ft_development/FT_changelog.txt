@@ -1,0 +1,22 @@
+FT_changelog.txt
+
+This is a record of changes we've made to the fieldtrip toolbox.
+
+Whenever possible, save a copy of a function (keeping the same file name) to ft_development, and add this folder to the matlab path above the FT toolbox.
+
+However, if in some cases it's necessary to change a function within the FT toolbox (because there are too many dependencies, etc), then save the original FT function by appending 0 to the end of the name and make a new copy of the function with the original name, in which you make your change. Keep a record of the change here under your initials. Copy the lines you changed, which should include a comment describing the change.
+
+
+%%%%
+RD
+
+2014-09-03
+ft_read_header.m
+renamed to ft_read_header0.m and replaced with new ft_read_header.m
+if ft_hastoolbox('yokogawa_meg_reader', 0); %%% RD: changed 3 to 0 % stay silent if it cannot be added
+
+2014-09-04
+fileio/private/hasyokogawa.m
+renamed to hasyokogawa0.m and replaced with new hasyokogawa.m
+also keep this hasyokogawa.m in ft_development, since there is another copy in utilities
+

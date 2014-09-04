@@ -1,4 +1,4 @@
-function ts_pre = meg_environmental_denoising(ts_pre, produce_figures)
+function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data)
 
 %% Description of function
 
@@ -13,6 +13,14 @@ function ts_pre = meg_environmental_denoising(ts_pre, produce_figures)
 %
 % OUTPUTS:
 % ts_pre  = concatenated timeseries of all the denoised epochs
+
+%% Deal with inputs
+if nargin < 2 || isempty(produce_figures)
+    produce_figures = 0;
+end
+if nargin < 3 || isempty(save_data)
+    save_data = 0;
+end
 
 %% Define timeseries of conditions
 
@@ -39,13 +47,14 @@ for channel = 1:157;
 end
 warning on stats:regress:RankDefDesignMat
 
-
-fprintf('[%s]: Save data matrix to folder..', mfilename);
-
-
-save denoised_with_nuissance_data.mat ts
-
-fprintf('[%s]: Done! Data matrix saved to folder..', mfilename);
+%% Save denoised data
+if save_data
+    fprintf('[%s]: Save data matrix to folder..', mfilename);
+    
+    save denoised_with_nuissance_data.mat ts
+    
+    fprintf('[%s]: Done! Data matrix saved to folder..', mfilename);
+end
 
 %% Make figures of all the raw epochs 
 if produce_figures
