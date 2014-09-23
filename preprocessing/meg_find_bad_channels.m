@@ -18,13 +18,19 @@ function bad_channels = meg_find_bad_channels(ts)
 %
 % Example: bad_channels = meg_find_bad_channels(ts);
 
+% % doesn't work when there is only one epoch
+% sd              = squeeze(nanstd(ts)); % sd will be epochs x channels
+% sd_median       = nanmedian(sd); % median sd for each channel
+% sd_grand_median = nanmedian(sd_median); % median across all channels
+%
+% bad_channels = sd_median < 0.1 * sd_grand_median | sd_median > 10 * sd_grand_median;
+% bad_channels = find(bad_channels);
 
+sd              = nanstd(ts,0,1); % sd will be epochs x channels
+sd_median       = nanmedian(sd,2); % median sd for each channel
+sd_grand_median = nanmedian(sd_median,3); % median across all channels
 
-sd              = squeeze(nanstd(ts)); % sd will be epochs x channels
-sd_median       = nanmedian(sd); % median sd for each channel
-sd_grand_median = nanmedian(sd_median); % median across all channels
-
-bad_channels = sd_median < 0.1 * sd_grand_median | sd_median > 10 * sd_grand_median;
+bad_channels = squeeze(sd_median) < 0.1 * sd_grand_median | squeeze(sd_median) > 10 * sd_grand_median;
 bad_channels = find(bad_channels);
 
 
