@@ -65,7 +65,7 @@ if produce_figures
     plot(squeeze(mean(ts_pre(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %f', chan_1))
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
     legend('Denoised','Raw')
 
 
@@ -74,7 +74,7 @@ if produce_figures
     plot(squeeze(mean(ts_pre(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %f', chan_1))
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
     legend('Denoised','Raw')
 
 
