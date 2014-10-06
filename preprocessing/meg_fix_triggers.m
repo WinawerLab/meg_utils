@@ -62,7 +62,18 @@ trigger_problem_inds =find(trigger_problems);
 
 bad_time_points = trigger_present_inds(trigger_problem_inds);
 
-%% go on from here
+% Issue: most of the above indexes return all zeros, check on that 
+% Solution: because of padding, the triggers are present -1 or -2 time
+% points before the the time points listed in bad_time_points
+
+%% go on from here (new general fix triggers algorithm WIP)
+
+
+for ii=1:length(bad_time_points)
+    ts(bad_time_points(ii),:) = ts(bad_time_points(ii)-1,:) + ts(bad_time_points(ii)-2,:);
+    ts(bad_time_points(ii)-1,:) = zeros([1,size(ts,2)]);
+    ts(bad_time_points(ii)-2,:) = zeros([1,size(ts,2)]);
+end
 
 %%
 trigger = trigger_onsets * [1 2 4 8]';
@@ -70,16 +81,16 @@ trigger = trigger_onsets * [1 2 4 8]';
 
 
 
-% Plot all the triggers
-figure(200); clf
-set(gca, 'ColorOrder', jet(4), 'Color', [.6 .6 .6]); hold all;
-plot(bsxfun(@plus, ts(:,161:164), (1:4)*40000), '-o',  'LineWidth', 2);
-legend(cellstr(num2str((161:164)')))
-set(gca, 'XTick', weird, 'XGrid', 'on');
-title('Trigger channels (indices and values)');
-xlabel('Time [s]');
-ylabel('Relative amplitude');
-legend('Trigger 1 / Chan 161', 'Trigger 2 / Chan 162', 'Trigger 3 / Chan 163', 'Trigger 4 / Chan 164');
+% % Plot all the triggers
+% figure(200); clf
+% set(gca, 'ColorOrder', jet(4), 'Color', [.6 .6 .6]); hold all;
+% plot(bsxfun(@plus, ts(:,161:164), (1:4)*40000), '-o',  'LineWidth', 2);
+% legend(cellstr(num2str((161:164)')))
+% set(gca, 'XTick', weird, 'XGrid', 'on');
+% title('Trigger channels (indices and values)');
+% xlabel('Time [s]');
+% ylabel('Relative amplitude');
+% legend('Trigger 1 / Chan 161', 'Trigger 2 / Chan 162', 'Trigger 3 / Chan 163', 'Trigger 4 / Chan 164');
 
 
 %% Fix triggers when they have value 11 or higher
