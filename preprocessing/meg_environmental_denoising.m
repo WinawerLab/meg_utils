@@ -1,4 +1,5 @@
-function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data)
+function ts_pre = meg_environmental_denoising(ts_pre,environmental_channels,...
+    produce_figures, save_data)
 
 %% Description of function
 
@@ -27,7 +28,6 @@ end
 
 %% Make empty arrays for regressed 'clean' data
 ts       = zeros(size(ts_pre));
-noise_channels = [158 159 160];
 
 % Start regression, keep residuals
 warning off stats:regress:RankDefDesignMat
@@ -38,7 +38,7 @@ for channel = 1:157;
         %%% ON PERIODS %%%
         
         % Full
-        [~,~,R] = regress(ts_pre(:,epoch,channel),[squeeze(ts_pre(:,epoch,noise_channels)) ones(size(ts_pre,1),1) ]);
+        [~,~,R] = regress(ts_pre(:,epoch,channel),[squeeze(ts_pre(:,epoch,environmental_channels)) ones(size(ts_pre,1),1) ]);
         ts(:,epoch,channel) = R;
         
         clear R
