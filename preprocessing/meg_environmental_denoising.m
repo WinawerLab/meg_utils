@@ -1,4 +1,4 @@
-function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data)
+function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data, verbose)
 
 %% Description of function
 
@@ -21,6 +21,9 @@ end
 if nargin < 3 || isempty(save_data)
     save_data = 0;
 end
+if nargin < 4 || isempty(verbose)
+    verbose = 0;
+end
 
 %% Define timeseries of conditions
 
@@ -31,8 +34,10 @@ noise_channels = [158 159 160];
 
 % Start regression, keep residuals
 warning off stats:regress:RankDefDesignMat
-for channel = 1:157; 
-    fprintf('[%s]: Channel %d\n', mfilename, channel); 
+for channel = 1:157;
+    if verbose
+        fprintf('[%s]: Channel %d\n', mfilename, channel);
+    end
     for epoch = 1:size(ts_pre,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
         
         %%% ON PERIODS %%%
