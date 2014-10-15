@@ -1,4 +1,6 @@
-function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data, verbose)
+function ts_denoised = meg_environmental_denoising(ts,...
+    environmental_channels, data_channels, ...
+    produce_figures, save_data, verbose)
 
 %% Description of function
 
@@ -9,19 +11,26 @@ function ts_pre = meg_environmental_denoising(ts_pre, produce_figures, save_data
 % before and after denoising plots.
 %
 % INPUTS:
-% ts_pre  = concatenated timeseries of all epochs (number of timepoints by number of epochs by number of channels)
+%  ts                        MEG timeseries (number of timepoints by number 
+%                                of epochs  by number of channels)
+%  environmental_channels    vector of channel numbers that are
+%                               nonphysiological. These will be used to
+%                               regress out noise from all other channels.
+%  data_channels             vector of channel numbers to denoise
+%  produce_figures           boolean. If true, make some plots to compare
+%                               pre and post denoising
 %
 % OUTPUTS:
-% ts_pre  = concatenated timeseries of all the denoised epochs
+%  ts                        denoised time series
 
 %% Deal with inputs
-if nargin < 2 || isempty(produce_figures)
-    produce_figures = 0;
+if ~exist('produce_figures', 'var') || isempty(produce_figures), 
+    produce_figures = 0; 
 end
-if nargin < 3 || isempty(save_data)
-    save_data = 0;
+if ~exist('save_data', 'var') || isempty(save_data),       
+    save_data = 0;       
 end
-if nargin < 4 || isempty(verbose)
+if ~exist('verbose', 'var') || isempty(verbose)
     verbose = 0;
 end
 
@@ -29,22 +38,22 @@ end
 
 
 %% Make empty arrays for regressed 'clean' data
-ts       = zeros(size(ts_pre));
-noise_channels = [158 159 160];
+ts_denoised = ts;
 
 % Start regression, keep residuals
 warning off stats:regress:RankDefDesignMat
-for channel = 1:157;
+
+for channel = data_channels; 
     if verbose
         fprintf('[%s]: Channel %d\n', mfilename, channel);
     end
-    for epoch = 1:size(ts_pre,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
+    for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
         
         %%% ON PERIODS %%%
         
         % Full
-        [~,~,R] = regress(ts_pre(:,epoch,channel),[squeeze(ts_pre(:,epoch,noise_channels)) ones(size(ts_pre,1),1) ]);
-        ts(:,epoch,channel) = R;
+        [~,~,R] = regress(ts(:,epoch,channel),[squeeze(ts(:,epoch,environmental_channels)) ones(size(ts,1),1) ]);
+        ts_denoised(:,epoch,channel) = R;
         
         clear R
         
@@ -61,13 +70,13 @@ if save_data
     fprintf('[%s]: Done! Data matrix saved to folder..', mfilename);
 end
 
-%% Make figures of all the raw epochs 
+%% For debugging: Make figures of all the raw epochs 
 if produce_figures
 
     % And for two visual channels
     chan_1 = 1;
-    figure(104); plot(squeeze(mean(ts(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts_pre(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
+    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
     title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
@@ -75,8 +84,8 @@ if produce_figures
 
 
     chan_1 = 14;
-    figure(105); plot(squeeze(mean(ts(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts_pre(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
+    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
     title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
