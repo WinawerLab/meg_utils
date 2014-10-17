@@ -1,5 +1,6 @@
 function ts_denoised = meg_environmental_denoising(ts,...
-    environmental_channels,data_channels, produce_figures, save_data)
+    environmental_channels, data_channels, ...
+    produce_figures, save_data, verbose)
 
 %% Description of function
 
@@ -23,8 +24,15 @@ function ts_denoised = meg_environmental_denoising(ts,...
 %  ts                        denoised time series
 
 %% Deal with inputs
-if ~exist('produce_figures', 'var') || isempty(produce_figures), produce_figures = 0; end
-if ~exist('save_data', 'var')       || isempty(save_data),       save_data = 0;       end
+if ~exist('produce_figures', 'var') || isempty(produce_figures), 
+    produce_figures = 0; 
+end
+if ~exist('save_data', 'var') || isempty(save_data),       
+    save_data = 0;       
+end
+if ~exist('verbose', 'var') || isempty(verbose)
+    verbose = 0;
+end
 
 %% Define timeseries of conditions
 
@@ -34,8 +42,11 @@ ts_denoised = ts;
 
 % Start regression, keep residuals
 warning off stats:regress:RankDefDesignMat
+
 for channel = data_channels; 
-    fprintf('[%s]: Channel %d\n', mfilename, channel); 
+    if verbose
+        fprintf('[%s]: Channel %d\n', mfilename, channel);
+    end
     for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
         
         %%% ON PERIODS %%%
