@@ -20,3 +20,6 @@ fileio/private/hasyokogawa.m
 renamed to hasyokogawa0.m and replaced with new hasyokogawa.m
 also keep this hasyokogawa.m in ft_development, since there is another copy in utilities
 
+2014-10-15
+fileio/private/read_trigger.m
+renamed to read_trigger0.m and added working version read_trigger.m to ft_development
