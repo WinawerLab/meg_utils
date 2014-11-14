@@ -20,16 +20,16 @@ remove_bad_epochs             = true;        % Remove epochs whose variance exce
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
-save_tseries                  = true;        % Save epoched time series?
 
 denoise_via_pca               = false;       % Do you want to use megdenoise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [.05 0.55];     % start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [.05 0.55];  % start and end of epoch, relative to trigger, in seconds
 
 save_images                   = false;
 
-condition_names               = {   'White Noise' ...
+% condition names correspond to trigger numbers
+condition_names               = {   'White Noise' ... 
                                     'Binarized White Noise' ...
                                     'Pink Noise' ...
                                     'Brown Noise' ...
@@ -113,7 +113,7 @@ f = (0:length(t)-1)/max(t);
 spectral_data = abs(fft(ts))/length(t)*2;
 spectral_data_mean = zeros(size(ts,1), length(conditions_unique), length(data_channels));
 
-% conmpute the mean amplitude spectrum for each electrode in each condition
+% compute the mean amplitude spectrum for each electrode in each condition
 for ii = 1:length(conditions_unique)
     these_epochs = conditions == conditions_unique(ii);
     these_data = spectral_data(:,these_epochs,data_channels);
