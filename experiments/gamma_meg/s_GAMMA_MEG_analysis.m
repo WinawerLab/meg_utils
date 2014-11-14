@@ -5,11 +5,11 @@
 
 % Analysis options
 %% Set analysis variables
-project_pth                     = '/Volumes/server-1/Projects/MEG/Gamma/Data';
+project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
 % data to be analysed
-trial_data_pth                = {'03_Gamma_7_16_2014_subj008', '02_Gamma_7_9_2014_subj002', '04_Gamma_7_23_2014_subj013'};
-num_trials                    = length(trial_data_pth);
+data_pth                      = {'03_Gamma_7_16_2014_subj008', '02_Gamma_7_9_2014_subj002', '04_Gamma_7_23_2014_subj013'};
+num_data_sets                 = length(data_pth);
 
 data_channels                 = 1:157;
 environmental_channels        = 158:160;
@@ -26,7 +26,7 @@ denoise_via_pca               = false;       % Do you want to use megdenoise?
 fs                            = 1000;        % sample rate
 epoch_start_end               = [.05 0.55];  % start and end of epoch, relative to trigger, in seconds
 
-save_images                   = false;
+save_images                   = true;
 
 % condition names correspond to trigger numbers
 condition_names               = {   'White Noise' ... 
@@ -44,17 +44,17 @@ condition_names               = {   'White Noise' ...
 %% Add paths
 
 %change server-1 back to server
-meg_add_fieldtrip_paths('/Volumes/server-1/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
-save_pth = fullfile(project_pth, 'Images', data_pth(i));
-if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
 
 
 %% Loops over datasets 
-for i = 1:length(num_trials)
+for subject_num = 1:num_data_sets
     
+save_pth = fullfile(project_pth, 'Images', data_pth{subject_num});
+if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+
 %% Load data (SLOW) 
-data_pth = trial_data_pth(i);
-raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth, 'raw'), '*Gamma*');
+raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth{subject_num}, 'raw'), '*Gamma*');
 
 %% Extract triggers
 trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
@@ -95,7 +95,7 @@ end
 % Denoise data with 3 noise channels
 if denoise_with_nonphys_channels
     if exist('./denoised_with_nuissance_data.mat', 'file')
-        load(fullfile(data_pth,'denoised_with_nuissance_data.mat'));
+        load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
     else fprintf('Loading data.. This may take a couple of seconds\n');
         ts = meg_environmental_denoising(ts, environmental_channels,...
             data_channels, produce_figures);
@@ -185,11 +185,11 @@ for chan = data_channels
         set(gca, 'XScale', 'log', 'YScale', 'log', ...
             'XLim', [min(f_use4fit) max(f_use4fit)], ...
             'YLim', 10.^[0.3 1.5] )
-        title(sprintf('Channel %d, %s', chan, condition_names{cond}))        
+        title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))        
     end
     if save_images, 
 
-        hgexport(fH, fullfile(save_pth(i), sprintf('Spectra_Chan%03d.eps', chan)));
+        hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
     end
 end
 
@@ -213,7 +213,7 @@ for chan = data_channels
     set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl,  ...
         'Color', [1 1 1], 'XGrid', 'on', ...
         'XTick', [10 60 100 200]);    
-    title(sprintf('Data from channel %d', chan))
+    title(sprintf('Data from channel %d, subject %d', chan, subject_num))
     
     % Plot Fits ----------------------------------------------------------- 
     subplot(1,3,2); cla; hold on
@@ -223,7 +223,7 @@ for chan = data_channels
     set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
         'Color', [1 1 1], 'XGrid', 'on', ...
         'XTick', [10 60 100 200]);    
-    title(sprintf('Fits to channel %d', chan))
+    title(sprintf('Fits to channel %d, subject %d', chan, subject_num))
     
     % Legend  -----------------------------------------------------------
     subplot(1,3,3); cla
@@ -234,7 +234,7 @@ for chan = data_channels
     legend(condition_names)
     drawnow;
     if save_images
-        hgexport(fH, fullfile(save_pth(i), sprintf('Spectral_fits_Chan%03d.eps', chan)));
+        hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
     end
 
 end
@@ -242,25 +242,34 @@ end
 
 %% Mesh visualization of model fits 
 
-figure(998); clf
+fH = figure(998); clf
 for cond = 1:9
     subplot(3,3,cond)
-    fH = ft_plotOnMesh(w_gauss(:,cond)', condition_names{cond});
+    ft_plotOnMesh(w_gauss(:,cond)', condition_names{cond});
     set(gca, 'CLim', [0 .2])
 end
 
-figure(999); clf
+if save_images
+    hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
+end
+
+fH = figure(999); clf
 for cond = 1:9
     subplot(3,3,cond)
-    fH = ft_plotOnMesh(w_pwr(:,cond)' - w_pwr(:,num_conditions)', condition_names{cond});
+    ft_plotOnMesh(w_pwr(:,cond)' - w_pwr(:,num_conditions)', condition_names{cond});
     set(gca, 'CLim', [-1 1] *.03)
 end
 
-figure(1000); clf
+if save_images
+    hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
+end
+
+
+fH = figure(1000); clf
 subplot(2,2,1)
 ft_plotOnMesh((w_gauss * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
 set(gca, 'CLim', .5*[-1 1])
- 
+
 subplot(2,2,2)
  ft_plotOnMesh((w_gauss * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
 set(gca, 'CLim', .5*[-1 1])
@@ -272,6 +281,11 @@ set(gca, 'CLim', .5*[-1 1])
 subplot(2,2,4) 
 ft_plotOnMesh((w_pwr * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
 set(gca, 'CLim', .2 * [-1 1])
+
+if save_images
+    hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
+end
+
 
 end
 
