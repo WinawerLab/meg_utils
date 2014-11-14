@@ -5,11 +5,11 @@
 
 % Analysis options
 %% Set analysis variables
-project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
-data_pth                      = '03_Gamma_7_16_2014_subj008';
-% data_pth                      = '02_Gamma_7_9_2014_subj002';
-% data_pth                      = '04_Gamma_7_23_2014_subj013';
+project_pth                     = '/Volumes/server-1/Projects/MEG/Gamma/Data';
 
+% data to be analysed
+trial_data_pth                = {'03_Gamma_7_16_2014_subj008', '02_Gamma_7_9_2014_subj002', '04_Gamma_7_23_2014_subj013'};
+num_trials                    = length(trial_data_pth);
 
 data_channels                 = 1:157;
 environmental_channels        = 158:160;
@@ -27,7 +27,7 @@ denoise_via_pca               = false;       % Do you want to use megdenoise?
 fs                            = 1000;        % sample rate
 epoch_start_end               = [.05 0.55];     % start and end of epoch, relative to trigger, in seconds
 
-save_images                   = true;
+save_images                   = false;
 
 condition_names               = {   'White Noise' ...
                                     'Binarized White Noise' ...
@@ -42,11 +42,18 @@ condition_names               = {   'White Noise' ...
 
 
 %% Add paths
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
-save_pth = fullfile(project_pth, 'Images', data_pth);
+
+%change server-1 back to server
+meg_add_fieldtrip_paths('/Volumes/server-1/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
+save_pth = fullfile(project_pth, 'Images', data_pth(i));
 if ~exist(save_pth, 'dir'), mkdir(save_pth); end
 
-%% Load data (SLOW)
+
+%% Loops over datasets 
+for i = 1:length(num_trials)
+    
+%% Load data (SLOW) 
+data_pth = trial_data_pth(i);
 raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth, 'raw'), '*Gamma*');
 
 %% Extract triggers
@@ -182,7 +189,7 @@ for chan = data_channels
     end
     if save_images, 
 
-        hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
+        hgexport(fH, fullfile(save_pth(i), sprintf('Spectra_Chan%03d.eps', chan)));
     end
 end
 
@@ -227,7 +234,7 @@ for chan = data_channels
     legend(condition_names)
     drawnow;
     if save_images
-        hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
+        hgexport(fH, fullfile(save_pth(i), sprintf('Spectral_fits_Chan%03d.eps', chan)));
     end
 
 end
@@ -265,34 +272,8 @@ set(gca, 'CLim', .5*[-1 1])
 subplot(2,2,4) 
 ft_plotOnMesh((w_pwr * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
 set(gca, 'CLim', .2 * [-1 1])
-%% Time frequency analysis
-%
-%
-% TODO: replace epochs.data with ts
 
-warning('Time frequency analysis not yet implemented')
-return
+end
 
-
-% add chronux path
-addpath('/Volumes/server/Projects/MEG/Gamma/cerebral_cortex_datashare/Chronux')
-
-% parameters for mtspecgramc
-  movingwin=[0.250 0.050]; %original [.200..
-    params.pad=-1; %no padding
-    params.tapers=[3 5];
-    params.fpass=[0 500]; % Fs/2
-    params.Fs=1000; %one sample per msec so 1000 samples per sec
-    params.trialave=1;
-
-    specchannel = 26;
-
-
-data2use = squeeze(epochs.data(:,:,specchannel,:));
-
-% Spectrogram (WIP)
-
-[S,t_spec,f,]=mtspecgramc(data2use,movingwin,params);
-imagesc(t_spec,f,log10(S)',[-1.3 1.3])
 
 
