@@ -26,7 +26,7 @@ denoise_via_pca               = false;       % Do you want to use megdenoise?
 fs                            = 1000;        % sample rate
 epoch_start_end               = [.05 0.55];  % start and end of epoch, relative to trigger, in seconds
 
-save_images                   = true;
+save_images                   = false;
 
 % condition names correspond to trigger numbers
 condition_names               = {   'White Noise' ... 
@@ -40,6 +40,7 @@ condition_names               = {   'White Noise' ...
                                     'Plaid'...
                                     'Blank'};
 
+which_data_sets_to_analyze = 1;
 
 %% Add paths
 
@@ -48,7 +49,7 @@ meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa
 
 
 %% Loops over datasets 
-for subject_num = 1:num_data_sets
+for subject_num = which_data_sets_to_analyze
     
 save_pth = fullfile(project_pth, 'Images', data_pth{subject_num});
 if ~exist(save_pth, 'dir'), mkdir(save_pth); end
