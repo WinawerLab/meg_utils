@@ -134,5 +134,5 @@ ft_cleandata = ft_rejectcomponent(struct('component',[],'demean','no'),ft_PCA_IC
 
 %% view cleandata (blue) and original data (red)
 windowSize = [1 5 2560 1392];
-eegplot(ft_cleandata.trial{1}./1e-13,'srate',cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',ft_data.trial{1}./1e-13);
+eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',ft_data.trial{1}./1e-13);
 
