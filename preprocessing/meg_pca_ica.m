@@ -103,13 +103,14 @@ WorkFlow.ICA_topo = ft_ICA.topo;
 % event related averaged ICA and frequency spectrum
 
 % ft_databrowser(struct('viewmode','component','layout',layout), ft_ICA);
-close all;
+% close all;
 Pos1 = [1 5 800 1364];
 Nsec = 4;
 ER_shift = WorkFlow.data_continuous_block(1)-1;
 compSets = {1:6,7:12,13:18,19:24,25:30,31:32};
+latestFig = gcf;
 for i = numel(compSets):-1:1
-    figure(i)
+    figure(i+latestFig)
     Aft_plot_component_rd(ft_ICA,compSets{i},layout,trl,ER_shift,1000,Nsec,Pos1);
 end
 
@@ -117,11 +118,13 @@ end
 % select and visualize components to reject
 reject_ICA_comps = input('\nInput ICA components to reject (e.g. [1 4] or []): ');
 
-figure(3);Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,Pos1);
-saveas(gcf,'output','jpg');
+if ~isempty(reject_ICA_comps)
+    figure(3);Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,Pos1);
+    saveas(gcf,'output','jpg');
+    WorkFlow.ICA_rejected_screenshot = imread('output.jpg');
+end
 
 WorkFlow.ICA_rejected_components = reject_ICA_comps;
-WorkFlow.ICA_rejected_screenshot = imread('output.jpg');
 
 % backprojection
 activations = ft_ICA.trial{1};
