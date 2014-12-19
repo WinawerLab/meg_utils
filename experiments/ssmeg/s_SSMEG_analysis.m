@@ -8,7 +8,7 @@
 %% Analysis options %%
 %%%%%%%%%%%%%%%%%%%%%%
 % Set analysis variables
-project_pth                     = '/Volumes/server/Projects/MEG/SSMEG/';
+project_pth                   = '/Volumes/server/Projects/MEG/SSMEG/';
 
 % data to be analysed (% set nr)
 data_pth                      = {'04_SSMEG_04_01_2014_wl_subj006', ... % 1
@@ -46,7 +46,7 @@ condition_names               = {   'Full field' ...
                               
 load_saved_epochs             = false;
 
-which_data_sets_to_analyze = 1;
+which_data_sets_to_analyze    = 5;
 
 
 %% Add paths
@@ -66,7 +66,7 @@ for subject_num = which_data_sets_to_analyze
     
 %% Make image folder
 save_pth = fullfile(project_pth, 'Images', data_pth{subject_num});
-if ~exist(save_pth, 'dir'), mkdir(session_image_pth); end
+if ~exist(save_pth, 'dir'), mkdir(save_pth); end
 
 
 %% For new data sets
