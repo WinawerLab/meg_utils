@@ -77,7 +77,9 @@ if load_saved_epochs == false;
 
     %% Extract triggers
     if subject_num == 5
-        % Photodiode function --> generalize this function
+        % Do some plotting here, so someone can get the start ind. Maybe we
+        % should think about a way to automize this. 
+        trigger = meg_fix_triggers_photodiode(raw_ts, start_ind, threshold, fs, photodiode_channel);
     else
         trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
     end

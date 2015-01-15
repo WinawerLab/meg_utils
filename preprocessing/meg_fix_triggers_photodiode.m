@@ -1,8 +1,27 @@
-function trigger = meg_fix_triggers_photodiode(raw_ts, threshold, fs, photodiode_channel)
+function trigger = meg_fix_triggers_photodiode(raw_ts, start_ind, threshold, fs, photodiode_channel)
 
-%% DONT USE, ITS NOT READY YET
+%% DON'T USE FOR NOW, ITS NOT READY YET
 
-%% Description comes here
+%% Description of meg_fix_triggers_photodiode
+
+% trigger = meg_fix_triggers_photodiode(raw_ts, start_ind, [threshold], [fs], [photodiode_channel])
+
+% This function is based on the function meg_fix_triggers, but now you define 
+% triggers by the use of photodiode timeseries. For now, one needs to input 
+% the raw_data and a start index. That is, because the continuous recording 
+% starts before the experiments was started, there may be some unrelated 
+% 'triggers' in the timeseries that may vary per experiment.
+
+% INPUTS:
+% raw_ts    =   Timeseries [timepoints x channels]
+% start_ind =   one integer that defines your starting point of the first
+%               run.
+
+% OUTPUTS: 
+
+
+
+
 
 %% Deal with inputs
 if nargin<2 || isempty(threshold)
@@ -17,21 +36,70 @@ if nargin<4 || isempty(photodiode_channel)
 end
 
 %% Get length of run in time
-t = (0:size(raw_ts,1)-1) / fs; % seconds
 
-% Get peaks of photodiode response
-data_pd   = diff(raw_ts(:,photodiode_channel));
-thresh_data_pd      = (max(data_pd) - min(data_pd)) / threshold;
-[pd.value_white, pd.ind_white] = findpeaks([0; -data_pd],'MINPEAKHEIGHT',thresh_data_pd);
-[pd.value_black, pd.ind_black] = findpeaks([0; data_pd],'MINPEAKHEIGHT',thresh_data_pd);
+%% OLD CODE
+% t = (0:size(raw_ts,1)-1) / fs; % seconds
 
-pd.ind = sort([pd.ind_white; pd.ind_black]);
+% % Get peaks of photodiode response
+% data_pd             = diff(raw_ts(:,photodiode_channel));
+% thresh_data_pd      = (max(data_pd) - min(data_pd)) / threshold;
+% [pd.value_white, pd.ind_white] = findpeaks([0; -data_pd],'MINPEAKHEIGHT',thresh_data_pd);
+% [pd.value_black, pd.ind_black] = findpeaks([0; data_pd],'MINPEAKHEIGHT',thresh_data_pd);
+% 
+% % Sort the triggers in time
+% pd.ind = sort([pd.ind_white; pd.ind_black]);
+% 
+% % Get rid of the runs where the photodiode triggers don't make sense
+% start_value = pd.ind(start_ind);
+% pd.ind_shortened = pd.ind(start_ind:end);
+% 
+% % differentiate to isolate trigger onsets, and pad to preserve length
+% ts = padarray(diff(pd.ind_shortened), [1 0], 0, 'post');
 
-% Get rid of the runs where the photodiode triggers don't make sense
-start_ind_1 = find(pd.ind == 488777);
+%%
 
-pd.ind_shortened = pd.ind(start_ind_1:end);
+ts = raw_ts(:,photodiode_channel);
 
+% rescale to [0 1]
+ts = ts - min(ts(:));
+ts = ts / max(ts(:));
+
+% check whether triggers are indicated by a low value or a high value
+if round(mean(ts)) == 0, trigger_is_high = true; 
+else                     trigger_is_high = false; end 
+
+% if triggers are indicated by a low value, then invert the signal
+if ~trigger_is_high, ts = 1 - ts; end
+
+% threshold to binarize from analog recording 
+ts = ts > 0.1;
+
+% differentiate to isolate trigger onsets, and pad to preserve length
+ts = padarray(diff(ts), [1 0], 0, 'post');
+
+% rectify 
+ts(ts<0) = 0;
+
+% mark the samples as 1 when any trigger channel signaled 
+any_trigger      = sum(ts,2) > 0;
+
+% list the sample numbers (time ponts) when any trigger channel signalled
+any_trigger_inds = find(any_trigger);
+
+% Delete the stuff you don't want *This needs to be implemented in the code
+% some day*
+any_trigger_inds = any_trigger_inds(start_ind:end);
+
+% check for really short triggers
+assert(sum(diff(any_trigger_inds) < 10)==0)
+
+%%
+
+% get triggers around mode of trigger indices
+criterion =  mode(diff(any_trigger_inds)) + [-2:2];
+triggers_to_keep = any_trigger_inds==criterion;
+
+difference_inds = diff(any_trigger_inds);
 % for ii = 1:12
 %     if ii == 1
 %         inds.on(ii,:) = pd.ind_shortened(1:12:(12*36)-1);
