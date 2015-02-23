@@ -19,13 +19,17 @@ function trigger = meg_fix_triggers(ts)
 
 % error('Not yet implemented')
 
-ts_tmp = ts;
+% exclude outliers
+md = median(ts(:));
+ts(ts > 5*md) = NaN;
+
+
 % rescale to [0 1]
 ts = ts - min(ts(:));
 ts = ts / max(ts(:));
 
 % check whether triggers are indicated by a low value or a high value
-if round(mean(ts)) == 0, trigger_is_high = true; 
+if round(mean(ts(:))) == 0, trigger_is_high = true; 
 else                     trigger_is_high = false; end 
 
 % if triggers are indicated by a low value, then invert the signal
