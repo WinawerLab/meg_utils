@@ -5,18 +5,20 @@ function ev_time = eeg_read_evt_file(pth)
 %  ev_time = eeg_read_evt_file(pth)
 %
 
+% test
+% pth = '/Volumes/server/Projects/EEG/SSEEG/Data/Pilot_SSEEG_20150129_wl_subj001/raw/Session_20150129_1007_pt1.evt';
+
+
 
 % Reading in the evt file results in a 1 by many characters vector
 data = fileread(pth);
 %  
 
-% test
-pth = '/Volumes/server/Projects/EEG/SSEEG/Data/Pilot_SSEEG_20150129_wl_subj001/raw/Session_20150129_1007_pt1.evt';
-fileID = fopen(pth);
-formatSpec = '%s\t\t%s\t%s\t%d\t%s\t%s\t%s\t%d';
-sizeA = [8 inf];
-A = textscan(fileID,formatSpec, sizeA);
-fclose(fileID);
+% fileID = fopen(pth);
+% formatSpec = '%s\t\t%s\t%s\t%d\t%s\t%s\t%s\t%d';
+% sizeA = [8 inf];
+% A = textscan(fileID,formatSpec, sizeA);
+% fclose(fileID);
 %% Convert a character vector of event onsets in time 
 % ('00:00.000' - Hours:Minutes:Seconds.Milliseconds) 
 
