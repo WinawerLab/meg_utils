@@ -1,47 +1,71 @@
-function ev_time = eeg_read_evt_file(pth)
+function [ev_time] = eeg_read_evt_file(pth)
 % Read a NetStation events text file, extract event timing, and return a
 % vector of event times in seconds
-%
-%  ev_time = eeg_read_evt_file(pth)
-%
 
+% ev_time = eeg_read_evt_file(pth)
 
-% Reading in the evt file results in a 1 by many characters vector
-data = fileread(pth);
-%  
+% Reading in the evt file 'fopen(pth)' results in a 1 by many characters
+% vector called fileID. We use textscan, with a size that should always be
+% larger than the number of DIN's in any given session (i.e. 1000000).
+                                                                         
+% Since the .evt file is actually made completely of strings, we put ten of
+% these '%s' in the 'formatSpec' field. Ten is the number of strings in a
+% line of the .evt file, at least in the way we are currently exporting. 
+  
+% This outputs ten cells of size (# of DIN's x 1), if we assign a variable
+% to the 7th cell in A we get a vector B of all the times in strings. 
+% Then we fun this through a datevec loop to create an actual vector
+% 'ev_time' which contains numerical time values in seconds of the recorded
+% DIN's 
 
-% test
-pth = '/Volumes/server/Projects/EEG/SSEEG/Data/Pilot_SSEEG_20150129_wl_subj001/raw/Session_20150129_1007_pt1.evt';
+% example inputs:
+%       pth = '/Volumes/server/Projects/EEG/SSEEG/Data/Timing_test_SSEEG_20150219/Timing_test_20150219.evt';
+%       pth = '/Volumes/server/Projects/EEG/SSEEG/Data/Pilot_SSEEG_20150129_wl_subj001/raw/Session_20150129_1007.evt';
+
 fileID = fopen(pth);
-formatSpec = '%s\t\t%s\t%s\t%d\t%s\t%s\t%s\t%d';
-sizeA = [8 inf];
-A = textscan(fileID,formatSpec, sizeA);
+
+% These event files seem to have 10 columns. So read in 10 columns of cells
+formatSpec = '%s%s%s%s%s%s%s%s%s%s';
+sizeA = 1000000;
+A = textscan(fileID, formatSpec, sizeA);
 fclose(fileID);
-%% Convert a character vector of event onsets in time 
-% ('00:00.000' - Hours:Minutes:Seconds.Milliseconds) 
 
-char_length = 14; % characters that define the onset time of each DIN
+% The 7th columnn contains time stamps
+B = A{7};
 
-% the length of the initiation sequence should be n times the number of for
-% loops in the function flinitseq
-length_init_seq = 12;  
+% The first three rows are header rows
+B = B(4:end);
 
-% ']' (marker) precedes the time values of the triggers in DIN file 
-marker = find(data==']');
+[~, ~, ~, ~, M, S] = datevec(B); % Keep only minutes and seconds
+ev_time = M*60+S; % Convert to only seconds
 
-% Get events from character vector
-events = [];
 
-for ii = 1:size(marker,2)
-    events{ii} = data(marker(ii)+1:marker(ii)+char_length);
-end
-
-clear data; clear marker;
-%% Transform these character times (HH:MM:SS.FFF) into a vector containing
-% only seconds
-
-ev_time = [];
-for ii = 1:size(events,2)
-    [~, ~, ~, ~, M, S] = datevec(events{ii}); % Keep only minutes and seconds
-    ev_time(ii) = [M*60+S]; % Convert to only seconds
-end
+%% Garbage
+% %% Convert a character vector of event onsets in time 
+% % ('00:00.000' - Hours:Minutes:Seconds.Milliseconds) 
+% 
+% char_length = 14; % characters that define the onset time of each DIN
+% 
+% % the length of the initiation sequence should be n times the number of for
+% % loops in the function flinitseq
+% length_init_seq = 12;  
+% 
+% % ']' (marker) precedes the time values of the triggers in DIN file 
+% marker = find(data==']');
+% 
+% % Get events from character vector
+% events = [];
+% 
+% for ii = 1:size(marker,2)
+%     events{ii} = data(marker(ii)+1:marker(ii)+char_length);
+% end
+% 
+% clear data; clear marker;
+% %% Transform these character times (HH:MM:SS.FFF) into a vector containing
+% % only seconds
+% 
+% ev_time = [];
+% for ii = 1:size(events,2)
+%     [~, ~, ~, ~, M, S] = datevec(events{ii}); % Keep only minutes and seconds
+%     ev_time(ii) = [M*60+S]; % Convert to only seconds
+% end
