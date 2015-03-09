@@ -24,6 +24,6 @@ if nargout == 0,
     plot(inds_to_plot, event_ts(inds_to_plot), 'g')
     plot(inds_to_plot, flicker_sequence, 'k--')
     
-    xlim([inds_to_plot(1)-1000 inds_to_plot(end)+1000])
+%     xlim([inds_to_plot(1)-1000 inds_to_plot(end)+1000])
     plot(start_ind * [1 1], [0 1], 'b--', 'LineWidth',3)
 end
