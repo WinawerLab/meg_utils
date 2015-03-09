@@ -25,7 +25,7 @@ flicker_seq = zeros(1,round(n_timepoints));
 
 % Fill it up
 for ii = 1:n
-    flicker_seq(round(1+ ((ii-1)*isi*s_rate) + (1:dur*s_rate)) )=1;
+    flicker_seq(round(1+ ((ii-1)*dur*s_rate) + ((ii-1)*isi*s_rate) + (1:(dur*s_rate)) ))=1;
 end
 
 return
