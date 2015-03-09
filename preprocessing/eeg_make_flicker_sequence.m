@@ -21,11 +21,11 @@ function flicker_seq = eeg_make_flicker_sequence(n, dur, isi, s_rate)
 n_timepoints = (n*dur + (n-1)*isi) * s_rate;
 
 % Make an empty flicker sequence
-flicker_seq = zeros(1,round(n_timepoints));
+flicker_seq = zeros(1,round(n_timepoints)-1);
 
 % Fill it up
 for ii = 1:n
-    flicker_seq(round(1+ ((ii-1)*dur*s_rate) + ((ii-1)*isi*s_rate) + (1:(dur*s_rate)) ))=1;
+    flicker_seq(round(((ii-1)*dur*s_rate) + ((ii-1)*isi*s_rate) + (1:(dur*s_rate)) ))=1;
 end
 
 return
