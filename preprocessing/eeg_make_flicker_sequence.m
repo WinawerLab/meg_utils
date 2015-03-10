@@ -1,6 +1,6 @@
-function flicker_seq = eeg_make_flicker_sequence(n, dur, isi, s_rate)
+function flicker_seq = eeg_make_flicker_sequence(n, dur, isi, s_rate, pad_with_zeros)
 %
-% flicker_sequence = eeg_make_flicker_sequence(n, dur, isi, s_rate);
+% flicker_sequence = eeg_make_flicker_sequence(n, dur, isi, s_rate, pad_with_zeros);
 % 
 % Function to make a sequence of 1's and 0's to define the order of the 
 % photodiode flashes with duration, and isi in seconds, sampled at s_rate. 
@@ -26,6 +26,11 @@ flicker_seq = zeros(1,round(n_timepoints)-1);
 % Fill it up
 for ii = 1:n
     flicker_seq(round(((ii-1)*dur*s_rate) + ((ii-1)*isi*s_rate) + (1:(dur*s_rate)) ))=1;
+end
+
+% pad with zeros
+if exist('pad_with_zeros', 'var')
+    flicker_seq = padarray(flicker_seq(:), pad_with_zeros);
 end
 
 return
