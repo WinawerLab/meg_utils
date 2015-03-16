@@ -8,7 +8,7 @@
 project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
 % data to be analysed
-data_pth                      = {'03_Gamma_7_16_2014_subj008', '02_Gamma_7_9_2014_subj002', '04_Gamma_7_23_2014_subj013'};
+data_pth                      = {'06_Gamma_2_26_2015_subj017'};
 num_data_sets                 = length(data_pth);
 
 data_channels                 = 1:157;
@@ -24,7 +24,9 @@ produce_figures               = true;        % If you want figures in case of de
 denoise_via_pca               = false;       % Do you want to use megdenoise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [.05 0.55];  % start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [0.05 1.05];  % start and end of epoch, relative to trigger, in seconds
+
+interspace_trig               = 11;           % the MEG trigger value that corresponds to the interspace between images
 
 save_images                   = false;
 
@@ -33,10 +35,10 @@ condition_names               = {   'White Noise' ...
                                     'Binarized White Noise' ...
                                     'Pink Noise' ...
                                     'Brown Noise' ...
-                                    'Gratings(width 64)' ...
-                                    'Gratings(width 32)' ...
-                                    'Gratings(width 16)' ...
-                                    'Gratings(width 8)' ...
+                                    'Gratings(0.36 cpd)' ...
+                                    'Gratings(0.73 cpd)' ...
+                                    'Gratings(1.45 cpd)' ...
+                                    'Gratings(2.90 cpd)' ...
                                     'Plaid'...
                                     'Blank'};
 
@@ -61,7 +63,7 @@ raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth{subject_num}, 'raw'), 
 trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
 
 %% Make epochs
-[ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs); 
+[ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, interspace_trig, fs); 
 conditions_unique = unique(conditions);
 num_conditions    = length(condition_names);
 
@@ -110,17 +112,21 @@ end
 % compute spectral data
 t = (1:size(ts,1))/fs;
 f = (0:length(t)-1)/max(t);
-
+nboot = 10; % number of bootstrap samples
 spectral_data = abs(fft(ts))/length(t)*2;
-spectral_data_mean = zeros(size(ts,1), length(conditions_unique), length(data_channels));
+spectral_data_mean = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
 
 % compute the mean amplitude spectrum for each electrode in each condition
 for ii = 1:length(conditions_unique)
     these_epochs = conditions == conditions_unique(ii);
-    these_data = spectral_data(:,these_epochs,data_channels);
-    
+    for iii = 1:length(data_channels)
+        these_data = spectral_data(:,these_epochs,iii);
+        bootfun = @(x) exp(nanmean(log(x),2));
+        bootstat = bootstrp(nboot, bootfun, these_data);
+        spectral_data_mean(:,ii,iii,:) = permute(bootstat,[2 1]);
+    end
     % log transform for averaging spectra
-    spectral_data_mean(:,ii,:) = exp(nanmean(log(these_data),2));
+    % spectral_data_mean(:,ii,:) = exp(nanmean(log(these_data),2));
     
 end
 
@@ -138,7 +144,7 @@ out_exp = NaN(num_channels,num_conditions);     % slope of spectrum in log/log s
 w_pwr   = NaN(num_channels,num_conditions);     % broadband power
 w_gauss = NaN(num_channels,num_conditions);     % gaussian height
 gauss_f = NaN(num_channels,num_conditions);     % gaussian peak frequency
-fit_f2  = NaN(num_conditions,500,num_channels); % fitted spectrum
+fit_f2  = NaN(num_conditions,1000,num_channels); % fitted spectrum
 
 % Fit each channel separately
 for chan = data_channels
@@ -148,7 +154,7 @@ for chan = data_channels
     % For each channel, fit each condition separatley
     for cond = 1:num_conditions
         data_fit = spectral_data_mean(:,cond,chan);
-        
+       
         % try/catch because bad channels / bad epochs were replaced by
         % NaNs, and NaNs will cause an error
         try
