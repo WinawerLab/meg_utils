@@ -1,8 +1,7 @@
 function [ev_ts, start_inds, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
     s_rate_monitor, runs, eeg_ts, start_signal, plot_figures)
-
-%% Function to extract triggers from photodiode responses saved in evt file
-
+%% Extract triggers from photodiode responses saved in NetStation evt file
+%
 % [ev_ts, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
 %       s_rate_monitor, first_run, flicker_sequence, plot_figures);
 %
@@ -18,6 +17,8 @@ function [ev_ts, start_inds, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
 %                       should match length of eeg_ts, as there must be a
 %                       corresponding eeg time series for each run with
 %                       triggers
+% eeg_ts            : cell array of eeg data, where each cell is channel x
+%                       time
 % start_signal      : A vector indicating the flicker sequence which marks the start of each run
 % plot_figures      : Plot debug figures or not?
 

@@ -57,6 +57,7 @@ for subject_num = which_data_sets_to_analyze
     save_pth = fullfile(project_pth, 'Images', data_pth{subject_num});
     if ~exist(save_pth, 'dir'), mkdir(save_pth); end
     
+    % ------------------ PREPROCESS THE DATA -----------------------------
     %% Load data (SLOW)
     raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth{subject_num}, 'raw'), '*Gamma*');
     
@@ -108,6 +109,7 @@ for subject_num = which_data_sets_to_analyze
     
     
     
+    % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
     %% Spectral analysis
     
     % compute spectral data
