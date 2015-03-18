@@ -25,11 +25,15 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, int
 %                   epoch
 
 %% Parameters
-if nargin<5
-    interspace_trig = max(trigger);
+if nargin>5
+    trigger(trigger == interspace_trig) = 0; % remove the triggers corresponding to the interspace images
+else
+    % do nothing for now
+    % interspace_trig = max(trigger);
+    
 end
 
-trigger(trigger == interspace_trig) = 0; % remove the triggers corresponding to the interspace images
+
 onsets = find(trigger);
 
 epoch_samples = round(epoch_time * fs); %epoch length in samples
