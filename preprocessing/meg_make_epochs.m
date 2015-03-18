@@ -1,4 +1,4 @@
-function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, interspace_trig, fs)
+function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, interspace_trig)
 % Slice time series matrix (samples x channels) into 3D epoched array
 % (samples x epoch x channel) based on trigger times.
 %
@@ -25,7 +25,7 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, intersp
 %                   epoch
 
 %% Parameters
-if ~exist('interspace_trig','var'),
+if nargin<5
     interspace_trig = max(trigger);
 end
 
