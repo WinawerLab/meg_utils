@@ -1,111 +1,23 @@
-function trigger = meg_fix_triggers_photodiode(raw_ts, start_ind, threshold, fs, photodiode_channel)
+% Get epochs from photo diode
+function onsets = ssmeg_get_triggers_from_photodiode(pd_chan, Fs, ts)
 
-%% DON'T USE FOR NOW, ITS NOT READY YET
+cur_dir = pwd;
+cd('/Volumes/server/Projects/MEG/SSMEG/08_SSMEG_06_20_2014_wl_subj011')
 
-%% Description of meg_fix_triggers_photodiode
+% Get length of run in time
+t = (0:size(ts,1)-1) / Fs; % seconds
 
-% trigger = meg_fix_triggers_photodiode(raw_ts, start_ind, [threshold], [fs], [photodiode_channel])
+% Get peaks of photodiode response
+data_pd   = diff(ts(:,pd_chan));
+thresh_pd      = (max(data_pd) - min(data_pd)) / 50;
+[pd.value_white, pd.ind_white] = findpeaks([0; -data_pd],'MINPEAKHEIGHT',thresh_pd);
+[pd.value_black, pd.ind_black] = findpeaks([0; data_pd],'MINPEAKHEIGHT',thresh_pd);
 
-% This function is based on the function meg_fix_triggers, but now you define 
-% triggers by the use of photodiode timeseries. For now, one needs to input 
-% the raw_data and a start index. That is, because the continuous recording 
-% starts before the experiments was started, there may be some unrelated 
-% 'triggers' in the timeseries that may vary per experiment.
+pd.ind = sort([pd.ind_white; pd.ind_black]);
 
-% INPUTS:
-% raw_ts    =   Timeseries [timepoints x channels]
-% start_ind =   one integer that defines your starting point of the first
-%               run.
-
-% OUTPUTS: 
-
-
-
-
-
-%% Deal with inputs
-if nargin<2 || isempty(threshold)
-    threshold = 50; % threshold to define peak 
-end
-if nargin<3 || isempty(fs)
-    fs = 1000; % sampling rate
-end
-
-if nargin<4 || isempty(photodiode_channel)
-    photodiode_channel = 192;
-end
-
-%% Get length of run in time
-
-%% OLD CODE
-% t = (0:size(raw_ts,1)-1) / fs; % seconds
-
-% % Get peaks of photodiode response
-% data_pd             = diff(raw_ts(:,photodiode_channel));
-% thresh_data_pd      = (max(data_pd) - min(data_pd)) / threshold;
-% [pd.value_white, pd.ind_white] = findpeaks([0; -data_pd],'MINPEAKHEIGHT',thresh_data_pd);
-% [pd.value_black, pd.ind_black] = findpeaks([0; data_pd],'MINPEAKHEIGHT',thresh_data_pd);
-% 
-% % Sort the triggers in time
-% pd.ind = sort([pd.ind_white; pd.ind_black]);
-% 
-% % Get rid of the runs where the photodiode triggers don't make sense
-% start_value = pd.ind(start_ind);
-% pd.ind_shortened = pd.ind(start_ind:end);
-% 
-% % differentiate to isolate trigger onsets, and pad to preserve length
-% ts = padarray(diff(pd.ind_shortened), [1 0], 0, 'post');
-
-%%
-
-ts = raw_ts(:,photodiode_channel);
-
-% rescale to [0 1]
-ts = ts - min(ts(:));
-ts = ts / max(ts(:));
-
-% check whether triggers are indicated by a low value or a high value
-if round(mean(ts)) == 0, trigger_is_high = true; 
-else                     trigger_is_high = false; end 
-
-% if triggers are indicated by a low value, then invert the signal
-if ~trigger_is_high, ts = 1 - ts; end
-
-% threshold to binarize from analog recording 
-ts = ts > 0.1;
-
-% differentiate to isolate trigger onsets, and pad to preserve length
-ts = padarray(diff(ts), [1 0], 0, 'post');
-
-% rectify 
-ts(ts<0) = 0;
-
-% mark the samples as 1 when any trigger channel signaled 
-any_trigger      = sum(ts,2) > 0;
-
-% list the sample numbers (time ponts) when any trigger channel signalled
-any_trigger_inds = find(any_trigger);
-
-% Delete the stuff you don't want *This needs to be implemented in the code
-% some day*
-any_trigger_inds = any_trigger_inds(start_ind:end);
-
-% check for really short triggers
-assert(sum(diff(any_trigger_inds) < 10)==0)
-
-%%
-
-% get triggers around mode of trigger indices
-criterion =  mode(diff(any_trigger_inds)) + [-2:2];
-triggers_to_keep = any_trigger_inds==criterion;
-
-difference_inds = diff(any_trigger_inds);
-% for ii = 1:12
-%     if ii == 1
-%         inds.on(ii,:) = pd.ind_shortened(1:12:(12*36)-1);
-%     else
-%         inds.on(ii,:) = pd.ind_shortened(1:12:(12*36)-1);
-%     end
+% Get rid of the runs where the photodiode triggers don't make sense
+start_ind_1 = find(pd.ind == 488777);
+pd.ind_shortened = pd.ind(start_ind_1:end);
 
 % Define on periods (To Do: Automate this)
 run3_on = pd.ind_shortened(1:12:431);
@@ -186,27 +98,30 @@ seq_13 = stim_file.run13.stimulus.seq(1:12:end);
 seq_14 = stim_file.run14.stimulus.seq(1:12:end);
 seq_15 = stim_file.run15.stimulus.seq(1:12:end);
 
-master_seq = [seq_3;seq_4;seq_5;seq_6;seq_7;seq_8;seq_9;seq_10;seq_11;seq_12;seq_13;seq_14;seq_15];
+conditions = [seq_3;seq_4;seq_5;seq_6;seq_7;seq_8;seq_9;seq_10;seq_11;seq_12;seq_13;seq_14;seq_15];
 
-% Give blank triggers a new nr, to match with the on conditions
-for ii = 1:length(master_seq)
-    if master_seq(ii) == 3 & master_seq(ii-1) == 1
-        master_seq(ii:ii+5) = 8; % full
-    elseif master_seq(ii) == 3 & master_seq(ii-1) == 5
-        master_seq(ii:ii+5) = 9; % right
-    elseif master_seq(ii) == 3 & master_seq(ii-1) == 7
-        master_seq(ii:ii+5) = 10; % left
-    end
-end
+% % Give blank triggers a new nr, to match with the on conditions
+% for ii = 1:length(master_seq)
+%     if master_seq(ii) == 3 & master_seq(ii-1) == 1
+%         master_seq(ii:ii+5) = 8; % full
+%     elseif master_seq(ii) == 3 & master_seq(ii-1) == 5
+%         master_seq(ii:ii+5) = 9; % right
+%     elseif master_seq(ii) == 3 & master_seq(ii-1) == 7
+%         master_seq(ii:ii+5) = 10; % left
+%     end
+% end
 
 % Put triggers in same length timeseries
-trigger = zeros(length(t), 1);
-trigger(inds) = master_seq; 
+onsets = zeros(length(t), 1);
+onsets(inds) = conditions; 
+
+return
 
 % Index of every trigger value
 trig_full_on_ind  = find(trigger == 1); 
 trig_left_on_ind  = find(trigger == 5);
 trig_right_on_ind = find(trigger == 7);
+trig_off_ind      = find(trigger == 3);
 
 % Rename and define
 epoch_start_full_on_ind  = trig_full_on_ind; 
@@ -244,6 +159,4 @@ save epoch_conditions.mat epochs_condition
 epochs_on = [epoch_start_full_on_ind, epoch_start_right_on_ind, epoch_start_left_on_ind];
 epochs_off = [epoch_start_full_off_ind,epoch_start_right_off_ind,epoch_start_left_off_ind];
 
-end
-
-
+cd(cur_dir)
