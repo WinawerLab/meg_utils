@@ -12,12 +12,12 @@ off_starts      = cell(1,nr_runs);
 
 
 for ii = 1:nr_runs
-    reversal_inds{ii} = find(diff(ev_ts{ii}));
-    onsets{ii}        = reversal_inds{ii}(1:DINs_per_epoch*2:(trigs_per_run)-1);
-    off_starts{ii}    = reversal_inds{ii}(trigs_per_block*2:trigs_per_block:end);
+    reversal_inds{ii} = find(diff(ev_ts{ii}))+1;
+    onsets{ii}        = reversal_inds{ii}(1:DINs_per_epoch*2:trigs_per_run);
+    off_starts{ii}    = reversal_inds{ii}(trigs_per_block:trigs_per_block:end);
 end
 
-epoch_length   = median(diff(onsets{1}));
+epoch_length     = median(diff(onsets{1}));
 epochs_per_block = 6;
 
 for this_run = 1:nr_runs    
