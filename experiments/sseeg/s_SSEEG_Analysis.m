@@ -69,28 +69,27 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 samples_per_epoch = 1000;
 epoch_starts = sseeg_find_epochs(ev_ts, trigs_per_block, blocks_per_run, DINs_per_epoch);
 
-%% create inputs for meg_make_epochs function
-order = [1 3 1 3 5 3 5 3 7 3 7 3];
+%% create inputs necessary for eeg_make_epochs function
 
-epoch_ts = make_epoch_ts(order, nr_runs, ev_ts);
+order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of script
+epoch_ts    = make_epoch_ts(order, nr_runs, ev_ts, epoch_starts);
+
+%% run eeg_make_epochs
+ts_cell = cell(1,nr_runs);
 
 for ii = 1:nr_runs
-    epoch_ts{ii} = zeros(1,length(ev_ts{ii})-1);
-    for jj = 1:nr_trials
-        epoch_ts{ii}(epoch_starts{ii}((jj-1)*epochs_per_block+1:jj*epochs_per_block)) = order(1,jj);
-    end
+    epoch_time  = [epoch_starts{ii}(1) epoch_starts{ii}(2)]; 
+        [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
+    ts_cell{ii} = ts;
 end
 
-epoch_time = [epoch_starts{ii}(1) epoch_starts{ii}(2)]/1000; 
-fs = s_rate_eeg;
-raw_ts = eeg_ts{ii}';
-trigger = epoch_ts{ii};
+%%
+off.signal = ts(:, find(conditions == 3), 70);
 
-[ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, s_rate_eeg);
-%% Alternative for loop in the meg_make_epochs function
+full  = find(conditions == 1);
+right = find(conditions == 5);
+left  = find(conditions == 7);
+on.signal = ts(:, [full right], 70);
 
-for ii = 1:num_epochs
-    inds = onsets(ii):onsets(ii)+(epoch_len-1);
-    ts(ii, :, :) = raw_ts(inds,:);    
-end
 
+[on, off] = ecogCalcOnOffSpectra(on, off, 1, 1)
