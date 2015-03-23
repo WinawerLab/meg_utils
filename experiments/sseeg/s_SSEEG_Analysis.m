@@ -84,7 +84,7 @@ for ii = 1:nr_runs
 end
 
 %%
-off.signal = ts(:, find(conditions == 3), 70);
+off.signal = ts{ii}(:, find(conditions == 3), 70);
 
 full  = find(conditions == 1);
 right = find(conditions == 5);
