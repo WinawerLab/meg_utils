@@ -51,6 +51,6 @@ for which_subject = subjects
     [sensorData, conditions] = meg_make_epochs(ts, onsets, epoch_time, fs);
     
     save(fullfile(save_pth, sprintf('s%02d_sensorData', which_subject)), 'sensorData');
-    save(fullfile(save_pth, sprintf('s%02d_conditions', which_subject)), 'conditions');
+	
         
 end
