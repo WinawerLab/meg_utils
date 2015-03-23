@@ -6,8 +6,14 @@ function epoch_ts = make_epoch_ts(order, nr_runs, ev_ts, epoch_starts)
 % using ones to mark events, as we did in ev_ts. 
 %   
 %   INPUTS: 
-% order             : a vector representing the stimulus condition sequence.
-%       (e.g. [1 3 1 3 5 3 5 3 7 3 7 3])
+% order         : vector representing the stimulus condition sequence.
+%                   (e.g. [1 3 1 3 5 3 5 3 7 3 7 3])
+% nr_runs       : number of runs in a session 
+% ev_ts         : A cell with an event timeseries for each run, padded by
+%                   the refresh rate to indicate on and off timeperiods        
+% epoch_starts  : A cell with a vector for each run. Each vector contains
+%                   the timepoints in seconds of the start of each
+%                   epoch, for all epochs, on and off. 
 
 nr_trials = size(order,2);
 epochs_per_block = nr_trials/2;

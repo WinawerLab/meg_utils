@@ -75,21 +75,30 @@ order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of
 epoch_ts    = make_epoch_ts(order, nr_runs, ev_ts, epoch_starts);
 
 %% run eeg_make_epochs
-ts_cell = cell(1,nr_runs);
 
+ts_cell = cell(1,nr_runs);
 for ii = 1:nr_runs
     epoch_time  = [epoch_starts{ii}(1) epoch_starts{ii}(2)]; 
         [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
     ts_cell{ii} = ts;
 end
 
-%%
-off.signal = ts{ii}(:, find(conditions == 3), 70);
+%% *****just playing around with the ecogCalcOnOffSpectra function, not relevant****
+clear on off;
+ii = ii+1;
 
+off.signal = ts_cell{ii}(:, find(conditions == 3), 81:85);
+off.signal = off.signal(:,1:24,:);
 full  = find(conditions == 1);
 right = find(conditions == 5);
 left  = find(conditions == 7);
-on.signal = ts(:, [full right], 70);
+on.signal = ts_cell{ii}(:, [full left], 81:85);
 
+[on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
+ave_on = mean(on.meanFFT,3);
+ave_off = mean(off.meanFFT,3);
 
-[on, off] = ecogCalcOnOffSpectra(on, off, 1, 1)
+figure; plot(loglog(ave_on)); 
+hold on; 
+plot(loglog(ave_off));
+axis([5 50 0 3]);
