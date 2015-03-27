@@ -8,8 +8,7 @@
 project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
 % data to be analysed
-data_pth                      = {'06_Gamma_2_26_2015_subj017'};
-num_data_sets                 = length(data_pth);
+data_pth                      = '*_Gamma_*subj*';
 
 data_channels                 = 1:157;
 environmental_channels        = 158:160;
@@ -24,9 +23,9 @@ produce_figures               = true;        % If you want figures in case of de
 denoise_via_pca               = false;       % Do you want to use megdenoise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [0.05 1.05];  % start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [0.550 1.05];% start and end of epoch, relative to trigger, in seconds
 
-interspace_trig               = 11;           % the MEG trigger value that corresponds to the interspace between images
+intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
 
@@ -43,31 +42,37 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 1;
+which_data_sets_to_analyze = 6;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
 %change server-1 back to server
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
 
-
+d = dir(fullfile(project_pth, data_pth));
+subj_pths = struct2cell(d);
+subj_pths = subj_pths(1,:);
 %% Loops over datasets
 for subject_num = which_data_sets_to_analyze
     
-    save_pth = fullfile(project_pth, 'Images', data_pth{subject_num});
+    save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
     if ~exist(save_pth, 'dir'), mkdir(save_pth); end
     
     % --------------------------------------------------------------------
     % ------------------ PREPROCESS THE DATA -----------------------------
     % --------------------------------------------------------------------
     %% Load data (SLOW)
-    raw_ts = meg_load_sqd_data(fullfile(project_pth, data_pth{subject_num}, 'raw'), '*Gamma*');
+    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject_num}, 'raw'), '*Gamma*');
     
     %% Extract triggers
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
     
     %% Make epochs
-    [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, interspace_trig, fs);
+    [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
+    % remove intertrial intervals
+    iti               = conditions == intertrial_trigger_num;
+    ts                = ts(:,~iti, :);
+    conditions        = conditions(~iti);
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
@@ -118,9 +123,9 @@ for subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-    nboot = 10; % number of bootstrap samples
+    nboot = 3; % number of bootstrap samples
     spectral_data = abs(fft(ts))/length(t)*2;
-    spectral_data_mean = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
+    spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
     % compute the mean amplitude spectrum for each electrode in each condition
     fprintf('Computing bootstraps for each condition');
@@ -145,11 +150,16 @@ for subject_num = which_data_sets_to_analyze
         % reshape bootstat to 3D-array: nboot x freq x channel
         bootstat = reshape(bootstat, nboot, length(t), []);
         
-        % spectral_data_mean is freq x condition x channel x boot
-        spectral_data_mean(:,ii,:,:) = permute(bootstat,[2 3 1]);
+        % spectral_data_boots is freq x condition x channel x boot
+        spectral_data_boots(:,ii,:,:) = permute(bootstat,[2 3 1]);
         
     end
     fprintf('Done!\n');
+    
+    % Summarize bootstrapped spectral by mean and std over bootstraps
+    spectral_data_mean = mean(spectral_data_boots, 4);
+    spectral_data_std  =  std(spectral_data_boots, [], 4);
+    spectral_data_snr   = spectral_data_mean./spectral_data_std;
     
     %% Broadband and Gaussian Fit
     
@@ -176,8 +186,8 @@ for subject_num = which_data_sets_to_analyze
             
             for bootnum = 1:nboot
                                 
-                data_fit = spectral_data_mean(:,cond,chan, bootnum);
-                data_base = spectral_data_mean(:,blank_condition,chan, bootnum);
+                data_fit  = spectral_data_boots(:,cond,chan, bootnum);
+                data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
                 
                 % try/catch because bad channels / bad epochs were replaced by
                 % NaNs, and NaNs will cause an error
@@ -196,17 +206,32 @@ for subject_num = which_data_sets_to_analyze
         end
     end
     fprintf('done!\n')
+    
+    % summarize bootstrapped fits
+    out_exp_mn = mean(out_exp,3);
+    w_pwr_mn   = mean(w_pwr,3);
+    w_gauss_mn = mean(w_gauss,3);
+    gauss_f_mn = mean(gauss_f,3);
+    fit_f2_mn  = mean(fit_f2,4);
+    
+    out_exp_sd = std(out_exp,[],3);
+    w_pwr_sd   = std(w_pwr,[],3);
+    w_gauss_sd = std(w_gauss,[],3);
+    gauss_f_sd = std(gauss_f,[],3);
+    fit_f2_sd  = std(fit_f2,[],4);
+
+    
     %% Plot Gaussian fits
     line_width = 2; % line width for
     for chan = data_channels
         fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
         
-        data_base = median(spectral_data_mean(:,num_conditions,chan,:),4);
+        data_base = spectral_data_mean(:,num_conditions,chan);
         for cond = 1:num_conditions-1
-            data_fit = median(spectral_data_mean(:,cond,chan,:),4);
+            data_fit = spectral_data_mean(:,cond,chan,:);
             subplot(3,3,cond)
             % plot fit
-            plot(f,10.^(median(fit_f2(cond,:, chan,:),4)),'Color','g','LineWidth',line_width)
+            plot(f,10.^(fit_f2_mn(cond,:, chan)),'Color','g','LineWidth',line_width)
             hold on;
             
             % plot baseline data
@@ -217,11 +242,13 @@ for subject_num = which_data_sets_to_analyze
             set(gca, 'XScale', 'log', 'YScale', 'log', ...
                 'XLim', [min(f_use4fit) max(f_use4fit)], ...
                 'YLim', 10.^[0.3 1.5] )
-            title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))
+            title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))            
         end
         if save_images,
             
             hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
+        else
+            pause(0.1)
         end
     end
     
@@ -250,7 +277,7 @@ for subject_num = which_data_sets_to_analyze
         % Plot Fits -----------------------------------------------------------
         subplot(1,3,2); cla; hold on
         for cond = 1:num_conditions
-            plot(f, squeeze(10.^(fit_f2(cond,:, chan))), 'Color', colors(cond,:));
+            plot(f, squeeze(10.^(fit_f2_mn(cond,:, chan))), 'Color', colors(cond,:));
         end
         set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
             'Color', [1 1 1], 'XGrid', 'on', ...
@@ -274,10 +301,10 @@ for subject_num = which_data_sets_to_analyze
     
     %% Mesh visualization of model fits
     
-    fH = figure(998); clf
+    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for cond = 1:9
         subplot(3,3,cond)
-        ft_plotOnMesh(w_gauss(:,cond)', condition_names{cond});
+        ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
         set(gca, 'CLim', [0 .2])
     end
     
@@ -288,7 +315,7 @@ for subject_num = which_data_sets_to_analyze
     fH = figure(999); clf
     for cond = 1:9
         subplot(3,3,cond)
-        ft_plotOnMesh(w_pwr(:,cond)' - w_pwr(:,num_conditions)', condition_names{cond});
+        ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
         set(gca, 'CLim', [-1 1] *.03)
     end
     
