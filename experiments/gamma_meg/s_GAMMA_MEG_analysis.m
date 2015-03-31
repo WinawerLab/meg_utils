@@ -1,7 +1,33 @@
 % s_GAMMA_MEG_analysis
 
-% [Description comes here]
-
+% Analyze and visualize data from MEG Gamma experiments. Subjects saw
+% several kinds of stimuli, including gratings of various spatial
+% frequencies, plaids, and noise patterns (phase-randomized with 1/f^n
+% spectral power distrubutions)
+%
+% Stimuli were static, and on the screen either for 500 ms (subjects 1-3)
+% or 1000 ms (subjects 4-6) with 500 ms ISI.
+%
+% Spectral data from each channel for each stimulus type are modeled as a
+% mixture of a line and gaussian in log power / log frequency (meaning, a
+% power law and a narrowband response)
+%
+% TODO:
+%   1. Summarize the responses from each subject, for example as images on
+%   meshes showing the gaussian response and the broadband response for
+%   each separate type of image, as well as for contrasts of several
+%   stimulus categories (e.g., grating v noise, or grating v blank)
+%
+%   2. Denoise with environmental noise channels
+%
+%   3. MAYBE: summarize the EVOKED response from each stimulus
+%
+%   4. Make a POSTER!
+% 
+%   5. MAYBE: a grand average where you average the mesh images across
+%   subjects
+%
+%   6. MAYBE: source localize the signals
 
 % Analysis options
 %% Set analysis variables
@@ -14,7 +40,7 @@ data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
-denoise_with_nonphys_channels = false;       % Regress out time series from 3 nuissance channels
+denoise_with_nonphys_channels = true;        % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
@@ -300,6 +326,9 @@ for subject_num = which_data_sets_to_analyze
     %axis tight
     
     %% Mesh visualization of model fits
+    
+    % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
+    
     
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for cond = 1:9
