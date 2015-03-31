@@ -42,7 +42,7 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 6;
+which_data_sets_to_analyze = 1;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
