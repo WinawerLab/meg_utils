@@ -1,4 +1,4 @@
-function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, interspace_trig)
+function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs)
 % Slice time series matrix (samples x channels) into 3D epoched array
 % (samples x epoch x channel) based on trigger times.
 %
@@ -14,8 +14,6 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, int
 %                   (in seconds) relative to the trial onset
 %   fs:           sampling rate (Hz)
 %   
-%   blank_trig:   the MEG trigger value which corresponds to the interspace
-%   (optional)       between stimuli images (default: max(trigger))
 %
 % Outputs
 %   ts:           3D array containing epoched time series (samples by
@@ -25,15 +23,6 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, int
 %                   epoch
 
 %% Parameters
-if nargin>5
-    trigger(trigger == interspace_trig) = 0; % remove the triggers corresponding to the interspace images
-else
-    % do nothing for now
-    % interspace_trig = max(trigger);
-    
-end
-
-
 onsets = find(trigger);
 
 epoch_samples = round(epoch_time * fs); %epoch length in samples

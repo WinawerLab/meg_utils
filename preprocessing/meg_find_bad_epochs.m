@@ -14,7 +14,7 @@ function bad_epochs = meg_find_bad_epochs(ts, thresh)
 %   thresh: 2-vector specificy min and max multiplier of the variance to
 %                 threshold data
 % OUTPUT
-%   bad_epochs: logical matrix of bad epocjs (epoch x channel), where 1 =
+%   bad_epochs: logical matrix of bad epochs (epoch x channel), where 1 =
 %                   bad
 %
 % Example: bad_epochs = meg_find_bad_channels(ts, [.1 10]);
