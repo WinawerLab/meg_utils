@@ -8,25 +8,30 @@ nr_runs         = numel(ev_ts);
 trigs_per_run   = trigs_per_block * blocks_per_run;
 reversal_inds   = cell(1,nr_runs);
 onsets          = cell(1,nr_runs);
-off_starts      = cell(1,nr_runs);
 
+% off_starts      = cell(1,nr_runs);
 
 for ii = 1:nr_runs
     reversal_inds{ii} = find(diff(ev_ts{ii}))+1;
-    onsets{ii}        = reversal_inds{ii}(1:DINs_per_epoch*2:trigs_per_run);
-    off_starts{ii}    = reversal_inds{ii}(trigs_per_block:trigs_per_block:end);
+    onsets{ii}        = reversal_inds{ii}(1:DINs_per_epoch*2:trigs_per_run*2);
+
 end
 
-epoch_length     = median(diff(onsets{1}));
-epochs_per_block = 6;
+%   this line used to be in the loop but is no longer needed as per below message   
+%   off_starts{ii}    = reversal_inds{ii}(trigs_per_block:trigs_per_block:end);
 
-for this_run = 1:nr_runs    
-    for this_epoch = 2:epochs_per_block
-        off_starts{this_run}(this_epoch,:) = off_starts{this_run}(this_epoch-1,:)+epoch_length;
-    end
-    off_starts{this_run} = off_starts{this_run}(:)';
-    onsets{this_run} = sort([onsets{this_run}  off_starts{this_run}]);
-end
+%% probably no longer needed, since we now have a flicker during the off periods
+% 
+% epoch_length     = median(diff(onsets{1}));
+% epochs_per_block = 6;
+% 
+% for this_run = 1:nr_runs    
+%     for this_epoch = 2:epochs_per_block
+%         off_starts{this_run}(this_epoch,:) = off_starts{this_run}(this_epoch-1,:)+epoch_length;
+%     end
+%     off_starts{this_run} = off_starts{this_run}(:)';
+%     onsets{this_run} = sort([onsets{this_run}  off_starts{this_run}]);
+% end
 
 
 

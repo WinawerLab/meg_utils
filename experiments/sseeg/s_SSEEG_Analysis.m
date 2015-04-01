@@ -18,18 +18,19 @@ plot_figures     = true; % Plot debug figures or not?
 trigs_per_block  = 72;   % number of contrast reversals in one block of experiment
 blocks_per_run   = 6;    % number of blocks in one experimental run
 DINs_per_epoch   = 6;
+
 % Photodiode start sequence parameters
 %   We look for this in the trigger sequence to indicate where the
 %   experiment starts. In this case, we flash the square for one frame
 %   every 8 frames, 4x
-nr_flashes = 4; 
-dur = 1/s_rate_monitor; 
-isi = 7/s_rate_monitor; 
+% nr_flashes = 4; 
+% dur = 1/s_rate_monitor; 
+% isi = 7/s_rate_monitor; 
 
 %% Define variables for this subject's session
-session_name   = 'Pilot_SSEEG_20150129_wl_subj001';
-session_prefix = 'Session_20150129_1007';
-runs             = 3:10; % In case there are irrelevant runs recorderd to check stimulus code for presentation
+session_name   = 'Dummy_20150401';
+session_prefix = 'Dummy_20150401';
+runs           = 1:4; % In case there are irrelevant runs recorderd to check stimulus code for presentation
 
 %% Get toolboxes and code
 addpath(fullfile(project_path, 'Code'));
@@ -55,7 +56,8 @@ clear el_data;
 %% Get timeseries from event files
 
 % Make a flicker sequence as presented in the experiment
-start_signal = eeg_make_flicker_sequence(nr_flashes, dur, isi, s_rate_eeg, 10);
+% start_signal = eeg_make_flicker_sequence(nr_flashes, dur, isi, s_rate_eeg, 10);
+load('start_signal')
 
 % Get events file in useful units (seconds)
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
@@ -78,14 +80,13 @@ epoch_ts    = make_epoch_ts(order, nr_runs, ev_ts, epoch_starts);
 
 ts_cell = cell(1,nr_runs);
 for ii = 1:nr_runs
-    epoch_time  = [epoch_starts{ii}(1) epoch_starts{ii}(2)]; 
+    epoch_time  = [1  mode(diff(epoch_starts{1}))+1]; 
         [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
     ts_cell{ii} = ts;
 end
 
-%% *****just playing around with the ecogCalcOnOffSpectra function, not relevant****
-clear on off;
-ii = ii+1;
+%% ***** just playing around with the ecogCalcOnOffSpectra function ******
+%  *****               will be deleted eventually                   ******
 
 off.signal = ts_cell{ii}(:, find(conditions == 3), 81:85);
 off.signal = off.signal(:,1:24,:);
