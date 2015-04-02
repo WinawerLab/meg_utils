@@ -202,6 +202,8 @@ for subject_num = which_data_sets_to_analyze
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
     fit_f2  = NaN(num_conditions,1000,num_channels, nboot); % fitted spectrum
     
+    warning off 'MATLAB:subsassigndimmismatch'
+    
     % For each channel, fit each condition separatley
     fprintf('Fitting gamma and broadband values for each channel and each condition')
     for cond = 1:num_conditions
@@ -232,6 +234,8 @@ for subject_num = which_data_sets_to_analyze
         end
     end
     fprintf('done!\n')
+    
+    warning on 'MATLAB:subsassigndimmismatch'
     
     % summarize bootstrapped fits
     out_exp_mn = mean(out_exp,3);

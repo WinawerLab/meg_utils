@@ -75,8 +75,8 @@ if produce_figures
 
     % And for two visual channels
     chan_1 = 1;
-    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
     title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
@@ -84,8 +84,8 @@ if produce_figures
 
 
     chan_1 = 14;
-    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,chan_1),2)),'b')
     xlabel('Time (ms)')
     ylabel('Amplitude (Picotesla)')
     title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
