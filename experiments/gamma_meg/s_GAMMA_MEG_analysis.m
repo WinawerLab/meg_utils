@@ -242,60 +242,93 @@ for subject_num = which_data_sets_to_analyze
     
     
     % summarize bootstrapped fits
-    out_exp_mn = mean(out_exp,3);
-    w_pwr_mn   = mean(w_pwr,3);
-    w_gauss_mn = mean(w_gauss,3);
-    gauss_f_mn = mean(gauss_f,3);
-    fit_f2_mn  = mean(fit_f2,4);
+    out_exp_mn = nanmean(out_exp,3);
+    w_pwr_mn   = nanmean(w_pwr,3);
+    w_gauss_mn = nanmean(w_gauss,3);
+    gauss_f_mn = nanmean(gauss_f,3);
+    fit_f2_mn  = nanmean(fit_f2,4);
     
-    out_exp_sd = std(out_exp,[],3);
-    w_pwr_sd   = std(w_pwr,[],3);
-    w_gauss_sd = std(w_gauss,[],3);
-    gauss_f_sd = std(gauss_f,[],3);
-    fit_f2_sd  = std(fit_f2,[],4);
+    out_exp_sd = nanstd(out_exp,[],3);
+    w_pwr_sd   = nanstd(w_pwr,[],3);
+    w_gauss_sd = nanstd(w_gauss,[],3);
+    gauss_f_sd = nanstd(gauss_f,[],3);
+    fit_f2_sd  = nanstd(fit_f2,[],4);
     
     w_pwr_snr   = w_pwr_mn./w_pwr_sd;
     w_gauss_snr = w_gauss_mn./w_gauss_sd;
     
+   %% Calculating SNR contrasts
+   
+   contrasts = [...
+        1 1 1 1 0 0 0 0 0 -4; ...    % noise - baseline
+        0 0 0 0 1 1 1 1 0 -4; ...    % gratings - baseline
+        1 1 1 1 -1 -1 -1 -1 0 0; ... % noise - gratings
+        -1 -1 -1 -1 1 1 1 1 0 0; ... % gratings - noise
+        1 0 0 0 0 0 0 0 0 -1; ...    % white noise - baseline
+        0 1 0 0 0 0 0 0 0 -1; ...    % binarized white noise - baseline
+        0 0 1 0 0 0 0 0 0 -1; ...    % pink noise - baseline
+        0 0 0 1 0 0 0 0 0 -1; ...    % brown noise - baseline
+        0 0 0 0 1 0 0 0 0 -1; ...    % 0.36cpd gratings - baseline
+        0 0 0 0 0 1 0 0 0 -1; ...    % 0.73cpd gratings - baseline
+        0 0 0 0 0 0 1 0 0 -1; ...    % 1.46cpd gratings - baseline
+        0 0 0 0 0 0 0 1 0 -1; ...    % 2.90cpd gratings - baseline
+        0 0 0 0 0 0 0 0 1 -1];       % plaid - baseline
     
+   
     
+    % ensure each condition is weighted proportionatly in each contrast
+    contrasts = bsxfun(@rdivide, contrasts, sqrt(sum(contrasts.^2,2)));
     
-    % snr contrasts (gamma gratings vs noise)
-    % c_gauss = sum(w_gauss_snr(:,5:8), 2) - sum(w_gauss_snr(:,1:4), 2);
-    % use matrix for summed weights eg [-1 -1 -1 -1 1 1 1 1 0 0]
-    % t-test for one channel/one stimuli:
+    num_contrasts = size(contrasts,1);
+    
+    % compute SNR
+    snr_out_exp = zeros(num_channels, num_contrasts);    
+    snr_w_pwr   = zeros(num_channels, num_contrasts);  
+    snr_w_gauss = zeros(num_channels, num_contrasts);   
+    snr_gauss_f = zeros(num_channels, num_contrasts);     
+   
+    for contrast = 1:num_contrasts
+        
+        snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_mn')./(contrasts(contrast,:) * out_exp_sd');
+        snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_mn')./(contrasts(contrast,:) * w_pwr_sd');
+        snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_mn')./(contrasts(contrast,:) * w_gauss_sd');
+        snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_mn')./(contrasts(contrast,:) * gauss_f_sd');
+
+    end
+    
+
     % [h, p] = ttest(w_pwr(1,7,:),w_pwr_mn(1,7)); broadband
     % [h, p] = ttest(w_gauss(1,7,:),w_gauss(1,7)); gamma
     
-    % compute p-value of bootstraps based on the means of gaussian and power 
-    h_gauss = zeros(num_channels,num_conditions);
-    h_pwr   = zeros(num_channels,num_conditions);
-    p_gauss = zeros(num_channels,num_conditions);
-    p_pwr   = zeros(num_channels,num_conditions);
-    
-    for chan = data_channels 
-        for cond = 1:num_conditions
-            [h_pwr(chan,cond), p_pwr(chan,cond)] = ttest(w_pwr(chan,cond,:),w_pwr_mn(chan,cond),0.05,'both');
-            [h_gauss(chan,cond), p_gauss(chan,cond)] = ttest(w_gauss(chan,cond,:),w_gauss_mn(chan,cond),0.05,'both');
-        end
-    end
-    
-    % normal distribution
-    
-    p = zeros(data_channels, num_conditions);
-    
-    for chan = data_channels
-        for cond = 1:num_conditions
-            
-            x    = normrnd(w_gauss_mn(chan, cond), w_gauss_sd(chan,cond), nboot);
-            xbar = mean(x);
-            s    = std(x);
-            t    = (xbar - w_gauss_mn(14, 7))/(s/sqrt(nboot));
-            p(chan, cond)    = 1-tcdf(t, nboot-1);
-            
-        end
-    end
-    
+%     % compute p-value of bootstraps based on the means of gaussian and power 
+%     h_gauss = zeros(num_channels,num_conditions);
+%     h_pwr   = zeros(num_channels,num_conditions);
+%     p_gauss = zeros(num_channels,num_conditions);
+%     p_pwr   = zeros(num_channels,num_conditions);
+%     
+%     for chan = data_channels 
+%         for cond = 1:num_conditions
+%             [h_pwr(chan,cond), p_pwr(chan,cond)] = ttest(w_pwr(chan,cond,:),w_pwr_mn(chan,cond),0.05,'both');
+%             [h_gauss(chan,cond), p_gauss(chan,cond)] = ttest(w_gauss(chan,cond,:),w_gauss_mn(chan,cond),0.05,'both');
+%         end
+%     end
+%     
+%     % normal distribution
+%     
+%     p = zeros(data_channels, num_conditions);
+%     
+%     for chan = data_channels
+%         for cond = 1:num_conditions
+%             
+%             x    = normrnd(w_gauss_mn(chan, cond), w_gauss_sd(chan,cond), nboot);
+%             xbar = mean(x);
+%             s    = std(x);
+%             t    = (xbar - w_gauss_mn(14, 7))/(s/sqrt(nboot));
+%             p(chan, cond)    = 1-tcdf(t, nboot-1);
+%             
+%         end
+%     end
+%     
     %% Plot Gaussian fits
     line_width = 2; % line width for
     for chan = data_channels
