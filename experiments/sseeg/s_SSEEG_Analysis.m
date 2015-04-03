@@ -91,24 +91,31 @@ epoch_ts    = make_epoch_ts(order_long, nr_runs, ev_ts, epoch_starts);
 
 %% run eeg_make_epochs
 
-ts_cell = cell(1,nr_runs);
+ts_cell         = cell(1,nr_runs);
+conditions_all  = cell(1,nr_runs);
 for ii = 1:nr_runs
     epoch_time  = [1  mode(diff(epoch_starts{1}))+1]; 
         [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
-    ts_cell{ii} = ts;
+             ts_cell{ii} = ts;
+      conditions_all{ii} = conditions;
 end
 
 %% ***** just playing around with the ecogCalcOnOffSpectra function ******
 %  *****               will be deleted eventually                   ******
 
-% off.signal = ts_cell{ii}(:, find(conditions == 3), 81:85);
-% off.signal = off.signal(:,1:24,:);
-% full  = find(conditions == 1);
-% right = find(conditions == 5);
-% left  = find(conditions == 7);
-% on.signal = ts_cell{ii}(:, [full left], 81:85);
+% off.signal = ts_cell{ii}(:, find(conditions_all{ii} == 3),83);
+% off.signal = off.signal(:,1:24);
+% full  = find(conditions_all{ii} == 1);
+% right = find(conditions_all{ii} == 5);
+% left  = find(conditions_all{ii} == 7);
+% on.signal = ts_cell{ii}(:, [full left], 83);
 % 
 % [on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
+% 
+% t = [.001:.001:.995];
+% stimF = 12;
+% calcPower = 1;
+% fH = ecogPlotOnOffSpectra(on, off, t, stimF, calcPower)
 % ave_on = mean(on.meanFFT,3);
 % ave_off = mean(off.meanFFT,3);
 % 
