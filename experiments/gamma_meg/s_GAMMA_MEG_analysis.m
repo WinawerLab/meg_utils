@@ -68,7 +68,7 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 1;
+which_data_sets_to_analyze = 5;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
@@ -149,7 +149,7 @@ for subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-    nboot = 3; % number of bootstrap samples
+    nboot = 30; % number of bootstrap samples
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
@@ -200,7 +200,7 @@ for subject_num = which_data_sets_to_analyze
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
-    fit_f2  = NaN(num_conditions,1000,num_channels, nboot); % fitted spectrum
+    fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
     
     warning off 'MATLAB:subsassigndimmismatch'
     
@@ -237,6 +237,10 @@ for subject_num = which_data_sets_to_analyze
     
     warning on 'MATLAB:subsassigndimmismatch'
     
+
+
+    
+    
     % summarize bootstrapped fits
     out_exp_mn = mean(out_exp,3);
     w_pwr_mn   = mean(w_pwr,3);
@@ -249,7 +253,48 @@ for subject_num = which_data_sets_to_analyze
     w_gauss_sd = std(w_gauss,[],3);
     gauss_f_sd = std(gauss_f,[],3);
     fit_f2_sd  = std(fit_f2,[],4);
-
+    
+    w_pwr_snr   = w_pwr_mn./w_pwr_sd;
+    w_gauss_snr = w_gauss_mn./w_gauss_sd;
+    
+    
+    
+    
+    % snr contrasts (gamma gratings vs noise)
+    % c_gauss = sum(w_gauss_snr(:,5:8), 2) - sum(w_gauss_snr(:,1:4), 2);
+    % use matrix for summed weights eg [-1 -1 -1 -1 1 1 1 1 0 0]
+    % t-test for one channel/one stimuli:
+    % [h, p] = ttest(w_pwr(1,7,:),w_pwr_mn(1,7)); broadband
+    % [h, p] = ttest(w_gauss(1,7,:),w_gauss(1,7)); gamma
+    
+    % compute p-value of bootstraps based on the means of gaussian and power 
+    h_gauss = zeros(num_channels,num_conditions);
+    h_pwr   = zeros(num_channels,num_conditions);
+    p_gauss = zeros(num_channels,num_conditions);
+    p_pwr   = zeros(num_channels,num_conditions);
+    
+    for chan = data_channels 
+        for cond = 1:num_conditions
+            [h_pwr(chan,cond), p_pwr(chan,cond)] = ttest(w_pwr(chan,cond,:),w_pwr_mn(chan,cond),0.05,'both');
+            [h_gauss(chan,cond), p_gauss(chan,cond)] = ttest(w_gauss(chan,cond,:),w_gauss_mn(chan,cond),0.05,'both');
+        end
+    end
+    
+    % normal distribution
+    
+    p = zeros(data_channels, num_conditions);
+    
+    for chan = data_channels
+        for cond = 1:num_conditions
+            
+            x    = normrnd(w_gauss_mn(chan, cond), w_gauss_sd(chan,cond), nboot);
+            xbar = mean(x);
+            s    = std(x);
+            t    = (xbar - w_gauss_mn(14, 7))/(s/sqrt(nboot));
+            p(chan, cond)    = 1-tcdf(t, nboot-1);
+            
+        end
+    end
     
     %% Plot Gaussian fits
     line_width = 2; % line width for
