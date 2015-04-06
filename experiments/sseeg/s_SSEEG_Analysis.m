@@ -28,9 +28,9 @@ DINs_per_epoch   = 6;
 % isi = 7/s_rate_monitor; 
 
 %% Define variables for this subject's session
-session_name   = 'Dummy_20150401';
-session_prefix = 'Dummy_20150401';
-runs           = 1:4; % In case there are irrelevant runs recorderd to check stimulus code for presentation
+session_name   = 'SSEEG_20150403_wl_subj004';
+session_prefix = 'Session_20150403_1145';
+runs           = [2:11 13:17]; % In case there are irrelevant runs recorderd to check stimulus code for presentation
 
 %% Get toolboxes and code
 addpath(fullfile(project_path, 'Code'));
@@ -71,35 +71,55 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 samples_per_epoch = 1000;
 epoch_starts = sseeg_find_epochs(ev_ts, trigs_per_block, blocks_per_run, DINs_per_epoch);
 
+%% extract conditions from behavioral matfiles
+
+directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+dir = what(directory_name);
+which_mats = dir.mat(runs);
+
+order_long = cell(1,nr_runs);
+for ii = 1:nr_runs
+    stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+    sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+    order_long{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+end
+
 %% create inputs necessary for eeg_make_epochs function
 
-order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of script
-epoch_ts    = make_epoch_ts(order, nr_runs, ev_ts, epoch_starts);
+% order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of script
+epoch_ts    = make_epoch_ts(order_long, nr_runs, ev_ts, epoch_starts);
 
 %% run eeg_make_epochs
 
-ts_cell = cell(1,nr_runs);
+ts_cell         = cell(1,nr_runs);
+conditions_all  = cell(1,nr_runs);
 for ii = 1:nr_runs
     epoch_time  = [1  mode(diff(epoch_starts{1}))+1]; 
         [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
-    ts_cell{ii} = ts;
+             ts_cell{ii} = ts;
+      conditions_all{ii} = conditions;
 end
 
 %% ***** just playing around with the ecogCalcOnOffSpectra function ******
 %  *****               will be deleted eventually                   ******
 
-off.signal = ts_cell{ii}(:, find(conditions == 3), 81:85);
-off.signal = off.signal(:,1:24,:);
-full  = find(conditions == 1);
-right = find(conditions == 5);
-left  = find(conditions == 7);
-on.signal = ts_cell{ii}(:, [full left], 81:85);
-
-[on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
-ave_on = mean(on.meanFFT,3);
-ave_off = mean(off.meanFFT,3);
-
-figure; plot(loglog(ave_on)); 
-hold on; 
-plot(loglog(ave_off));
-axis([5 50 0 3]);
+% off.signal = ts_cell{ii}(:, find(conditions_all{ii} == 3),83);
+% off.signal = off.signal(:,1:24);
+% full  = find(conditions_all{ii} == 1);
+% right = find(conditions_all{ii} == 5);
+% left  = find(conditions_all{ii} == 7);
+% on.signal = ts_cell{ii}(:, [full left], 83);
+% 
+% [on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
+% 
+% t = [.001:.001:.995];
+% stimF = 12;
+% calcPower = 1;
+% fH = ecogPlotOnOffSpectra(on, off, t, stimF, calcPower)
+% ave_on = mean(on.meanFFT,3);
+% ave_off = mean(off.meanFFT,3);
+% 
+% figure; plot(loglog(ave_on)); 
+% hold on; 
+% plot(loglog(ave_off));
+% axis([5 50 0 3]);
