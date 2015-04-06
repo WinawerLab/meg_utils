@@ -55,7 +55,7 @@ d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 %% Loops over datasets
-for subject_num = which_data_sets_to_analyze
+parfor subject_num = which_data_sets_to_analyze
     
     save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
     if ~exist(save_pth, 'dir'), mkdir(save_pth); end
