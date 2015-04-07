@@ -15,7 +15,6 @@
 project_path      = '/Volumes/server/Projects/EEG/SSEEG/';
 s_rate_eeg        = 1000; % sample rate of the eeg in Hz
 s_rate_monitor    = 60;   % sample rate of the monitor in Hz
-num_time_pts      = 1000; % Number of time points for 1 epoch
 plot_figures      = true; % Plot debug figures or not?
 images_per_block  = 72;   % number of images shown within each 6-s block of experiment
 DINs_per_epoch    = 6;    % black-to-white transitions
@@ -72,7 +71,7 @@ load('start_signal')
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
 % Extract the triggers from the file, and put them in timeseries
-[ev_ts, start_inds, t] = eeg_get_triggers(ev_pth,...
+[ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
     s_rate_eeg, s_rate_monitor, runs, eeg_ts, start_signal, plot_figures);
 
 %% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
@@ -93,47 +92,45 @@ end
 
 %% create inputs necessary for eeg_make_epochs function
 
-% order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of script
 epoch_ts    = make_epoch_ts(order_long, nr_runs, ev_ts, epoch_starts);
 
 %% run eeg_make_epochs
 
-ts_cell         = cell(1,nr_runs);
-conditions_all  = cell(1,nr_runs);
-for ii = 1:nr_runs
-    epoch_time  = [1  mode(diff(epoch_starts{1}))+1]; 
-        [ts, conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
-             ts_cell{ii} = ts;
-      conditions_all{ii} = conditions;
-end
 
+epoch_time  = [1  mode(diff(epoch_starts{1}))+1];
+ts = [];conditions=[];
+for ii = 1:nr_runs     
+        [thists, this_conditions] = eeg_make_epochs(eeg_ts{ii}', epoch_ts{ii}, epoch_time, s_rate_eeg);
+        ts          = cat(2,ts, thists);
+        conditions  = cat(2, conditions, this_conditions);
+end
 
 
 %% PREPROCESS DATA
 
-ts_one = ts_cell{1}; % time x epochs x channels
 data_channels = 1:128;
 
 if remove_bad_epochs
     
     % This identifies any epochs whos variance is outside some multiple of the
     % grand variance
-    bad_epochs = meg_find_bad_epochs(ts_one(:,:,data_channels), [.05 20]);
+    bad_epochs = meg_find_bad_epochs(ts(:,:,data_channels), [.05 20]);
     
     % any epoch in which more than 10% of channels were bad should be removed
     % entirely
-    epochs_to_remove = mean(bad_epochs,2)>.1;
+    epochs_to_remove = mean(bad_epochs,2)>.2;
     
     % once we remove 'epochs_to_remove', check whether any channels have more
     % than 10% bad epochs, and we will remove these
-    channels_to_remove = mean(bad_epochs(~epochs_to_remove,:),1)>.1;
+    channels_to_remove = mean(bad_epochs(~epochs_to_remove,:),1)>.2;
     
     bad_epochs(epochs_to_remove,:) = 1;
     bad_epochs(:,channels_to_remove) = 1;
     
     figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
     
-    ts_one = meg_remove_bad_epochs(bad_epochs, ts_one);
+    rawts =ts;
+    ts = meg_remove_bad_epochs(bad_epochs, rawts);
 end
 
 %% with plot, compare the old versus the new ts across a particular epoch or channel 
