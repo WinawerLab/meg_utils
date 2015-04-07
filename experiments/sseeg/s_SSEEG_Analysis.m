@@ -130,28 +130,38 @@ if remove_bad_epochs
     ts_one = meg_remove_bad_epochs(bad_epochs, ts_one);
 end
 
+%% with plot, compare the old versus the new ts across a particular epoch or channel 
+
+figure; 
+hold all 
+for ii = 1:72
+    plot(1:size(ts_cell{1}), ts_cell{1}(:, ii, 1) + ii*15)
+end 
+
+figure; 
+hold all 
+for ii = 1:72
+    plot(1:size(ts_one), ts_one(:, ii, 1) + ii*15)
+end 
+
+%% CALCULATE FOURIER TRANSFORMS
+
+t                   = 995;
+num_epoch_time_pts  = 995;
+ts_off_full         = ts_one(:, find(conditions_all{1} == 3), :);
+full                = find(conditions_all{1} == 1);
+right               = find(conditions_all{1} == 5);
+left                = find(conditions_all{1} == 7);
+ts_on_full          = ts_one(:, full, :);
+ts_on_right         = ts_one(:, right, :);
+ts_on_left          = ts_one(:, left, :);
+num_epochs          = 72; 
+
+[amps_on_full,amps_on_right,amps_on_left, ...
+    amps_off_full,amps_off_right,amps_off_left] = ssmeg_fourier(...
+    t, num_epoch_time_pts, ts_on, ts_off, num_epochs, [], [], 1)
 
 
-%% ***** just playing around with the ecogCalcOnOffSpectra function ******
-%  *****               will be deleted eventually                   ******
 
-% off.signal = ts_cell{ii}(:, find(conditions_all{ii} == 3),83);
-% off.signal = off.signal(:,1:24);
-% full  = find(conditions_all{ii} == 1);
-% right = find(conditions_all{ii} == 5);
-% left  = find(conditions_all{ii} == 7);
-% on.signal = ts_cell{ii}(:, [full left], 83);
-% 
-% [on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
-% 
-% t = [.001:.001:.995];
-% stimF = 12;
-% calcPower = 1;
-% fH = ecogPlotOnOffSpectra(on, off, t, stimF, calcPower)
-% ave_on = mean(on.meanFFT,3);
-% ave_off = mean(off.meanFFT,3);
-% 
-% figure; plot(loglog(ave_on)); 
-% hold on; 
-% plot(loglog(ave_off));
-% axis([5 50 0 3]);
+
+
