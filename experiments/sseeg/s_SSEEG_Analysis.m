@@ -1,24 +1,26 @@
-%% Script to analyze EEG data
+%% Script to analyze EEG pilot data
 
-% Description comes here: ...
+% Description comes here: Script to analyze a pilot steady state EEG data
+% set (subject wl_s004). Contrast patterns were contrast-reversed at 12 Hz
+% in 6 second blocks alaternating with 6 s of blank (mean luminance) while
+% subjects fixated the middle of the screen and detected a fixation color
+% change. Stimuli consisted of either full-field (11 deg radius?? check
+% this), left field, or right field apertures.
 
 
-% Note: Vistadisp code starts with a white square in the upper left corner
-% to trigger photodiode.
-%
 % Dependencies: meg_utils github repository
 
 
 %% Define variables for this experiment
-project_path     = '/Volumes/server/Projects/EEG/SSEEG/';
-s_rate_eeg       = 1000; % sample rate of the eeg in Hz
-s_rate_monitor   = 60;   % sample rate of the monitor in Hz
-num_time_pts     = 1000; % Number of time points for 1 epoch
-plot_figures     = true; % Plot debug figures or not?
-trigs_per_block  = 72;   % number of contrast reversals in one block of experiment
-blocks_per_run   = 6;    % number of blocks in one experimental run
-DINs_per_epoch   = 6;
-remove_bad_epochs= true;
+project_path      = '/Volumes/server/Projects/EEG/SSEEG/';
+s_rate_eeg        = 1000; % sample rate of the eeg in Hz
+s_rate_monitor    = 60;   % sample rate of the monitor in Hz
+num_time_pts      = 1000; % Number of time points for 1 epoch
+plot_figures      = true; % Plot debug figures or not?
+images_per_block  = 72;   % number of images shown within each 6-s block of experiment
+DINs_per_epoch    = 6;    % black-to-white transitions
+blocks_per_run    = 6;    % number of blocks in one experimental run
+remove_bad_epochs = true;
 
 % Photodiode start sequence parameters
 %   We look for this in the trigger sequence to indicate where the
@@ -34,7 +36,7 @@ session_prefix = 'Session_20150403_1145';
 runs           = [2:11 13:17]; % In case there are irrelevant runs recorderd to check stimulus code for presentation
 
 %% Get toolboxes and code
-addpath(fullfile(project_path, 'Code'));
+% addpath(fullfile(project_path, 'Code'));
 addpath(genpath('~/matlab/git/meg_utils'));
 
 %% Get EEG data
@@ -47,10 +49,16 @@ fields = fieldnames(el_data);
 which_fields = find(~cellfun(@isempty, strfind(fields, session_prefix)));
 which_fields = which_fields(runs);
 
-for ii = 1:nr_runs % Assuming that there will be a DIN, TCPIP and Marks field
+% pull out eeg data from el_data structure and store in cell array eeg_ts
+for ii = 1:nr_runs 
     this_field = fields{which_fields(ii)};
     eeg_ts{ii} = el_data.(this_field);
 end
+
+% pull out the impedance maps
+tmp =  find(~cellfun(@isempty, strfind(fields, 'Impedances')));
+impedances = cell(1, length(tmp));
+for ii = 1:length(tmp), impedances{ii} = el_data.(fields{tmp(ii)}); end
 
 clear el_data;
 
@@ -67,10 +75,8 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 [ev_ts, start_inds, t] = eeg_get_triggers(ev_pth,...
     s_rate_eeg, s_rate_monitor, runs, eeg_ts, start_signal, plot_figures);
 
-%% Find epochs
-
-samples_per_epoch = 1000;
-epoch_starts = sseeg_find_epochs(ev_ts, trigs_per_block, blocks_per_run, DINs_per_epoch);
+%% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
+epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run, DINs_per_epoch);
 
 %% extract conditions from behavioral matfiles
 
