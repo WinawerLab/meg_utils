@@ -18,6 +18,7 @@ plot_figures     = true; % Plot debug figures or not?
 trigs_per_block  = 72;   % number of contrast reversals in one block of experiment
 blocks_per_run   = 6;    % number of blocks in one experimental run
 DINs_per_epoch   = 6;
+remove_bad_epochs= true;
 
 % Photodiode start sequence parameters
 %   We look for this in the trigger sequence to indicate where the
@@ -99,6 +100,37 @@ for ii = 1:nr_runs
              ts_cell{ii} = ts;
       conditions_all{ii} = conditions;
 end
+
+
+
+%% PREPROCESS DATA
+
+ts_one = ts_cell{1}; % time x epochs x channels
+data_channels = 1:128;
+
+if remove_bad_epochs
+    
+    % This identifies any epochs whos variance is outside some multiple of the
+    % grand variance
+    bad_epochs = meg_find_bad_epochs(ts_one(:,:,data_channels), [.05 20]);
+    
+    % any epoch in which more than 10% of channels were bad should be removed
+    % entirely
+    epochs_to_remove = mean(bad_epochs,2)>.1;
+    
+    % once we remove 'epochs_to_remove', check whether any channels have more
+    % than 10% bad epochs, and we will remove these
+    channels_to_remove = mean(bad_epochs(~epochs_to_remove,:),1)>.1;
+    
+    bad_epochs(epochs_to_remove,:) = 1;
+    bad_epochs(:,channels_to_remove) = 1;
+    
+    figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
+    
+    ts_one = meg_remove_bad_epochs(bad_epochs, ts_one);
+end
+
+
 
 %% ***** just playing around with the ecogCalcOnOffSpectra function ******
 %  *****               will be deleted eventually                   ******
