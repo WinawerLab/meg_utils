@@ -219,17 +219,17 @@ parfor subject_num = which_data_sets_to_analyze
     warning on
     
     % summarize bootstrapped fits
-    out_exp_mn = mean(out_exp,3);
-    w_pwr_mn   = mean(w_pwr,3);
-    w_gauss_mn = mean(w_gauss,3);
-    gauss_f_mn = mean(gauss_f,3);
-    fit_f2_mn  = mean(fit_f2,4);
+    out_exp_mn = nanmean(out_exp,3);
+    w_pwr_mn   = nanmean(w_pwr,3);
+    w_gauss_mn = nanmean(w_gauss,3);
+    gauss_f_mn = nanmean(gauss_f,3);
+    fit_f2_mn  = nanmean(fit_f2,4);
     
-    out_exp_sd = std(out_exp,[],3);
-    w_pwr_sd   = std(w_pwr,[],3);
-    w_gauss_sd = std(w_gauss,[],3);
-    gauss_f_sd = std(gauss_f,[],3);
-    fit_f2_sd  = std(fit_f2,[],4);
+    out_exp_sd = nanstd(out_exp,[],3);
+    w_pwr_sd   = nanstd(w_pwr,[],3);
+    w_gauss_sd = nanstd(w_gauss,[],3);
+    gauss_f_sd = nanstd(gauss_f,[],3);
+    fit_f2_sd  = nanstd(fit_f2,[],4);
     
     % Save data
     fname = sprintf(fullfile(rootPath,'HPC','Data','s0%d_bootstrappedData'),which_data_sets_to_analyze);
