@@ -133,20 +133,6 @@ if remove_bad_epochs
     ts = meg_remove_bad_epochs(bad_epochs, rawts);
 end
 
-%% with plot, compare the old versus the new ts across a particular epoch or channel 
-
-figure; 
-hold all 
-for ii = 1:72
-    plot(1:size(ts_cell{1}), ts_cell{1}(:, ii, 1) + ii*15)
-end 
-
-figure; 
-hold all 
-for ii = 1:72
-    plot(1:size(ts_one), ts_one(:, ii, 1) + ii*15)
-end 
-
 %% CALCULATE FOURIER TRANSFORMS
 
 t                   = 995;
