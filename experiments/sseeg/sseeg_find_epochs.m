@@ -14,7 +14,6 @@ onsets          = cell(1,nr_runs);
 for ii = 1:nr_runs
     reversal_inds{ii} = find(diff(ev_ts{ii}))+1;
     onsets{ii}        = reversal_inds{ii}(1:DINs_per_epoch*2:trigs_per_run*2);
-
 end
 
 %   this line used to be in the loop but is no longer needed as per below message   
