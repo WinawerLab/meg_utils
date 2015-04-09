@@ -1,5 +1,4 @@
-function epoch_ts = make_epoch_ts(order_long, nr_runs, ev_ts, epoch_starts)
-
+function epoch_ts = make_epoch_ts_2(order_long, nr_runs, ev_ts, epoch_starts)
 % Create a timeseries that marks the start of every epoch, as opposed to
 % every trigger. Additionally, meg_make_epochs requires a ts with
 % stimulus condition numbers (e.g. 1, 3, 5, and 7 for full visual field,
@@ -22,6 +21,7 @@ for ii = 1:nr_runs
         epoch_ts{ii}(epoch_starts{ii}(ll)) = order_long{ii}(ll);
     end
 end
+
 
 for ii = 1:nr_runs
     figure; plot(epoch_ts{ii})
