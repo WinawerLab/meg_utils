@@ -254,9 +254,13 @@ for subject_num = which_data_sets_to_analyze
     gauss_f_sd = nanstd(gauss_f,[],3);
     fit_f2_sd  = nanstd(fit_f2,[],4);
     
-    w_pwr_snr   = w_pwr_mn./w_pwr_sd;
-    w_gauss_snr = w_gauss_mn./w_gauss_sd;
+    out_exp_md = nanmedian(out_exp,3);
+    w_pwr_md   = nanmedian(w_pwr,3);
+    w_gauss_md = nanmedian(w_gauss,3);
+    gauss_f_md = nanmedian(gauss_f,3);
+    fit_f2_md  = nanmedian(fit_f2,4);
     
+
    %% Calculating SNR contrasts
    
    contrasts = [...
@@ -274,7 +278,21 @@ for subject_num = which_data_sets_to_analyze
         0 0 0 0 0 0 0 1 0 -1; ...    % 2.90cpd gratings - baseline
         0 0 0 0 0 0 0 0 1 -1];       % plaid - baseline
     
-   
+   contrastnames = {
+       'noise - baseline'...
+       'gratings - baseline'...
+       'noise - gratings'...
+       'gratings - noise'...
+       'white noise - baseline'...
+       'binwn - baseline'...
+       'pink noise - baseline'...
+       'brown noise - baseline'...
+       '0.36cpd gratings - baseline'...
+       '0.73cpd gratings - baseline'...
+       '1.46cpd gratings - baseline'...
+       '2.90cpd gratings - baseline'...
+       'plaid - baseline'};
+       
     
     % ensure each condition is weighted proportionatly in each contrast
     contrasts = bsxfun(@rdivide, contrasts, sqrt(sum(contrasts.^2,2)));
@@ -289,46 +307,39 @@ for subject_num = which_data_sets_to_analyze
    
     for contrast = 1:num_contrasts
         
-        snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_mn')./(contrasts(contrast,:) * out_exp_sd');
-        snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_mn')./(contrasts(contrast,:) * w_pwr_sd');
-        snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_mn')./(contrasts(contrast,:) * w_gauss_sd');
-        snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_mn')./(contrasts(contrast,:) * gauss_f_sd');
+        snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
+        snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
+        snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
+        snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
 
     end
     
-
-    % [h, p] = ttest(w_pwr(1,7,:),w_pwr_mn(1,7)); broadband
-    % [h, p] = ttest(w_gauss(1,7,:),w_gauss(1,7)); gamma
+    % threshold (replace SNR values < 2 or > 20 with NaN)
     
-%     % compute p-value of bootstraps based on the means of gaussian and power 
-%     h_gauss = zeros(num_channels,num_conditions);
-%     h_pwr   = zeros(num_channels,num_conditions);
-%     p_gauss = zeros(num_channels,num_conditions);
-%     p_pwr   = zeros(num_channels,num_conditions);
-%     
-%     for chan = data_channels 
-%         for cond = 1:num_conditions
-%             [h_pwr(chan,cond), p_pwr(chan,cond)] = ttest(w_pwr(chan,cond,:),w_pwr_mn(chan,cond),0.05,'both');
-%             [h_gauss(chan,cond), p_gauss(chan,cond)] = ttest(w_gauss(chan,cond,:),w_gauss_mn(chan,cond),0.05,'both');
-%         end
-%     end
-%     
-%     % normal distribution
-%     
-%     p = zeros(data_channels, num_conditions);
-%     
-%     for chan = data_channels
-%         for cond = 1:num_conditions
-%             
-%             x    = normrnd(w_gauss_mn(chan, cond), w_gauss_sd(chan,cond), nboot);
-%             xbar = mean(x);
-%             s    = std(x);
-%             t    = (xbar - w_gauss_mn(14, 7))/(s/sqrt(nboot));
-%             p(chan, cond)    = 1-tcdf(t, nboot-1);
-%             
-%         end
-%     end
-%     
+    lt = 1;
+    ut = 100;
+    
+    snr_out_exp(snr_out_exp < lt | snr_out_exp > ut) = 0;    
+    snr_w_pwr(snr_w_pwr < lt | snr_w_pwr > ut )      = 0;  
+    snr_w_gauss(snr_w_gauss < lt | snr_w_pwr > ut)   = 0;   
+    snr_gauss_f(snr_gauss_f < lt | snr_gauss_f < lt) = 0;   
+    
+    
+
+%% SNR Mesh (WIP)
+
+% gaussing weight for each stimuli
+    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
+    for contrast = 5:12
+        subplot(3,4,contrast)
+        ft_plotOnMesh(snr_w_gauss(:,contrast)', contrastnames{contrast});
+        set(gca)
+    end
+    
+
+for contrasts = 1:num_contrasts
+    
+
     %% Plot Gaussian fits
     line_width = 2; % line width for
     for chan = data_channels
