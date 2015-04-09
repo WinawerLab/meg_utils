@@ -51,7 +51,7 @@ end
 set(handle,'facevertexCdata',data,'linewidth',1,'markersize',20,'marker','.');
 set(handle,'userdata','plotOnEgi');
 
-colormap(jmaColors('usadarkblue'));
+%colormap(jmaColors('usadarkblue'));
 
 if nargout >= 1
 varargout{1} = handle;

@@ -90,8 +90,28 @@ for ii = 1:nr_runs
     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
 end
 
+%% extract conditions from behavioral matfiles
+
+directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+dir = what(directory_name);
+which_mats = dir.mat(runs);
+
+order_long = cell(1,nr_runs);
+for ii = 1:nr_runs
+    stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+    sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+    order_long{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+end
+
 %% create inputs necessary for eeg_make_epochs function
+<<<<<<< HEAD
 epoch_ts    = make_epoch_ts(conditions, nr_runs, ev_ts, epoch_starts);
+=======
+
+% order       = [1 3 1 3 5 3 5 3 7 3 7 3]; % this parameter might go to the top of script
+
+epoch_ts    = make_epoch_ts(order_long, nr_runs, ev_ts, epoch_starts);
+>>>>>>> 9ea37560b20416cbcdabc25b5003f85e6b29d53e
 
 %% run eeg_make_epochs
 
@@ -201,10 +221,28 @@ amps_off_full = abs(ft_off_epoched_full);   clear ft_off_epoched_full;
 
 %% Alternative method to extract conditions 
 
+<<<<<<< HEAD
 el_data         = load(fullfile(project_path,'Data', session_name, 'raw', session_prefix));
 condition_cell  = el_data.ECI_TCPIP_55513;
 conditions      = str2double(condition_cell(1,:));
 clear el_data;
 
 
+=======
+% off.signal = ts_cell{ii}(:, find(conditions == 3), 81:85);
+% off.signal = off.signal(:,1:24,:);
+% full  = find(conditions == 1);
+% right = find(conditions == 5);
+% left  = find(conditions == 7);
+% on.signal = ts_cell{ii}(:, [full left], 81:85);
+% 
+% [on, off] = ecogCalcOnOffSpectra(on, off, 1, 0);
+% ave_on = mean(on.meanFFT,3);
+% ave_off = mean(off.meanFFT,3);
+% 
+% figure; plot(loglog(ave_on)); 
+% hold on; 
+% plot(loglog(ave_off));
+% axis([5 50 0 3]);
+>>>>>>> 9ea37560b20416cbcdabc25b5003f85e6b29d53e
 
