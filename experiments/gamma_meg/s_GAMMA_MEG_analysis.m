@@ -305,25 +305,30 @@ for subject_num = which_data_sets_to_analyze
     snr_w_gauss = zeros(num_channels, num_contrasts);   
     snr_gauss_f = zeros(num_channels, num_contrasts);     
    
+%     for contrast = 1:num_contrasts
+%         
+%         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
+%         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
+%         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
+%         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
+% 
+%     end
+%     
     for contrast = 1:num_contrasts
-        
-        snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
-        snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
-        snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
-        snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
-
+       snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
+       snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
     end
     
-    % threshold (replace SNR values < 2 or > 20 with NaN)
+    % threshold (replace SNR values < 2 or > 20 with 0)
     
-    lt = 1;
-    ut = 100;
+    lt = -4;
+    ut = 2;
     
-    snr_out_exp(snr_out_exp < lt | snr_out_exp > ut) = 0;    
-    snr_w_pwr(snr_w_pwr < lt | snr_w_pwr > ut )      = 0;  
-    snr_w_gauss(snr_w_gauss < lt | snr_w_pwr > ut)   = 0;   
-    snr_gauss_f(snr_gauss_f < lt | snr_gauss_f < lt) = 0;   
-    
+        
+    snr_w_pwr(snr_w_pwr < lt)      = NaN;  
+    snr_w_gauss(snr_w_gauss < lt)  = NaN;   
+    snr_w_pwr(snr_w_pwr > ut)      = NaN;  
+    snr_w_gauss(snr_w_gauss > ut)  = NaN;
     
 
 %% SNR Mesh (WIP)
