@@ -13,17 +13,17 @@
 % power law and a narrowband response)
 %
 % TODO:
-%   1. Summarize the responses from each subject, for example as images on
-%   meshes showing the gaussian response and the broadband response for
-%   each separate type of image, as well as for contrasts of several
-%   stimulus categories (e.g., grating v noise, or grating v blank)
+%   1. Summarize and SAVE the responses from each subject, for example as
+%   images on meshes showing the gaussian response and the broadband
+%   response for each separate type of image, as well as for contrasts of
+%   several stimulus categories (e.g., grating v noise, or grating v blank)
 %
 %   2. Denoise with environmental noise channels
 %
 %   3. MAYBE: summarize the EVOKED response from each stimulus
 %
 %   4. Make a POSTER!
-% 
+%
 %   5. MAYBE: a grand average where you average the mesh images across
 %   subjects
 %
@@ -44,9 +44,11 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
+nboot                         = 10; % number of bootstrap samples
+
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
-denoise_via_pca               = false;       % Do you want to use megdenoise?
+denoise_via_pca               = false;       % Do you want to use megde noise?
 
 fs                            = 1000;        % sample rate
 epoch_start_end               = [0.550 1.05];% start and end of epoch, relative to trigger, in seconds
@@ -149,14 +151,14 @@ for subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-    nboot = 30; % number of bootstrap samples
+    
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
     % compute the mean amplitude spectrum for each electrode in each condition
     fprintf('Computing bootstraps for each condition');
     for ii = 1:length(conditions_unique)
-        fprintf('.'); drawnow;
+        fprintf('Conidtion %d of %d', ii, length(conditions_unique)); drawnow;
         
         % Binary vector to identify epochs with this condition
         these_epochs = conditions == conditions_unique(ii);
@@ -213,7 +215,7 @@ for subject_num = which_data_sets_to_analyze
             
             
             for bootnum = 1:nboot
-                                
+                
                 data_fit  = spectral_data_boots(:,cond,chan, bootnum);
                 data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
                 
@@ -237,8 +239,8 @@ for subject_num = which_data_sets_to_analyze
     
     warning on 'MATLAB:subsassigndimmismatch'
     
-
-
+    
+    
     
     
     % summarize bootstrapped fits
@@ -260,10 +262,10 @@ for subject_num = which_data_sets_to_analyze
     gauss_f_md = nanmedian(gauss_f,3);
     fit_f2_md  = nanmedian(fit_f2,4);
     
-
-   %% Calculating SNR contrasts
-   
-   contrasts = [...
+    
+    %% Calculating SNR contrasts
+    
+    contrasts = [...
         1 1 1 1 0 0 0 0 0 -4; ...    % noise - baseline
         0 0 0 0 1 1 1 1 0 -4; ...    % gratings - baseline
         1 1 1 1 -1 -1 -1 -1 0 0; ... % noise - gratings
@@ -278,21 +280,21 @@ for subject_num = which_data_sets_to_analyze
         0 0 0 0 0 0 0 1 0 -1; ...    % 2.90cpd gratings - baseline
         0 0 0 0 0 0 0 0 1 -1];       % plaid - baseline
     
-   contrastnames = {
-       'noise - baseline'...
-       'gratings - baseline'...
-       'noise - gratings'...
-       'gratings - noise'...
-       'white noise - baseline'...
-       'binwn - baseline'...
-       'pink noise - baseline'...
-       'brown noise - baseline'...
-       '0.36cpd gratings - baseline'...
-       '0.73cpd gratings - baseline'...
-       '1.46cpd gratings - baseline'...
-       '2.90cpd gratings - baseline'...
-       'plaid - baseline'};
-       
+    contrastnames = {
+        'noise - baseline'...
+        'gratings - baseline'...
+        'noise - gratings'...
+        'gratings - noise'...
+        'white noise - baseline'...
+        'binwn - baseline'...
+        'pink noise - baseline'...
+        'brown noise - baseline'...
+        '0.36cpd gratings - baseline'...
+        '0.73cpd gratings - baseline'...
+        '1.46cpd gratings - baseline'...
+        '2.90cpd gratings - baseline'...
+        'plaid - baseline'};
+    
     
     % ensure each condition is weighted proportionatly in each contrast
     contrasts = bsxfun(@rdivide, contrasts, sqrt(sum(contrasts.^2,2)));
@@ -300,23 +302,23 @@ for subject_num = which_data_sets_to_analyze
     num_contrasts = size(contrasts,1);
     
     % compute SNR
-    snr_out_exp = zeros(num_channels, num_contrasts);    
-    snr_w_pwr   = zeros(num_channels, num_contrasts);  
-    snr_w_gauss = zeros(num_channels, num_contrasts);   
-    snr_gauss_f = zeros(num_channels, num_contrasts);     
-   
-%     for contrast = 1:num_contrasts
-%         
-%         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
-%         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
-%         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
-%         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
-% 
-%     end
-%     
+    snr_out_exp = zeros(num_channels, num_contrasts);
+    snr_w_pwr   = zeros(num_channels, num_contrasts);
+    snr_w_gauss = zeros(num_channels, num_contrasts);
+    snr_gauss_f = zeros(num_channels, num_contrasts);
+    
+    %     for contrast = 1:num_contrasts
+    %
+    %         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
+    %         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
+    %         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
+    %         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
+    %
+    %     end
+    %
     for contrast = 1:num_contrasts
-       snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
-       snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
+        snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
+        snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
     end
     
     % threshold (replace SNR values < 2 or > 20 with 0)
@@ -324,156 +326,157 @@ for subject_num = which_data_sets_to_analyze
     lt = -4;
     ut = 2;
     
-        
-    snr_w_pwr(snr_w_pwr < lt)      = NaN;  
-    snr_w_gauss(snr_w_gauss < lt)  = NaN;   
-    snr_w_pwr(snr_w_pwr > ut)      = NaN;  
-    snr_w_gauss(snr_w_gauss > ut)  = NaN;
+    replace_val = NaN;
+    snr_w_pwr(snr_w_pwr < lt)      = replace_val;
+    snr_w_gauss(snr_w_gauss < lt)  = replace_val;
+    snr_w_pwr(snr_w_pwr > ut)      = replace_val;
+    snr_w_gauss(snr_w_gauss > ut)  = replace_val;
     
-
-%% SNR Mesh (WIP)
-
-% gaussing weight for each stimuli
+    
+    %% SNR Mesh (WIP)
+    
+    % gaussing weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for contrast = 5:12
         subplot(3,4,contrast)
         ft_plotOnMesh(snr_w_gauss(:,contrast)', contrastnames{contrast});
-        set(gca)
+        set(gca, 'CLim', [-4 4])       
     end
     
-
-for contrasts = 1:num_contrasts
     
-
-    %% Plot Gaussian fits
-    line_width = 2; % line width for
-    for chan = data_channels
-        fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
+    for contrasts = 1:num_contrasts
         
-        data_base = spectral_data_mean(:,num_conditions,chan);
-        for cond = 1:num_conditions-1
-            data_fit = spectral_data_mean(:,cond,chan,:);
+        
+        %% Plot Gaussian fits
+        line_width = 2; % line width for
+        for chan = data_channels
+            fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
+            
+            data_base = spectral_data_mean(:,num_conditions,chan);
+            for cond = 1:num_conditions-1
+                data_fit = spectral_data_mean(:,cond,chan,:);
+                subplot(3,3,cond)
+                % plot fit
+                plot(f,10.^(fit_f2_mn(cond,:, chan)),'Color','g','LineWidth',line_width)
+                hold on;
+                
+                % plot baseline data
+                plot(f(f_sel),data_base(f_sel),'k--','LineWidth',line_width)
+                % plot stimulus data
+                plot(f(f_sel),data_fit(f_sel),'-','LineWidth',line_width)
+                
+                set(gca, 'XScale', 'log', 'YScale', 'log', ...
+                    'XLim', [min(f_use4fit) max(f_use4fit)], ...
+                    'YLim', 10.^[0.3 1.5] )
+                title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))
+            end
+            if save_images,
+                
+                hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
+            else
+                pause(0.1)
+            end
+        end
+        
+        %% Plot spectra
+        fH = figure(2); clf,  set(gcf, 'Position', [100 100 1000 400], 'Color', 'w')
+        
+        colors = zeros(num_conditions,3);
+        colors(1:4,:) = ([1 1 1]'*[.2 .4 .6 .8])';
+        colors(5:9,:) = hsv(5);
+        colors(10,:)  = [0 0 0];
+        yl            =  10.^([0.5 1.6]);
+        xl            = [30 200];
+        
+        for chan = data_channels
+            
+            % Plot Data -----------------------------------------------------------
+            subplot(1,3,1); cla; hold on
+            for cond = 1:num_conditions
+                plot(f(f_sel), squeeze(spectral_data_mean(f_sel,cond,chan)), 'Color', colors(cond,:));
+            end
+            set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl,  ...
+                'Color', [1 1 1], 'XGrid', 'on', ...
+                'XTick', [10 60 100 200]);
+            title(sprintf('Data from channel %d, subject %d', chan, subject_num))
+            
+            % Plot Fits -----------------------------------------------------------
+            subplot(1,3,2); cla; hold on
+            for cond = 1:num_conditions
+                plot(f, squeeze(10.^(fit_f2_mn(cond,:, chan))), 'Color', colors(cond,:));
+            end
+            set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
+                'Color', [1 1 1], 'XGrid', 'on', ...
+                'XTick', [10 60 100 200]);
+            title(sprintf('Fits to channel %d, subject %d', chan, subject_num))
+            
+            % Legend  -----------------------------------------------------------
+            subplot(1,3,3); cla
+            
+            set(gca, 'ColorOrder', colors); hold all
+            plot(zeros(10,10), zeros(10,10), '-')
+            box off; axis off;
+            legend(condition_names)
+            drawnow;
+            if save_images
+                hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
+            end
+            
+        end
+        %axis tight
+        
+        %% Mesh visualization of model fits
+        
+        % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
+        
+        
+        fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
+        for cond = 1:9
             subplot(3,3,cond)
-            % plot fit
-            plot(f,10.^(fit_f2_mn(cond,:, chan)),'Color','g','LineWidth',line_width)
-            hold on;
-            
-            % plot baseline data
-            plot(f(f_sel),data_base(f_sel),'k--','LineWidth',line_width)
-            % plot stimulus data
-            plot(f(f_sel),data_fit(f_sel),'-','LineWidth',line_width)
-            
-            set(gca, 'XScale', 'log', 'YScale', 'log', ...
-                'XLim', [min(f_use4fit) max(f_use4fit)], ...
-                'YLim', 10.^[0.3 1.5] )
-            title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))            
+            ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+            set(gca, 'CLim', [0 .2])
         end
-        if save_images,
-            
-            hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
-        else
-            pause(0.1)
-        end
-    end
-    
-    %% Plot spectra
-    fH = figure(2); clf,  set(gcf, 'Position', [100 100 1000 400], 'Color', 'w')
-    
-    colors = zeros(num_conditions,3);
-    colors(1:4,:) = ([1 1 1]'*[.2 .4 .6 .8])';
-    colors(5:9,:) = hsv(5);
-    colors(10,:)  = [0 0 0];
-    yl            =  10.^([0.5 1.6]);
-    xl            = [30 200];
-    
-    for chan = data_channels
         
-        % Plot Data -----------------------------------------------------------
-        subplot(1,3,1); cla; hold on
-        for cond = 1:num_conditions
-            plot(f(f_sel), squeeze(spectral_data_mean(f_sel,cond,chan)), 'Color', colors(cond,:));
-        end
-        set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl,  ...
-            'Color', [1 1 1], 'XGrid', 'on', ...
-            'XTick', [10 60 100 200]);
-        title(sprintf('Data from channel %d, subject %d', chan, subject_num))
-        
-        % Plot Fits -----------------------------------------------------------
-        subplot(1,3,2); cla; hold on
-        for cond = 1:num_conditions
-            plot(f, squeeze(10.^(fit_f2_mn(cond,:, chan))), 'Color', colors(cond,:));
-        end
-        set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
-            'Color', [1 1 1], 'XGrid', 'on', ...
-            'XTick', [10 60 100 200]);
-        title(sprintf('Fits to channel %d, subject %d', chan, subject_num))
-        
-        % Legend  -----------------------------------------------------------
-        subplot(1,3,3); cla
-        
-        set(gca, 'ColorOrder', colors); hold all
-        plot(zeros(10,10), zeros(10,10), '-')
-        box off; axis off;
-        legend(condition_names)
-        drawnow;
         if save_images
-            hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
+            hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
         end
         
+        fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
+        for cond = 1:9
+            subplot(3,3,cond)
+            ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
+            set(gca, 'CLim', [-1 1] *.03)
+        end
+        
+        if save_images
+            hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
+        end
+        
+        
+        fH = figure(1000); clf
+        subplot(2,2,1)
+        ft_plotOnMesh((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
+        set(gca, 'CLim', .5*[-1 1])
+        
+        subplot(2,2,2)
+        ft_plotOnMesh((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
+        set(gca, 'CLim', .5*[-1 1])
+        
+        subplot(2,2,3)
+        ft_plotOnMesh((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
+        set(gca, 'CLim', .5*[-1 1])
+        
+        subplot(2,2,4)
+        ft_plotOnMesh((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
+        set(gca, 'CLim', .2 * [-1 1])
+        
+        if save_images
+            hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
+        end
+        
+        
     end
-    %axis tight
-    
-    %% Mesh visualization of model fits
-    
-    % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
-    
-    
-    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
-    for cond = 1:9
-        subplot(3,3,cond)
-        ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
-        set(gca, 'CLim', [0 .2])
-    end
-    
-    if save_images
-        hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
-    end
-    
-    fH = figure(999); clf
-    for cond = 1:9
-        subplot(3,3,cond)
-        ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
-        set(gca, 'CLim', [-1 1] *.03)
-    end
-    
-    if save_images
-        hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
-    end
-    
-    
-    fH = figure(1000); clf
-    subplot(2,2,1)
-    ft_plotOnMesh((w_gauss * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
-    set(gca, 'CLim', .5*[-1 1])
-    
-    subplot(2,2,2)
-    ft_plotOnMesh((w_gauss * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
-    set(gca, 'CLim', .5*[-1 1])
-    
-    subplot(2,2,3)
-    ft_plotOnMesh((w_gauss * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
-    set(gca, 'CLim', .5*[-1 1])
-    
-    subplot(2,2,4)
-    ft_plotOnMesh((w_pwr * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
-    set(gca, 'CLim', .2 * [-1 1])
-    
-    if save_images
-        hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
-    end
-    
     
 end
-
 
 
