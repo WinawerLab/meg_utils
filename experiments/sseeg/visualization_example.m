@@ -3,8 +3,8 @@
 data_channels = 1:128;
 ts  = ts_one(:,:,data_channels);
 fs  = 1000; % sample rate
-T   = .995; %s
-slF = 12; %Hz
+T   = .995; % s
+slF = 12; % Hz
 
 % Compute spectral data
 t = (1:size(ts,1))/fs;
