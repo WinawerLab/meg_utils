@@ -154,12 +154,12 @@ num_epochs          = epochs_per_condition;
 off_conditions      = find(conditions ==3);
 a                   = size(off_conditions,2)/3;
 
-off_full  = ts(:,off_conditions(1:a), :);
-off_right = ts(:,off_conditions(a+1:2*a), :);
-off_left  = ts(:,off_conditions((2*a)+1:3*a), :);
-on_full   = ts(:, find(conditions == 1), :);   
-on_right  = ts(:, find(conditions == 5), :);
-on_left   = ts(:, find(conditions == 7), :);   
+off_full  = ts(:,off_conditions(1:a), 1:128);
+off_right = ts(:,off_conditions(a+1:2*a), 1:128);
+off_left  = ts(:,off_conditions((2*a)+1:3*a), 1:128);
+on_full   = ts(:, find(conditions == 1), 1:128);   
+on_right  = ts(:, find(conditions == 5), 1:128);
+on_left   = ts(:, find(conditions == 7), 1:128);   
 
 amps = zeros(size(amps_on_full,1), size(amps_on_full,2), size(amps_on_full,3), 6); 
 amps(:,:,:,1) = on_full;
