@@ -16,7 +16,7 @@ if datSz(1)<datSz(2)
 end
 
 if size(data,1) == 128
-tEpos = load('defaultFlatNet.mat');
+tEpos = load('eeg128xy.mat');
 tEpos = [ tEpos.xy, zeros(128,1) ];
 
 tEGIfaces = mrC_EGInetFaces( false );
