@@ -145,19 +145,11 @@ num_epochs          = epochs_per_condition;
         num_epochs, data_channels, channels_to_plot, 1); 
     
 %% Plot values on mesh
-mean_on_full        = mean(amps_on_full(12,:,:));
 
-stimlock_on_right   = amps_on_right(12,:,:);
-mean_on_right       = nanmean(stimlock_on_right,2);
-
-stimlock_on_left    = mean(amps_on_left(12,:,:));
-mean_off_full       = nanmean(stimlock_on_left,2);
-mean_off_right      = mean(amps_off_right(12,:,:));
-mean_off_left       = mean(amps_off_left(12,:,:));
-
-xy = plotOnEgi(mean_on_right);
+[coh_full, coh_right, coh_left] = sseeg_cal_coh(amps_on_full, amps_on_right, ...
+     amps_on_left, [], 1, 1);
     
-%% Calculate broadband spectra
+%% Calculate broadband spectra **** UNFINISHED
 
 off_conditions      = find(conditions ==3);
 a                   = size(off_conditions,2)/3;

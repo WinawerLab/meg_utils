@@ -5,7 +5,7 @@ function [amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right 
 %% Function description
 % This function will calculate the FFT of the different input timeseries.
 % And will make some nice plots of the amplitude data.
-
+%
 % INPUTS:
 %
 % t:                    Relative time (0 = start of first trigger)
@@ -20,12 +20,15 @@ function [amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right 
 % amps_*_*:             Absolute fourier transformed amplitudes for every
 %                       condition.
 
-freq                = (0:num_epoch_time_pts-1)/(num_epoch_time_pts/1000);
-channels_to_plot    = 50:99; 
+% add path for the function 'get_MEG_axes' which formats the plots properly
+addpath(genpath('/Volumes/server/Projects/MEG/SSMEG/code/'));
 
+
+freq                = (0:num_epoch_time_pts-1)/(num_epoch_time_pts/1000); 
 off_conditions      = find(conditions ==3);
 a                   = size(off_conditions,2)/3;
 
+% find and extract the six different conditions from the timeseries
 off_full  = ts(:,off_conditions(1:a), data_channels);
 off_right = ts(:,off_conditions(a+1:2*a), data_channels);
 off_left  = ts(:,off_conditions((2*a)+1:3*a), data_channels);
@@ -33,6 +36,7 @@ on_full   = ts(:, find(conditions == 1), :);
 on_right  = ts(:, find(conditions == 5), :);
 on_left   = ts(:, find(conditions == 7), :);   
 
+% calculate fast fourier transform
 ft_on_epoched_full   = fft(on_full) / length(t)*2;   
 ft_on_epoched_right  = fft(on_right) / length(t)*2;
 ft_on_epoched_left   = fft(on_left) / length(t)*2; 
@@ -40,6 +44,7 @@ ft_off_epoched_full  = fft(off_full)/ length(t)*2;
 ft_off_epoched_right = fft(off_right)/ length(t)*2; 
 ft_off_epoched_left  = fft(off_left)/ length(t)*2; 
 
+% take absolute values
 amps_on_full   =  abs(ft_on_epoched_full);    clear ft_on_epoched_full;
 amps_on_right  =  abs(ft_on_epoched_right);   clear ft_on_epoched_right;
 amps_on_left   =  abs(ft_on_epoched_left);    clear ft_on_epoched_left;
