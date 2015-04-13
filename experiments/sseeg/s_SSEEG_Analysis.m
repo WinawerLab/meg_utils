@@ -124,5 +124,3 @@ sensorData = sensorData(:,~badEpochs,~badChannels);
 %% Visualize
 
 
-
-
