@@ -21,7 +21,7 @@
 % Dependencies: meg_utils github repository
 
 
-%% Define variables for this experiment
+%% Define variables for this experiment and analysis
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
 s_rate_eeg            = 1000;     % sample rate of the eeg in Hz
 s_rate_monitor        = 60;       % sample rate of the monitor in Hz
@@ -36,7 +36,7 @@ data_channels         = 1:128;
 verbose               = true;
 
 
-%% Define variables for this subject's session
+%% Define variables for this particular subject's session
 session_name   = 'SSEEG_20150403_wl_subj004';
 session_prefix = 'Session_20150403_1145';
 runs           = [2:11 13:17];  % In case there are irrelevant runs recorderd to check stimulus code for presentation
@@ -64,7 +64,7 @@ for ii = 1:length(tmp), impedances{ii} = el_data.(fields{tmp(ii)}); end
 
 clear el_data;
 
-%% Get timeseries from event files
+%% Get conditions
 
 % Make a flicker sequence as presented in the experiment
 % start_signal = eeg_make_flicker_sequence(nr_flashes, dur, isi, s_rate_eeg, 10);
@@ -78,11 +78,12 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
     s_rate_eeg, s_rate_monitor, runs, eeg_ts, start_signal, plot_figures);
 
 clear ev_pth start_signal;
-%% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
+
+% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
     epochs_per_block);
 
-%% extract conditions from behavioral matfiles
+% extract conditions from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 dir = what(directory_name);
@@ -95,11 +96,9 @@ for ii = 1:nr_runs
     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
 end
 
-%% Create onset time series from onset times
+%% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
 onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
-
-%% Create epoched time series from vector time series
 
 epoch_time  = [0  mode(diff(epoch_starts{1}))-1]/s_rate_eeg;
 ts = [];  conditions=[];
@@ -108,6 +107,7 @@ for ii = 1:nr_runs
         ts          = cat(2,ts, thists);
         conditions  = cat(2, conditions, this_conditions);
 end
+
 
 %% PREPROCESS DATA
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
