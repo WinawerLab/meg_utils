@@ -1,4 +1,4 @@
-function epoch_ts = make_epoch_ts(conditions, nr_runs, ev_ts, epoch_starts)
+function epoch_ts = make_epoch_ts(conditions, onsets, n_samples)
 %
 % Create a timeseries that marks the start of every epoch, as opposed to
 % every trigger. Additionally, meg_make_epochs requires a ts with
@@ -6,21 +6,35 @@ function epoch_ts = make_epoch_ts(conditions, nr_runs, ev_ts, epoch_starts)
 % blank, left field, right field in the SSEEG experiment), instead of just
 % using ones to mark events, as we did in ev_ts. 
 %   
-%   INPUTS: 
-% order         : vector representing the stimulus condition sequence.
+% INPUTS: 
+%    condtions:    A cell of vectors representing the stimulus condition sequence.
 %                   (e.g. [1 3 1 3 5 3 5 3 7 3 7 3])
-% nr_runs       : number of runs in a session 
-% ev_ts         : A cell with an event timeseries for each run, padded by
-%                   the refresh rate to indicate on and off timeperiods        
-% epoch_starts  : A cell with a vector for each run. Each vector contains
-%                   the timepoints in seconds of the start of each
-%                   epoch, for all epochs, on and off. 
+%    onsets:       A cell of vectors representing the frame number that each
+%                   epochs starts
+%    n_samples:    A vector indicating the number of samples in each run.
+%                    If a scalar, then assume the same number for every
+%                    run
+% OUTPUTS
+% 
+% epoch_ts
+nr_runs = numel(conditions);
+
+% one condition vector and one onsets vector for each run. so they
+% must be the same length
+try
+    assert(numel(conditions) == numel(onsets))
+catch
+    error('The number of runs with conditions is not the same as the number of runs with onset times')
+end
+
+
+if isscalar(n_samples), n_samples = repmat(n_samples, [1, nr_runs]); end
+
+epoch_ts = cell(1, nr_runs);
 
 for ii = 1:nr_runs
-    epoch_ts{ii} = zeros(1,length(ev_ts{ii})-1);
-    for ll = 1:length(conditions{ii})
-        epoch_ts{ii}(epoch_starts{ii}(ll)) = conditions{ii}(ll);
-    end
+    epoch_ts{ii} = zeros(1,n_samples(ii));    
+    epoch_ts{ii}(onsets{ii}) = conditions{ii};    
 end
 
 return

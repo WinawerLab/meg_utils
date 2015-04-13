@@ -23,21 +23,21 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs)
 %                   epoch
 
 %% Parameters
-onsets = find(trigger);
+onset_times = find(trigger);
 
 epoch_samples = round(epoch_time * fs); %epoch length in samples
-epoch_len     = diff(epoch_samples);    %epoch length in samples
+epoch_len     = diff(epoch_samples)+1;    %epoch length in samples
 num_channels  = size(raw_ts, 2);
-num_epochs    = length(onsets);
+num_epochs    = length(onset_times);
 
 ts           = zeros(num_epochs,epoch_len,num_channels);
 
 for ii = 1:num_epochs
-    inds = onsets(ii)+(epoch_samples(1):epoch_samples(2)-1);
+    inds = onset_times(ii)+(epoch_samples(1):epoch_samples(2));
     ts(ii, :, :) = raw_ts(inds,:);    
 end
 
 ts         = permute(ts, [2 1 3]);
-conditions = trigger(onsets);
+conditions = trigger(onset_times);
 
 return

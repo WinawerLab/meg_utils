@@ -17,8 +17,8 @@ function [ev_ts, start_inds, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
 %                       should match length of eeg_ts, as there must be a
 %                       corresponding eeg time series for each run with
 %                       triggers
-% eeg_ts            : cell array of eeg data, where each cell is channel x
-%                       time
+% eeg_ts            : cell array of eeg data, where each cell is time x channels
+%         
 % start_signal      : A vector indicating the flicker sequence which marks the start of each run
 % plot_figures      : Plot debug figures or not?
 
@@ -60,7 +60,7 @@ end
 ev_ts = cell(1, nr_runs);
 t     = cell(1, nr_runs);
 for ii = 1:nr_runs
-    num_time_pts = size(eeg_ts{ii},2);
+    num_time_pts = size(eeg_ts{ii},1);
     t{ii} = (0:num_time_pts-1) / s_rate_eeg; 
     
     [~, inds] = findnearest(ev_times_by_run{ii}, t{ii});
