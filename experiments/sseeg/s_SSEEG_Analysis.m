@@ -37,9 +37,9 @@ verbose               = true;
 
 
 %% Define variables for this particular subject's session
-session_name   = 'SSEEG_20150403_wl_subj004';
-session_prefix = 'Session_20150403_1145';
-runs           = [2:11 13:17];  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+session_name   = 'Pilot_SSEEG_20150129_wl_subj001';
+session_prefix = 'Session_20150129_1007_pt2';
+runs           = 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
 
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
@@ -68,16 +68,17 @@ clear el_data;
 
 % Make a flicker sequence as presented in the experiment
 % start_signal = eeg_make_flicker_sequence(nr_flashes, dur, isi, s_rate_eeg, 10);
-load('start_signal')
+% load('start_signal');
+load('init_seq');
 
 % Get events file in useful units (seconds)
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
 % Extract the triggers from the file, and put them in timeseries
 [ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
-    s_rate_eeg, s_rate_monitor, runs, eeg_ts, start_signal, plot_figures);
+    s_rate_eeg, s_rate_monitor, runs, eeg_ts, init_seq.old, plot_figures);
 
-clear ev_pth start_signal;
+clear ev_pth start_signal init_seq;
 
 % Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
@@ -89,11 +90,21 @@ directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles
 dir = what(directory_name);
 which_mats = dir.mat(runs);
 
+% conditions = cell(1,nr_runs);
+% for ii = 1:nr_runs
+%     stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+%     sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+%     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+% end
+
+%% temporary extraction of conditions for eline's dataset
+
 conditions = cell(1,nr_runs);
 for ii = 1:nr_runs
     stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
     sequence        = find(stimulus_file.stimulus.trigSeq > 0);
     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+    conditions{ii} = conditions{ii}(1:12:end);
 end
 
 %% Epoch the EEG data
