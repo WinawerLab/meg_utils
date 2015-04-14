@@ -18,10 +18,10 @@ for ii = 1:nr_runs
     off_starts{ii}    = reversal_inds{ii}(images_per_block:images_per_block:end);
 end
 
-%   this line used to be in the loop but is no longer needed as per below message   
-%   
-
-% **** take out the '/2' at the end of onsets in above loop to change back to normal *****
+%   for a regular run with triggers sent during both on and off periods,
+%   take the line that starts with off_starts out of the above loop, take
+%   out the '/2' at the end of onsets in above loop to change back to
+%   normal, and comment out everything below this message.
 %              
 %% probably no longer needed, since we now have a flicker during the off periods
 % 

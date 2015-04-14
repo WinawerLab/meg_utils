@@ -35,6 +35,8 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
+late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
+early_timing_thresh   = 990:      % if diff between two epoch onsets is < this value, toss the epoch 
 
 
 %% Define variables for this particular subject's session
@@ -82,10 +84,12 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 clear ev_pth start_signal init_seq;
 
 % Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
+%% TIMING ISSUES (only for pilot data set 'Pilot_SSEEG_20150129_wl_subj001')
+%  for regular data sets look inside of this function for instructions 
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
     epochs_per_block);
-
-% extract conditions from behavioral matfiles
+    
+%% extract conditions from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 dir = what(directory_name);
@@ -98,14 +102,21 @@ which_mats = dir.mat(runs);
 %     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
 % end
 
-%% temporary extraction of conditions for eline's dataset
+%% TIMING ISSUES (only for pilot data set 'Pilot_SSEEG_20150129_wl_subj001')
+%  temporary extraction of conditions for eline's dataset. For other data
+%  sets, use the shorter code above.
 
 conditions = cell(1,nr_runs);
 for ii = 1:nr_runs
     stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
     sequence        = find(stimulus_file.stimulus.trigSeq > 0);
     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
-    conditions{ii} = conditions{ii}(1:12:end);
+    conditions{ii}  = conditions{ii}(1:12:end);
+    lags            = find(diff(epoch_starts{ii}) > late_timing_thresh);
+    early           = find(diff(epoch_starts{ii}) < early_timing_thresh);
+    time_errors     = cat(2, lags, early);
+    epoch_starts{ii}(time_errors) = [];
+    conditions{ii}(time_errors) = [];
 end
 
 %% Epoch the EEG data
