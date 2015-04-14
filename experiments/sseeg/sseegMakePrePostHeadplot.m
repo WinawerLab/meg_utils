@@ -1,70 +1,83 @@
-function fH = sseegMakePrePostHeadplot()
+function fH = sseegMakePrePostHeadplot(projectPath,sessionName,sessionPrefix,saveFigures)
 
-%% Visualize
+%% Visualize  Stimulus signal, broadband before and after denoising
+% We take the bootstrapped beta values for each condition (in this case we
+% defined 3 (Full, left, right) for one subject. We calculate the SNR by
+% taking the median of the bootstrapped beta values and divide this by the
+% standard error. We pad the SNR data with NaNs for the missing bad
+% channels and then plot it on a flat topoplot of the head.
 
-%% Choices to make:                                              
+% INPUTS:
+% projectPath      : String variable, path where saved denoised results are stored
+%                       Assumes that there is a folder called
+%                       'processed' with mat files containing the outputs
+%                       of the denoising algorithm.
+% sessionName      : Folder name of subject
+% sessionPrefix    : Name of particular session.
+% saveFigures       : Boolean to save figure or not
 
+% OUTPUTS:
+% fH                : Figure handle of headlplot
 
-project_path   = '/Volumes/server/Projects/EEG/SSEEG/';
-session_name   = 'SSEEG_20150403_wl_subj004';
-session_prefix = 'Session_20150403_1145';
+% Dependencies
+% This function depends on meg_utils and denoiseproject repositories.
 
-figureDir       = fullfile(project_path, 'Data', session_name, 'figures');
-saveFigures     = true;     % Save figures in the figure folder?
+%% Options to set:                                              
+if notDefined('projectPath'),   projectPath = '/Volumes/server/Projects/EEG/SSEEG/'; end
+if notDefined('sessionName'),   sessionName = 'SSEEG_20150403_wl_subj004'; end
+if notDefined('sessionPrefix'), sessionPrefix = 'Session_20150403_1145'; end
+if notDefined('saveFigures'),   saveFigures = false; end
 
-% Load denoised data
-load(fullfile(project_path, 'Data', session_name, 'processed', [session_prefix '_denoisedData_bb.mat']));
-bbresults = results;
+figureDir       = fullfile(projectPath, 'Data', sessionName, 'figures');
+if ~exist(figureDir,'dir'); mkdir(figureDir); end
 
-load(fullfile(project_path, 'Data', session_name, 'processed', [session_prefix '_denoisedData_sl.mat']));
-slresults = results;
+%% Load denoised data
+load(fullfile(projectPath, 'Data', sessionName, 'processed', [sessionPrefix '_denoisedData_bb.mat']));
+bbResults = results;
 
-% Make a headplot of data before and denoising
+load(fullfile(projectPath, 'Data', sessionName, 'processed', [sessionPrefix '_denoisedData_sl.mat']));
+slResults = results;
 
+%% Make a headplot of data before and denoising
 figure('position',[1,600,1400,800]);
 condNames = {'Stim Full','Stim Left','Stim Right'};
 for icond = 1:3
     % get stimulus-locked snr
-    sl_snr1 = getsignalnoise(slresults.origmodel(1),icond, 'SNR');
-    clims_sl = [0,25.6723];
+    tmpSLSNR1 = getsignalnoise(slResults.origmodel(1),icond, 'SNR');
+    climsSL = [0,10];
     % get broadband snr for before and after denoising
-    ab_snr1 = getsignalnoise(bbresults.origmodel(1),  icond, 'SNR');
-    ab_snr2 = getsignalnoise(bbresults.finalmodel(1), icond, 'SNR');
-    clims_ab = [0, max([ab_snr1, 12.4445])];
-    
+    tmpBBSNR1 = getsignalnoise(bbResults.origmodel(1),  icond, 'SNR');
+    tmpBBSNR2 = getsignalnoise(bbResults.finalmodel(1), icond, 'SNR');
+    climsBB = [0, max([tmpBBSNR1, tmpBBSNR2])];
 
-    % convert back into 157-channel space;
-    newArray_absnr1 = nan(size(ab_snr1,1),128);
-    newArray_absnr1(:,~badChannels) = ab_snr1;
+    % convert back into 128-electrode space
+    slsnr1 = nan(size(tmp_sl_snr1,1),128);
+    slsnr1(:,~badChannels) = tmpSLSNR1;
     
-    newArray_absnr2 = nan(size(ab_snr2,1),128);
-    newArray_absnr2(:,~badChannels) = ab_snr2;
+    absnr1 = nan(size(tmp_ab_snr1,1),128);
+    absnr1(:,~badChannels) = tmpBBSNR1;
     
-    newArray_slsnr1 = nan(size(sl_snr1,1),128);
-    newArray_slsnr1(:,~badChannels) = sl_snr1;
-    
-       
-    
+    absnr2 = nan(size(tmp_ab_snr2,1),128);
+    absnr2(:,~badChannels) = tmpBBSNR2;
     
     % plot spatial maps
     subplot(3,3,(icond-1)*3+1)
-    plotOnEgi(newArray_slsnr1);
-    set(gca,'CLim',[0 10]);
+    plotOnEgi(slsnr1);
+    set(gca,'CLim',climsSL);
     colorbar;
     makeprettyaxes(gca,9,9);
     title(sprintf('SL no DN %s', condNames{icond}))
     
     subplot(3,3,(icond-1)*3+2)
-    plotOnEgi(newArray_absnr1);
+    plotOnEgi(absnr1);
     colorbar;
-
-    set(gca,'CLim',[0 2]);
+    set(gca,'CLim',climsBB);
     makeprettyaxes(gca,9,9);
     title(sprintf('Broadband Pre %s', condNames{icond}))
     
     subplot(3,3,(icond-1)*3+3)
-    plotOnEgi(newArray_absnr2);
-    set(gca,'CLim',[0 2]);
+    plotOnEgi(absnr2);
+    set(gca,'CLim',climsBB);
     colorbar;
     makeprettyaxes(gca,9,9);
     title(sprintf('Broadband Post %s', condNames{icond}))
