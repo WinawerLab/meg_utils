@@ -48,16 +48,17 @@ for icond = 1:3
     % get broadband snr for before and after denoising
     tmpBBSNR1 = getsignalnoise(bbResults.origmodel(1),  icond, 'SNR');
     tmpBBSNR2 = getsignalnoise(bbResults.finalmodel(1), icond, 'SNR');
-    climsBB = [0, max([tmpBBSNR1, tmpBBSNR2])];
+%     climsBB = [0, max([tmpBBSNR1, tmpBBSNR2])];
+    climsBB = [0 2.5];
 
     % convert back into 128-electrode space
-    slsnr1 = nan(size(tmp_sl_snr1,1),128);
+    slsnr1 = nan(size(tmpSLSNR1,1),128);
     slsnr1(:,~badChannels) = tmpSLSNR1;
     
-    absnr1 = nan(size(tmp_ab_snr1,1),128);
+    absnr1 = nan(size(tmpBBSNR1,1),128);
     absnr1(:,~badChannels) = tmpBBSNR1;
     
-    absnr2 = nan(size(tmp_ab_snr2,1),128);
+    absnr2 = nan(size(tmpBBSNR2,1),128);
     absnr2(:,~badChannels) = tmpBBSNR2;
     
     % plot spatial maps
