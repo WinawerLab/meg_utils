@@ -115,12 +115,101 @@ end
 
 sensorData = sensorData(:,~badEpochs,~badChannels);
 
+% Make design matrix
+design = zeros(length(conditions), 3);
+design(conditions==1,1) = 1; % condition 1 is full field
+design(conditions==5,2) = 1; % condition 5 is right (??)
+design(conditions==7,3) = 1; % condition 7 is left (??)
+
+design     = design(~badEpochs,:);
 
 %% Denoise data and solve GLM
 
+% Get 'freq' struct to define stimulus locked and broadband frequencies
+%  This struct is needed as input args for getstimlocked and getbroadband
+freq = megGetSLandABfrequencies(0:150, .995, 12);
 
+% denoise parameters (see denoisedata.m)
+optsl.pcchoose        = -10;   % denoise with exactly 10 PCs for stimulus locked
+optbb.pcchoose        = -10;   % denoise with exactly 10 PCs for broadband
+optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
+evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
+evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
+optbb.npoolmethod       = {'r2','n',60};
+optbb.verbose           = true;
+optsl.npoolmethod       = {'r2','n',60};
+optsl.verbose           = true;
 
+% The denoise algorithm needs:
+% data      : time series [channel x time samples x epoch]
+% design    : design matrix [epoch x nconds]
+
+% Permute sensorData for denoising
+sensorData = permute(sensorData, [3 1 2]);
+
+% ********* Denoise the data ********************
+
+%   Denoise for broadband analysis
+[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
+
+fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData_bb']);
+
+parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
+    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+    'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+
+%   Denoise for stimulus-locked analysis
+[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
+
+fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData_sl']);
+parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
+    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+    'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
 
 %% Visualize
+
+% Make a headplot of data before and denoising
+
+figure('position',[1,600,1400,800]);
+condNames = {'Stim Full','Stim Left','Stim Right'};
+for icond = 1:3
+    % get stimulus-locked snr
+    sl_snr1 = getsignalnoise(slresults.origmodel(1),icond, 'SNR');
+    %clims_sl = [0, max(sl_snr1)];
+    clims_sl = [0,25.6723];
+    % get broadband snr for before and after denoising
+    ab_snr1 = getsignalnoise(bbresults.origmodel(1),  icond, 'SNR');
+    ab_snr2 = getsignalnoise(bbresults.finalmodel(1), icond, 'SNR');
+    clims_ab = [0, max([ab_snr1, 12.4445])];
+    %clims_ab = [0, max([ab_snr1, ab_snr2])];
+    
+    % convert back into 157-channel space
+    ab_snr1a = to157chan(ab_snr1,~badChannels,'nans');
+    ab_snr2a = to157chan(ab_snr2,~badChannels,'nans');
+    sl_snr1a = to157chan(sl_snr1,~badChannels,'nans');
+    
+    % plot spatial maps
+    subplot(3,3,(icond-1)*3+1)
+    [~,ch] = megPlotMap(sl_snr1a,clims_sl,gcf,'jet',sprintf('%s : Stimulus Locked Original', condNames{icond}));
+    makeprettyaxes(gca,9,9);
+    makeprettyaxes(ch,9,9);
+    title(sprintf('SL no DN %s', condNames{icond}))
+    
+    subplot(3,3,(icond-1)*3+2)
+    [~,ch] = megPlotMap(ab_snr1a,clims_ab,gcf,'jet',sprintf('%s Original', condNames{icond}));
+    makeprettyaxes(gca,9,9);
+    makeprettyaxes(ch,9,9);
+    title(sprintf('Broadband Pre %s', condNames{icond}))
+    
+    subplot(3,3,(icond-1)*3+3)
+    [~,ch] = megPlotMap(ab_snr2a,clims_ab,gcf,'jet',sprintf('%s : Denoised PC %d',condNames{icond}, bbresults.pcnum(1)));
+    makeprettyaxes(gca,9,9);
+    makeprettyaxes(ch,9,9);
+    title(sprintf('Broadband Post %s', condNames{icond}))
+end
+
+if saveFigures
+    figurewrite(fullfile(figureDir,'figure5_examplesubject3'),[],0,'.',1);
+end
 
 
