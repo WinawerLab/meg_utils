@@ -15,6 +15,13 @@ if datSz(1)<datSz(2)
     data = data';
 end
 
+% Check for nans, if so: take median of all electrodes
+for ii = 1:length(data)
+    if isnan(data(ii))
+        data(ii) = nanmedian(data);
+    end
+end
+
 if size(data,1) == 128
 tEpos = load('eeg128xy.mat');
 tEpos = [ tEpos.xy, zeros(128,1) ];
