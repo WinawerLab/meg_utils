@@ -6,18 +6,29 @@ function onsets = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
 % start index of the run, we make every 12th reversal an epoch timepoint,
 % since there are two reversals per DIN event, and six DIN events per epoch.
 %
-%   INPUTS: 
-% ev_ts:            a cell (nr_runs x 1) containing arrays of ones and 
-%                   zeros (time x DIN value), with length equal to length 
-%                   of run (including before and after trial). 
-% images_per_block: number of image reversals occurred in one block 
-% blocks_per_run:   number of blocks occured during one run
-% epochs_per_block: number of epochs in one block 
+% Inputs: 
+%   ev_ts:            a cell (nr_runs x 1) containing arrays of ones and 
+%                     zeros (time x DIN value), with length equal to length 
+%                     of run (including before and after trial). 
+%   images_per_block: number of image reversals occurred in one block 
+%   blocks_per_run:   number of blocks occured during one run
+%   epochs_per_block: number of epochs in one block 
 %
-%   OUTPUTS:
-% onsets:           a cell (nr_runs x 1) containing arrays of ms timepoints
-%                   (framenumber) indicating the onset of every epoch in a 
-%                   given run 
+% Outputs:
+%   onsets:           a cell (nr_runs x 1) containing arrays of ms timepoints
+%                     (framenumber) indicating the onset of every epoch in a 
+%                     given run 
+
+%% INSTRUCTIONS 
+%   For a regular run with DIN events during both on and off periods:
+%   In Section I, comment out the line starting with "off_starts{ii}" in the first loop, 
+%   remove the "/2" from the second line starting with "onsets{ii}" in the 
+%   first loop, and comment out everything in Section II. 
+%   
+%   For a run with DIN events occurring only during on periods:
+%   Do the reverse of the above instructions. 
+
+%% Section I
 
 nr_runs             = numel(ev_ts);
 reversals_per_run   = images_per_block * blocks_per_run;
@@ -32,13 +43,10 @@ for ii = 1:nr_runs
     off_starts{ii}    = reversal_inds{ii}(images_per_block:images_per_block:end);
 end
 
-%   for a regular run with triggers sent during both on and off periods,
-%   take the line that starts with off_starts out of the above loop, take
-%   out the '/2' at the end of onsets in above loop to change back to
-%   normal, and comment out everything below this message.
+
 %              
-%% probably no longer needed, since we now have a flicker during the off periods
-% 
+%% Section II - Comment this section if DINs are sent during all blocks (on and off)
+
 epoch_length     = median(diff(onsets{1}));
 epochs_per_block = 6;
 

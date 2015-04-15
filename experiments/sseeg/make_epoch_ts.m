@@ -7,16 +7,14 @@ function epoch_ts = make_epoch_ts(conditions, onsets, n_samples)
 % using ones to mark events, as we did in ev_ts. 
 %   
 % INPUTS: 
-%    condtions:    A cell of vectors representing the stimulus condition sequence.
-%                   (e.g. [1 3 1 3 5 3 5 3 7 3 7 3])
-%    onsets:       A cell of vectors representing the frame number that each
+%    condtions:     A cell (1 x nr_runs) of vectors (
+%    onsets:        A cell of vectors representing the frame number that each
 %                   epochs starts
-%    n_samples:    A vector indicating the number of samples in each run.
-%                    If a scalar, then assume the same number for every
-%                    run
+%    n_samples:     A vector indicating the number of samples in each run.
+%                   If a scalar, then assume the same number for every run
+%
 % OUTPUTS
-% 
-% epoch_ts
+%   epoch_ts:       a 
 nr_runs = numel(conditions);
 
 % one condition vector and one onsets vector for each run. so they

@@ -36,7 +36,7 @@ bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an 
 data_channels         = 1:128;
 verbose               = true;
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
-early_timing_thresh   = 990;      % if diff between two epoch onsets is < this value, toss the epoch 
+early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
 
 
 %% Define variables for this particular subject's session
@@ -83,30 +83,17 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 
 clear ev_pth start_signal init_seq;
 
-% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
-%% This function changed to accomodate pilot data set 'Pilot_SSEEG_20150129_wl_subj001'
-%  The pilot data set had no DIN events during the off periods. Look inside
-%  the function for instructions, if you are analyzing data with DIN events
-%  across all conditions (on and off periods)
+%% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
+%       NOTE: This function changed to accomodate pilot data set
+%  'Pilot_SSEEG_20150129_wl_subj001' The pilot data set had no DIN events
+%  during the off periods. Look inside the function for instructions, if
+%  you are analyzing data with DIN events across all conditions (on and off
+%  periods)
 
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
     epochs_per_block);
     
-%% extract conditions from behavioral matfiles (original)
-
-% directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
-% dir = what(directory_name);
-% which_mats = dir.mat(runs);
-
-% conditions = cell(1,nr_runs);
-% for ii = 1:nr_runs
-%     stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
-%     sequence        = find(stimulus_file.stimulus.trigSeq > 0);
-%     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
-% end
-
-%% TIMING ISSUES This loop will find timing errors and remove them
-%  Loop above is the original, and will not perform this function
+%% Extract conditions from behavioral matfiles, remove epochs with timing errors
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 dir = what(directory_name);
@@ -114,18 +101,18 @@ which_mats = dir.mat(runs);
 
 conditions = cell(1,nr_runs);
 for ii = 1:nr_runs
-    
-    stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
-    sequence        = find(stimulus_file.stimulus.trigSeq > 0);
-    conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
-    conditions{ii}  = conditions{ii}(1:12:end);
-% remove epochs with timing errors from conditions and onsets   
-    lags            = find(diff(epoch_starts{ii}) > late_timing_thresh);
-    early           = find(diff(epoch_starts{ii}) < early_timing_thresh);
-    time_errors     = cat(2, lags, early);
-    epoch_starts{ii}(time_errors) = [];
-    conditions{ii}(time_errors) = [];
-    
+      stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+      sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+      conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';      
+        if length(sequence) > epochs_per_block * blocks_per_run;
+                conditions{ii} = conditions{ii}(1:12:end);
+        elseif length(sequence) == epochs_per_block * blocks_per_run;     
+        end
+      lags            = find(diff(epoch_starts{ii}) > late_timing_thresh);
+      early           = find(diff(epoch_starts{ii}) < early_timing_thresh);
+      time_errors     = cat(2, lags, early);
+      epoch_starts{ii}(time_errors) = [];
+      conditions{ii}(time_errors) = [];
 end
 
 %% Epoch the EEG data
@@ -136,7 +123,7 @@ epoch_time  = [0  mode(diff(epoch_starts{1}))-1]/s_rate_eeg;
 ts = [];  conditions=[];
 for ii = 1:nr_runs     
         [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
-        ts          = cat(2,ts, thists);
+        ts          = cat(2, ts, thists);
         conditions  = cat(2, conditions, this_conditions);
 end
 
