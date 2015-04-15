@@ -33,7 +33,7 @@ blocks_per_run        = 12;       % number of blocks in one experimental run
 var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
 bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
-data_channels         = 1:128;
+data_channels         = 1:128;    
 verbose               = true;
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
@@ -108,9 +108,9 @@ for ii = 1:nr_runs
                 conditions{ii} = conditions{ii}(1:12:end);
         elseif length(sequence) == epochs_per_block * blocks_per_run;     
         end
-      lags            = find(diff(epoch_starts{ii}) > late_timing_thresh);
-      early           = find(diff(epoch_starts{ii}) < early_timing_thresh);
-      time_errors     = cat(2, lags, early);
+      lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
+      early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
+      time_errors     = cat(2, lag_epochs, early_epochs);
       epoch_starts{ii}(time_errors) = [];
       conditions{ii}(time_errors) = [];
 end
