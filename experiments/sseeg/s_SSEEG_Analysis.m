@@ -85,7 +85,10 @@ clear ev_pth start_signal init_seq;
 
 % Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
 %% This function changed to accomodate pilot data set 'Pilot_SSEEG_20150129_wl_subj001'
-%  for other data sets look inside of this function for instructions 
+%  The pilot data set had no DIN events during the off periods. Look inside
+%  the function for instructions, if you are analyzing data with DIN events
+%  across all conditions (on and off periods)
+
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
     epochs_per_block);
     
@@ -111,15 +114,18 @@ which_mats = dir.mat(runs);
 
 conditions = cell(1,nr_runs);
 for ii = 1:nr_runs
+    
     stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
     sequence        = find(stimulus_file.stimulus.trigSeq > 0);
     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
     conditions{ii}  = conditions{ii}(1:12:end);
+% remove epochs with timing errors from conditions and onsets   
     lags            = find(diff(epoch_starts{ii}) > late_timing_thresh);
     early           = find(diff(epoch_starts{ii}) < early_timing_thresh);
     time_errors     = cat(2, lags, early);
     epoch_starts{ii}(time_errors) = [];
     conditions{ii}(time_errors) = [];
+    
 end
 
 %% Epoch the EEG data
