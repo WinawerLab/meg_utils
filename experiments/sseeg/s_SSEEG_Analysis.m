@@ -36,7 +36,7 @@ bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an 
 data_channels         = 1:128;
 verbose               = true;
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
-early_timing_thresh   = 990:      % if diff between two epoch onsets is < this value, toss the epoch 
+early_timing_thresh   = 990;      % if diff between two epoch onsets is < this value, toss the epoch 
 
 
 %% Define variables for this particular subject's session
@@ -84,16 +84,16 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 clear ev_pth start_signal init_seq;
 
 % Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
-%% TIMING ISSUES (only for pilot data set 'Pilot_SSEEG_20150129_wl_subj001')
-%  for regular data sets look inside of this function for instructions 
+%% This function changed to accomodate pilot data set 'Pilot_SSEEG_20150129_wl_subj001'
+%  for other data sets look inside of this function for instructions 
 epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
     epochs_per_block);
     
-%% extract conditions from behavioral matfiles
+%% extract conditions from behavioral matfiles (original)
 
-directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
-dir = what(directory_name);
-which_mats = dir.mat(runs);
+% directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+% dir = what(directory_name);
+% which_mats = dir.mat(runs);
 
 % conditions = cell(1,nr_runs);
 % for ii = 1:nr_runs
@@ -102,9 +102,12 @@ which_mats = dir.mat(runs);
 %     conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
 % end
 
-%% TIMING ISSUES (only for pilot data set 'Pilot_SSEEG_20150129_wl_subj001')
-%  temporary extraction of conditions for eline's dataset. For other data
-%  sets, use the shorter code above.
+%% TIMING ISSUES This loop will find timing errors and remove them
+%  Loop above is the original, and will not perform this function
+
+directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+dir = what(directory_name);
+which_mats = dir.mat(runs);
 
 conditions = cell(1,nr_runs);
 for ii = 1:nr_runs
