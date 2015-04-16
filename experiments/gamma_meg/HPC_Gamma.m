@@ -97,7 +97,7 @@ parfor subject_num = which_data_sets_to_analyze
         bad_epochs(:,channels_to_remove) = 1;
         
         if verbose
-        figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
+            figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
         end
         
         ts = meg_remove_bad_epochs(bad_epochs, ts);
@@ -110,13 +110,9 @@ parfor subject_num = which_data_sets_to_analyze
     
     % Denoise data with 3 noise channels
     if denoise_with_nonphys_channels
-        if exist('./denoised_with_nuissance_data.mat', 'file')
-            load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
-        else
-            if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
-            ts = meg_environmental_denoising(ts, environmental_channels,...
-                data_channels, false);
-        end
+        if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
+        ts = meg_environmental_denoising(ts, environmental_channels,...
+            data_channels, false);
     end
     
     
@@ -128,7 +124,6 @@ parfor subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-    nboot = 50; % number of bootstrap samples
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
@@ -182,7 +177,7 @@ parfor subject_num = which_data_sets_to_analyze
     fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
     
 %     warning off 'MATLAB:subsassigndimmismatch'
-    warning off
+    warning off 'MATLAB:subsassigndimmismatch'
     
     % For each channel, fit each condition separatley
     if verbose; fprintf('Fitting gamma and broadband values for each channel and each condition'); end;
@@ -216,7 +211,7 @@ parfor subject_num = which_data_sets_to_analyze
     if verbose; fprintf('done!\n'); end;
     
 %     warning on 'MATLAB:subsassigndimmismatch'
-    warning on
+    warning on 'MATLAB:subsassigndimmismatch'
     
     % summarize bootstrapped fits
     out_exp_mn = nanmean(out_exp,3);
@@ -243,6 +238,18 @@ parfor subject_num = which_data_sets_to_analyze
     
     
 end
+
+function ts = meg_remove_bad_epochs(outliers, ts)
+% epochs x channel
+num_time_points = size(ts,1);
+num_epochs      = size(ts,2);
+num_channels    = size(ts,3);
+
+ts = reshape(ts, [num_time_points, num_epochs*num_channels]);
+
+ts(:, logical(outliers(:))) = NaN;
+
+ts = reshape(ts, [num_time_points, num_epochs, num_channels]);
 
 return
 
