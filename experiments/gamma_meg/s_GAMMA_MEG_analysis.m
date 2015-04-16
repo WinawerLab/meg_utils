@@ -151,11 +151,7 @@ for subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-<<<<<<< HEAD
-    nboot = 50; % number of bootstrap samples
-=======
-    
->>>>>>> fc1abe012c9f30e15c15f5571892d01e9e2d9c01
+
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
@@ -306,29 +302,14 @@ for subject_num = which_data_sets_to_analyze
     num_contrasts = size(contrasts,1);
     
     % compute SNR
-<<<<<<< HEAD
+
     snr_out_exp = zeros(num_channels, num_contrasts);    
     snr_w_pwr   = zeros(num_channels, num_contrasts);  
     snr_w_gauss = zeros(num_channels, num_contrasts);   
     snr_gauss_f = zeros(num_channels, num_contrasts);     
    
 
-=======
-    snr_out_exp = zeros(num_channels, num_contrasts);
-    snr_w_pwr   = zeros(num_channels, num_contrasts);
-    snr_w_gauss = zeros(num_channels, num_contrasts);
-    snr_gauss_f = zeros(num_channels, num_contrasts);
-    
-    %     for contrast = 1:num_contrasts
-    %
-    %         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
-    %         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
-    %         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
-    %         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
-    %
-    %     end
-    %
->>>>>>> fc1abe012c9f30e15c15f5571892d01e9e2d9c01
+
     for contrast = 1:num_contrasts
         snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
         snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
@@ -339,48 +320,33 @@ for subject_num = which_data_sets_to_analyze
     lt = -5;
     ut = 5;
     
-<<<<<<< HEAD
-        
-    snr_w_pwr(snr_w_pwr < lt)      = 0;  
-    snr_w_gauss(snr_w_gauss < lt)  = 0;   
-    snr_w_pwr(snr_w_pwr > ut)      = 0;  
-    snr_w_gauss(snr_w_gauss > ut)  = 0;
-=======
+
+
     replace_val = NaN;
     snr_w_pwr(snr_w_pwr < lt)      = replace_val;
     snr_w_gauss(snr_w_gauss < lt)  = replace_val;
     snr_w_pwr(snr_w_pwr > ut)      = replace_val;
     snr_w_gauss(snr_w_gauss > ut)  = replace_val;
->>>>>>> fc1abe012c9f30e15c15f5571892d01e9e2d9c01
+
     
     
-    %% SNR Mesh (WIP)
+%% SNR Mesh (WIP)
     
     % gaussing weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for contrast = 5:12
         subplot(3,4,contrast)
-<<<<<<< HEAD
-        ft_plotOnMesh(snr_w_pwr(:,contrast)', contrastnames{contrast});
-        set(gca)
-    end
-    
-   fH = figure(995); clf, set(fH, 'name', 'Gratings - Noise (Gauss)')
-   ft_plotOnMesh(snr_w_gauss(:,12)', contrastnames{12});
-   set(gca)
 
-
-=======
         ft_plotOnMesh(snr_w_gauss(:,contrast)', contrastnames{contrast});
         set(gca, 'CLim', [-4 4])       
     end
     
->>>>>>> fc1abe012c9f30e15c15f5571892d01e9e2d9c01
+
     
-    for contrasts = 1:num_contrasts
+ 
         
         
-        %% Plot Gaussian fits
+    %% Plot Gaussian fits
         line_width = 2; % line width for
         for chan = data_channels
             fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
@@ -485,8 +451,8 @@ for subject_num = which_data_sets_to_analyze
             hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
         end
         
-<<<<<<< HEAD
-    end
+
+   
     %axis tight
     
     %% Mesh visualization of model fits
@@ -536,31 +502,7 @@ for subject_num = which_data_sets_to_analyze
     
     if save_images
         hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
-=======
-        
-        fH = figure(1000); clf
-        subplot(2,2,1)
-        ft_plotOnMesh((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,2)
-        ft_plotOnMesh((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,3)
-        ft_plotOnMesh((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,4)
-        ft_plotOnMesh((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
-        set(gca, 'CLim', .2 * [-1 1])
-        
-        if save_images
-            hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
-        end
-        
-        
->>>>>>> fc1abe012c9f30e15c15f5571892d01e9e2d9c01
+
     end
     
 end
