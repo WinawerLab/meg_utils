@@ -53,7 +53,7 @@ epoch_start_end               = [0.550 1.05];% start and end of epoch, relative 
 
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
-save_images                   = false;
+save_images                   = true;
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -149,7 +149,7 @@ for subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-    nboot = 30; % number of bootstrap samples
+    nboot = 50; % number of bootstrap samples
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
@@ -305,15 +305,7 @@ for subject_num = which_data_sets_to_analyze
     snr_w_gauss = zeros(num_channels, num_contrasts);   
     snr_gauss_f = zeros(num_channels, num_contrasts);     
    
-%     for contrast = 1:num_contrasts
-%         
-%         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
-%         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
-%         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
-%         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
-% 
-%     end
-%     
+
     for contrast = 1:num_contrasts
        snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
        snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
@@ -321,14 +313,14 @@ for subject_num = which_data_sets_to_analyze
     
     % threshold (replace SNR values < 2 or > 20 with 0)
     
-    lt = -4;
-    ut = 2;
+    lt = -5;
+    ut = 5;
     
         
-    snr_w_pwr(snr_w_pwr < lt)      = NaN;  
-    snr_w_gauss(snr_w_gauss < lt)  = NaN;   
-    snr_w_pwr(snr_w_pwr > ut)      = NaN;  
-    snr_w_gauss(snr_w_gauss > ut)  = NaN;
+    snr_w_pwr(snr_w_pwr < lt)      = 0;  
+    snr_w_gauss(snr_w_gauss < lt)  = 0;   
+    snr_w_pwr(snr_w_pwr > ut)      = 0;  
+    snr_w_gauss(snr_w_gauss > ut)  = 0;
     
 
 %% SNR Mesh (WIP)
@@ -337,12 +329,15 @@ for subject_num = which_data_sets_to_analyze
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for contrast = 5:12
         subplot(3,4,contrast)
-        ft_plotOnMesh(snr_w_gauss(:,contrast)', contrastnames{contrast});
+        ft_plotOnMesh(snr_w_pwr(:,contrast)', contrastnames{contrast});
         set(gca)
     end
     
+   fH = figure(995); clf, set(fH, 'name', 'Gratings - Noise (Gauss)')
+   ft_plotOnMesh(snr_w_gauss(:,12)', contrastnames{12});
+   set(gca)
 
-for contrasts = 1:num_contrasts
+
     
 
     %% Plot Gaussian fits
@@ -453,19 +448,19 @@ for contrasts = 1:num_contrasts
     
     fH = figure(1000); clf
     subplot(2,2,1)
-    ft_plotOnMesh((w_gauss * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
+    ft_plotOnMesh((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
     set(gca, 'CLim', .5*[-1 1])
     
     subplot(2,2,2)
-    ft_plotOnMesh((w_gauss * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
+    ft_plotOnMesh((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
     set(gca, 'CLim', .5*[-1 1])
     
     subplot(2,2,3)
-    ft_plotOnMesh((w_gauss * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
+    ft_plotOnMesh((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
     set(gca, 'CLim', .5*[-1 1])
     
     subplot(2,2,4)
-    ft_plotOnMesh((w_pwr * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
+    ft_plotOnMesh((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
     set(gca, 'CLim', .2 * [-1 1])
     
     if save_images
