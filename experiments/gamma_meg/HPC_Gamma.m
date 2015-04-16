@@ -128,7 +128,7 @@ parfor subject_num = which_data_sets_to_analyze
     % compute spectral data
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
-%     nboot = 3; % number of bootstrap samples
+    nboot = 50; % number of bootstrap samples
     spectral_data = abs(fft(ts))/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
@@ -179,7 +179,7 @@ parfor subject_num = which_data_sets_to_analyze
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
-    fit_f2  = NaN(num_conditions,1000,num_channels, nboot); % fitted spectrum
+    fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
     
 %     warning off 'MATLAB:subsassigndimmismatch'
     warning off
@@ -193,7 +193,7 @@ parfor subject_num = which_data_sets_to_analyze
             
             
             for bootnum = 1:nboot
-                                
+                
                 data_fit  = spectral_data_boots(:,cond,chan, bootnum);
                 data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
                 
