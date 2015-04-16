@@ -15,8 +15,15 @@ if datSz(1)<datSz(2)
     data = data';
 end
 
+% Check for nans, if so: take median of all electrodes
+for ii = 1:length(data)
+    if isnan(data(ii))
+        data(ii) = nanmedian(data);
+    end
+end
+
 if size(data,1) == 128
-tEpos = load('defaultFlatNet.mat');
+tEpos = load('eeg128xy.mat');
 tEpos = [ tEpos.xy, zeros(128,1) ];
 
 tEGIfaces = mrC_EGInetFaces( false );
@@ -51,7 +58,7 @@ end
 set(handle,'facevertexCdata',data,'linewidth',1,'markersize',20,'marker','.');
 set(handle,'userdata','plotOnEgi');
 
-%colormap(jmaColors('usadarkblue'));
+% colormap(jmaColors('usadarkblue'));
 
 if nargout >= 1
 varargout{1} = handle;
