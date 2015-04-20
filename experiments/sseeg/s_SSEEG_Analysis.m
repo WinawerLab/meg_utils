@@ -40,7 +40,6 @@ early_timing_thresh   = 992;      % if diff between two epoch onsets is < this v
 
 
 %% Define variables for this particular subject's session
-<<<<<<< HEAD
 session_name   = 'Session_20150417_wlsubj019';
 session_prefix = 'Session_20150417_1351';
 runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
@@ -48,7 +47,6 @@ runs           = 1:15;  % In case there are irrelevant runs recorderd to check s
 session_name   = 'SSEEG_20150403_wl_subj004';
 session_prefix = 'Session_20150403_1145';
 runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
->>>>>>> 24dad45ac9ccece62cd84adc705af3acfc081187
 
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
