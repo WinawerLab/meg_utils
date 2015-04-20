@@ -1,5 +1,5 @@
 function [ev_ts, start_inds, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
-    s_rate_monitor, runs, eeg_ts, start_signal, plot_figures)
+    s_rate_monitor, runs, eeg_ts, init, plot_figures)
 %% Extract triggers from photodiode responses saved in NetStation evt file
 %
 % [ev_ts, t] = eeg_get_triggers(ev_pth, s_rate_eeg, ...
@@ -78,7 +78,7 @@ end
 
 %% Locate initializing sequence, and clip triggers prior to experiment start
 for which_run = 1:nr_runs
-    start_ind = eeg_find_trial_begin(start_signal, ev_ts{which_run});
+    start_ind = eeg_find_trial_begin(init, ev_ts{which_run});
     ev_ts{which_run}(1:start_ind) = 0;
 
     if plot_figures, start_inds(which_run) = start_ind; end %#ok<AGROW>
