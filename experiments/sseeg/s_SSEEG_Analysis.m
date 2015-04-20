@@ -35,6 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;    
 verbose               = true;
+
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
 
@@ -43,7 +44,7 @@ early_timing_thresh   = 992;      % if diff between two epoch onsets is < this v
 session_name   = 'Session_20150417_wlsubj019';
 session_prefix = 'Session_20150417_1351';
 runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
-=======
+
 session_name   = 'SSEEG_20150403_wl_subj004';
 session_prefix = 'Session_20150403_1145';
 runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
