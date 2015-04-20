@@ -44,18 +44,18 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 10; % number of bootstrap samples
+nboot                         = 5; % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
 denoise_via_pca               = false;       % Do you want to use megde noise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [0.550 1.05];% start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [0.550 1.049];% start and end of epoch, relative to trigger, in seconds
 
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
-save_images                   = false;
+save_images                   = true;
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -70,9 +70,10 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 5;
+which_data_sets_to_analyze = 6;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
+me
 
 %change server-1 back to server
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
@@ -104,28 +105,19 @@ for subject_num = which_data_sets_to_analyze
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
-    %% Find bad epochs
-    if remove_bad_epochs
-        
-        % This identifies any epochs whos variance is outside some multiple of the
-        % grand variance
-        bad_epochs = meg_find_bad_epochs(ts(:,:,data_channels), [.05 20]);
-        
-        % any epoch in which more than 10% of channels were bad should be removed
-        % entirely
-        epochs_to_remove = mean(bad_epochs,2)>.1;
-        
-        % once we remove 'epochs_to_remove', check whether any channels have more
-        % than 10% bad epochs, and we will remove these
-        channels_to_remove = mean(bad_epochs(~epochs_to_remove,:),1)>.1;
-        
-        bad_epochs(epochs_to_remove,:) = 1;
-        bad_epochs(:,channels_to_remove) = 1;
-        
-        figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
-        
-        ts = meg_remove_bad_epochs(bad_epochs, ts);
-    end
+    %% Remove bad epochs    
+    var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
+    bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
+    bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
+    verbose               = true;
+    
+    [ts(:,:,data_channels), badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
+        var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
+    
+    ts = ts(:,~badEpochs,:);
+    ts(:,:, badChannels) = NaN;
+    
+    conditions = conditions(~badEpochs);
     
     
     %% Denoise data by regressing out nuissance channel time series
@@ -136,7 +128,7 @@ for subject_num = which_data_sets_to_analyze
     if denoise_with_nonphys_channels
         if exist('./denoised_with_nuissance_data.mat', 'file')
             load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
-        else fprintf('Loading data.. This may take a couple of seconds\n');
+        else fprintf('Denoising data... \n');
             ts = meg_environmental_denoising(ts, environmental_channels,...
                 data_channels, produce_figures);
         end
@@ -156,9 +148,9 @@ for subject_num = which_data_sets_to_analyze
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
     % compute the mean amplitude spectrum for each electrode in each condition
-    fprintf('Computing bootstraps for each condition');
+    fprintf('Computing bootstraps for each condition\n');
     for ii = 1:length(conditions_unique)
-        fprintf('Conidtion %d of %d', ii, length(conditions_unique)); drawnow;
+        fprintf('Condition %d of %d\n', ii, length(conditions_unique)); drawnow;
         
         % Binary vector to identify epochs with this condition
         these_epochs = conditions == conditions_unique(ii);
@@ -186,15 +178,13 @@ for subject_num = which_data_sets_to_analyze
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
     spectral_data_mean = mean(spectral_data_boots, 4);
-    spectral_data_std  =  std(spectral_data_boots, [], 4);
-    spectral_data_snr   = spectral_data_mean./spectral_data_std;
-    
+
     %% Broadband and Gaussian Fit
     
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
     
-    f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
     
     num_channels = length(data_channels);
@@ -209,7 +199,7 @@ for subject_num = which_data_sets_to_analyze
     % For each channel, fit each condition separatley
     fprintf('Fitting gamma and broadband values for each channel and each condition')
     for cond = 1:num_conditions
-        fprintf('.'); drawnow;
+        fprintf('Condition %d of %d\n', cond, length(conditions_unique)); drawnow;
         % Fit each channel separately
         for chan = data_channels
             
@@ -302,178 +292,198 @@ for subject_num = which_data_sets_to_analyze
     num_contrasts = size(contrasts,1);
     
     % compute SNR
+    
     snr_out_exp = zeros(num_channels, num_contrasts);
-    snr_w_pwr   = zeros(num_channels, num_contrasts);
     snr_w_gauss = zeros(num_channels, num_contrasts);
     snr_gauss_f = zeros(num_channels, num_contrasts);
     
-    %     for contrast = 1:num_contrasts
-    %
-    %         snr_out_exp(:,contrast) = (contrasts(contrast,:) * out_exp_md')./(contrasts(contrast,:) * out_exp_sd');
-    %         snr_w_pwr(:,contrast) = (contrasts(contrast,:) * w_pwr_md')./(contrasts(contrast,:) * w_pwr_sd');
-    %         snr_w_gauss(:,contrast) = (contrasts(contrast,:) * w_gauss_md')./(contrasts(contrast,:) * w_gauss_sd');
-    %         snr_gauss_f(:,contrast) = (contrasts(contrast,:) * gauss_f_md')./(contrasts(contrast,:) * gauss_f_sd');
-    %
-    %     end
-    %
-    for contrast = 1:num_contrasts
-        snr_w_pwr(:,contrast)   = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
-        snr_w_gauss(:,contrast) = contrasts(contrast,:)*(w_pwr_md./w_pwr_sd)';
-    end
+    tmp_data = permute(w_pwr, [2 1 3]);
+    tmp_data = reshape(tmp_data, num_conditions, []);
+    tmp = contrasts*tmp_data;
+    tmp = reshape(tmp, num_contrasts, num_channels, nboot);
+    snr_w_pwr  = nanmean(tmp,3)./nanstd(tmp, [], 3);
+    snr_w_pwr = snr_w_pwr';
+
+    tmp_data = permute(w_gauss, [2 1 3]);
+    tmp_data = reshape(tmp_data, num_conditions, []);
+    tmp = contrasts*tmp_data;
+    tmp = reshape(tmp, num_contrasts, num_channels, nboot);
+    snr_w_gauss  = nanmean(tmp,3)./nanstd(tmp, [], 3);
+    snr_w_gauss  = snr_w_gauss';
     
     % threshold (replace SNR values < 2 or > 20 with 0)
-    
-    lt = -4;
-    ut = 2;
-    
-    replace_val = NaN;
-    snr_w_pwr(snr_w_pwr < lt)      = replace_val;
-    snr_w_gauss(snr_w_gauss < lt)  = replace_val;
-    snr_w_pwr(snr_w_pwr > ut)      = replace_val;
-    snr_w_gauss(snr_w_gauss > ut)  = replace_val;
-    
+        
     
     %% SNR Mesh (WIP)
-    
+    threshold = 3;
     % gaussing weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
-    for contrast = 5:12
-        subplot(3,4,contrast)
-        ft_plotOnMesh(snr_w_gauss(:,contrast)', contrastnames{contrast});
-        set(gca, 'CLim', [-4 4])       
+    for c = 1:12
+        subplot(3,4,c)
+        data_to_plot = snr_w_gauss(:,c)';
+        data_to_plot(abs(data_to_plot) < threshold) = 0;
+        ft_plotOnMesh(data_to_plot, contrastnames{c});
+        set(gca, 'CLim', [-1 1]* 10)
+    end
+    
+    %% Plot Gaussian fits
+    line_width = 2; % line width for
+    for chan = data_channels
+        fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
+        
+        data_base = spectral_data_mean(:,num_conditions,chan);
+        for cond = 1:num_conditions-1
+            data_fit = spectral_data_mean(:,cond,chan,:);
+            subplot(3,3,cond)
+            % plot fit
+            plot(f,10.^(fit_f2_mn(cond,:, chan)),'Color','g','LineWidth',line_width)
+            hold on;
+            
+            % plot baseline data
+            plot(f(f_sel),data_base(f_sel),'k--','LineWidth',line_width)
+            % plot stimulus data
+            plot(f(f_sel),data_fit(f_sel),'b-','LineWidth',line_width)
+            
+            set(gca, 'XScale', 'log', 'YScale', 'log', ...
+                'XLim', [min(f_use4fit) max(f_use4fit)], ...
+                'YLim', 10.^[0.3 1.5] )
+            title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))
+        end
+        if save_images,
+            
+            hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
+        else
+            waitforbuttonpress
+        end
+    end
+    
+    %% Plot spectra
+    fH = figure(2); clf,  set(gcf, 'Position', [100 100 1000 400], 'Color', 'w')
+    
+    colors = zeros(num_conditions,3);
+    colors(1:4,:) = ([0 1 0]'*[.4 .6 .8 1])';
+    colors(5:9,:) = ([1 0 0]'*[.4 .55 .7 .85 1])'; %hsv(5);
+    colors(10,:)  = [0 0 0];
+    yl            =  10.^([0.5 1.6]);
+    xl            = [30 200];
+    lw = 4;
+    for chan = data_channels
+        
+        % Plot Data -----------------------------------------------------------
+        subplot(1,3,1); cla; hold on
+        for cond = 1:num_conditions
+            plot(f(f_sel), squeeze(spectral_data_mean(f_sel,cond,chan)), 'Color', colors(cond,:), 'LineWidth', lw);
+        end
+        set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl,  ...
+            'Color', [1 1 1], 'XGrid', 'on', ...
+            'XTick', [10 60 100 200]);
+        title(sprintf('Data from channel %d, subject %d', chan, subject_num))
+        
+        % Plot Fits -----------------------------------------------------------
+        subplot(1,3,2); cla; hold on
+        for cond = 1:num_conditions
+            plot(f, squeeze(10.^(fit_f2_mn(cond,:, chan))), 'Color', colors(cond,:), 'LineWidth', lw);
+        end
+        set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
+            'Color', [1 1 1], 'XGrid', 'on', ...
+            'XTick', [10 60 100 200]);
+        title(sprintf('Fits to channel %d, subject %d', chan, subject_num))
+        
+        % Legend  -----------------------------------------------------------
+        subplot(1,3,3); cla
+        
+        set(gca, 'ColorOrder', colors); hold all
+        plot(zeros(10,10), zeros(10,10), '-')
+        box off; axis off;
+        legend(condition_names)
+        drawnow;
+        if save_images
+            hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
+        else
+            waitforbuttonpress
+        end
+        
+    end
+    %axis tight
+    
+    %% Mesh visualization of model fits
+    
+    % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
+    
+    
+    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
+    for cond = 1:9
+        subplot(3,3,cond)
+        ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+        set(gca, 'CLim', [0 .2])
+    end
+    
+    if save_images
+        hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
+    end
+    
+    fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
+    for cond = 1:9
+        subplot(3,3,cond)
+        ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
+        set(gca, 'CLim', [-1 1] *.03)
+    end
+    
+    if save_images
+        hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
     end
     
     
-    for contrasts = 1:num_contrasts
-        
-        
-        %% Plot Gaussian fits
-        line_width = 2; % line width for
-        for chan = data_channels
-            fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
-            
-            data_base = spectral_data_mean(:,num_conditions,chan);
-            for cond = 1:num_conditions-1
-                data_fit = spectral_data_mean(:,cond,chan,:);
-                subplot(3,3,cond)
-                % plot fit
-                plot(f,10.^(fit_f2_mn(cond,:, chan)),'Color','g','LineWidth',line_width)
-                hold on;
-                
-                % plot baseline data
-                plot(f(f_sel),data_base(f_sel),'k--','LineWidth',line_width)
-                % plot stimulus data
-                plot(f(f_sel),data_fit(f_sel),'-','LineWidth',line_width)
-                
-                set(gca, 'XScale', 'log', 'YScale', 'log', ...
-                    'XLim', [min(f_use4fit) max(f_use4fit)], ...
-                    'YLim', 10.^[0.3 1.5] )
-                title(sprintf('Subject %d, Channel %d, %s', subject_num, chan, condition_names{cond}))
-            end
-            if save_images,
-                
-                hgexport(fH, fullfile(save_pth, sprintf('Spectra_Chan%03d.eps', chan)));
-            else
-                pause(0.1)
-            end
-        end
-        
-        %% Plot spectra
-        fH = figure(2); clf,  set(gcf, 'Position', [100 100 1000 400], 'Color', 'w')
-        
-        colors = zeros(num_conditions,3);
-        colors(1:4,:) = ([1 1 1]'*[.2 .4 .6 .8])';
-        colors(5:9,:) = hsv(5);
-        colors(10,:)  = [0 0 0];
-        yl            =  10.^([0.5 1.6]);
-        xl            = [30 200];
-        
-        for chan = data_channels
-            
-            % Plot Data -----------------------------------------------------------
-            subplot(1,3,1); cla; hold on
-            for cond = 1:num_conditions
-                plot(f(f_sel), squeeze(spectral_data_mean(f_sel,cond,chan)), 'Color', colors(cond,:));
-            end
-            set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl,  ...
-                'Color', [1 1 1], 'XGrid', 'on', ...
-                'XTick', [10 60 100 200]);
-            title(sprintf('Data from channel %d, subject %d', chan, subject_num))
-            
-            % Plot Fits -----------------------------------------------------------
-            subplot(1,3,2); cla; hold on
-            for cond = 1:num_conditions
-                plot(f, squeeze(10.^(fit_f2_mn(cond,:, chan))), 'Color', colors(cond,:));
-            end
-            set(gca, 'YScale', 'log','XScale', 'log', 'YLim', yl, 'XLim', xl, ...
-                'Color', [1 1 1], 'XGrid', 'on', ...
-                'XTick', [10 60 100 200]);
-            title(sprintf('Fits to channel %d, subject %d', chan, subject_num))
-            
-            % Legend  -----------------------------------------------------------
-            subplot(1,3,3); cla
-            
-            set(gca, 'ColorOrder', colors); hold all
-            plot(zeros(10,10), zeros(10,10), '-')
-            box off; axis off;
-            legend(condition_names)
-            drawnow;
-            if save_images
-                hgexport(fH, fullfile(save_pth, sprintf('Spectral_fits_Chan%03d.eps', chan)));
-            end
-            
-        end
-        %axis tight
-        
-        %% Mesh visualization of model fits
-        
-        % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
-        
-        
-        fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
-        for cond = 1:9
-            subplot(3,3,cond)
-            ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
-            set(gca, 'CLim', [0 .2])
-        end
-        
-        if save_images
-            hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
-        end
-        
-        fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
-        for cond = 1:9
-            subplot(3,3,cond)
-            ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
-            set(gca, 'CLim', [-1 1] *.03)
-        end
-        
-        if save_images
-            hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
-        end
-        
-        
-        fH = figure(1000); clf
-        subplot(2,2,1)
-        ft_plotOnMesh((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,2)
-        ft_plotOnMesh((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,3)
-        ft_plotOnMesh((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
-        set(gca, 'CLim', .5*[-1 1])
-        
-        subplot(2,2,4)
-        ft_plotOnMesh((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
-        set(gca, 'CLim', .2 * [-1 1])
-        
-        if save_images
-            hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
-        end
-        
+    
+    %axis tight
+    
+    %% Mesh visualization of model fits
+    
+    % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
+    
+    
+    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
+    for cond = 1:9
+        subplot(3,3,cond)
+        ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+        set(gca, 'CLim', [0 .2])
+    end
+    
+    if save_images
+        hgexport(fH, fullfile(save_pth, 'Mesh_Gaussian.eps'));
+    end
+    
+    fH = figure(999); clf
+    for cond = 1:9
+        subplot(3,3,cond)
+        ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
+        set(gca, 'CLim', [-1 1] *.03)
+    end
+    
+    if save_images
+        hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
+    end
+    
+    
+    fH = figure(1000); clf
+    subplot(2,2,1)
+    ft_plotOnMesh((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')', 'Gamma power, All gratings minus baseline');
+    set(gca, 'CLim', .5*[-1 1])
+    
+    subplot(2,2,2)
+    ft_plotOnMesh((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')', 'Gamma power, All noise minus baseline');
+    set(gca, 'CLim', .5*[-1 1])
+    
+    subplot(2,2,3)
+    ft_plotOnMesh((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')', 'Gamma power, All gratings minus all noise');
+    set(gca, 'CLim', .5*[-1 1])
+    
+    subplot(2,2,4)
+    ft_plotOnMesh((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')', 'Broadband, All stimuli minus baseline');
+    set(gca, 'CLim', .2 * [-1 1])
+    
+    if save_images
+        hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
         
     end
     

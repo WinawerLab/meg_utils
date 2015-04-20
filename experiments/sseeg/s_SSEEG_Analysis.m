@@ -40,9 +40,15 @@ early_timing_thresh   = 992;      % if diff between two epoch onsets is < this v
 
 
 %% Define variables for this particular subject's session
+<<<<<<< HEAD
 session_name   = 'Session_20150417_wlsubj019';
 session_prefix = 'Session_20150417_1351';
 runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+=======
+session_name   = 'SSEEG_20150403_wl_subj004';
+session_prefix = 'Session_20150403_1145';
+runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+>>>>>>> 24dad45ac9ccece62cd84adc705af3acfc081187
 
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
@@ -157,9 +163,10 @@ design     = design(~badEpochs,:);
 freq = megGetSLandABfrequencies((0:150)/.995, .995, 12/.995);
 
 % denoise parameters (see denoisedata.m)
-opt.pchoose           = -10;  % denoise with exactly 10 PCs for stimulus locked and BB
-opt.npoolmethod       = {'r2','n',60};
+opt.pcchoose           = 1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
+opt.npoolmethod       = {'r2','n',70};
 opt.verbose           = true;
+opt.pcn                 = 70;
 optsl = opt;
 optbb = opt;
 optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
@@ -182,19 +189,20 @@ sensorData = permute(sensorData, [3 1 2]);
 % If requested: Save data
 if save_data
 fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
+parsave([fname '_bb_full70.mat'], 'results', results, 'evalout', evalout, ...
     'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
     'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
 end
 
-%   Denoise for stimulus-locked analysis
+  Denoise for stimulus-locked analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
 
 if save_data
-parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
+parsave([fname '_sl_full.mat'], 'results', results, 'evalout', evalout, ...
     'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
     'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
 end
 
 
-
+%% Visualize
+% sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)

@@ -81,7 +81,7 @@ for which_run = 1:nr_runs
     start_ind = eeg_find_trial_begin(init, ev_ts{which_run});
     ev_ts{which_run}(1:start_ind) = 0;
 
-    if plot_figures, start_inds(which_run) = start_ind; end %#ok<AGROW>
+    if plot_figures, start_inds(which_run) = start_ind; else start_inds(which_run) = start_ind; end %#ok<AGROW>
 end
 
 %% If requested, plot figures
