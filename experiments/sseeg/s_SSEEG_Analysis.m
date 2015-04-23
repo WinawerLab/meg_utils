@@ -60,10 +60,10 @@ which_fields = find(~cellfun(@isempty, strfind(fields, session_prefix)));
 which_fields = which_fields(runs);
 
 % pull out eeg data from el_data structure and store in cell array eeg_ts
-for ii = 1:nr_runs 
-    this_field = fields{which_fields(ii)};
-    eeg_ts{ii} = el_data.(this_field)'; % tranpose so that eeg_ts is time x channels
-end
+    for ii = 1:nr_runs 
+        this_field = fields{which_fields(ii)};
+        eeg_ts{ii} = el_data.(this_field)'; % tranpose so that eeg_ts is time x channels
+    end
 
 % pull out the impedance maps
 tmp =  find(~cellfun(@isempty, strfind(fields, 'Impedances')));
@@ -79,50 +79,50 @@ dir = what(directory_name);
 which_mats = dir.mat(runs);
 
 conditions  = cell(1,nr_runs);
-for ii = 1:nr_runs
-      stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
-      sequence        = find(stimulus_file.stimulus.trigSeq > 0);
-      conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';      
-        if isempty(strfind(session_name, '20150129'))
-        else 
-           conditions{ii} = conditions{ii}(1:12:end);
-        end
-end
+    for ii = 1:nr_runs
+          stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+          sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+          conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';      
+            if isempty(strfind(session_name, '20150129'))
+            else 
+               conditions{ii} = conditions{ii}(1:12:end);
+            end
+    end
 
 init_seq    = stimulus_file.stimulus.flashTimes.flip;
 init_times  = round((init_seq - init_seq(1)) * 1000)+1;
 init_ts     = ones(1, init_times(end)+40);
 
-for jj = 1:2:size(init_times,2)-1
-        init_ts(init_times(jj):init_times(jj+1)) = false;
-end
+    for jj = 1:2:size(init_times,2)-1
+            init_ts(init_times(jj):init_times(jj+1)) = false;
+    end
 
-%% Extract event times and define epoch onset times in samples (or ms if sampling at 1000Hz)
+%% Extract event times from .evt file, and define epoch onset times in samples 
+%  (or in ms if you have sampled at 1000Hz)
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
-% Extract the triggers from the file, and put them in timeseries
 [ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
     s_rate_eeg, s_rate_monitor, runs, eeg_ts, init_ts, plot_figures);
 
-if isempty(strfind(session_name, '20150129'))
-    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
+    if isempty(strfind(session_name, '20150129'))
+        epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
                                                                 epochs_per_block);
-else
-    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
+    else
+        epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
                                                  blocks_per_run, epochs_per_block);
-end      
+    end      
 
 clear ev_pth init_ts;    
 %% Remove epochs with timing errors
 
-for ii = 1:nr_runs
-      lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
-      early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
-      time_errors     = cat(2, lag_epochs, early_epochs);
-      epoch_starts{ii}(time_errors) = [];
-      conditions{ii}(time_errors) = [];
-end
+    for ii = 1:nr_runs
+          lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
+          early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
+          time_errors     = cat(2, lag_epochs, early_epochs);
+          epoch_starts{ii}(time_errors) = [];
+          conditions{ii}(time_errors) = [];
+    end
 
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
@@ -130,11 +130,11 @@ onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
 
 epoch_time  = [0  mode(diff(epoch_starts{1}))-1]/s_rate_eeg;
 ts = [];  conditions=[];
-for ii = 1:nr_runs     
-        [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
-        ts          = cat(2, ts, thists);
-        conditions  = cat(2, conditions, this_conditions);
-end
+    for ii = 1:nr_runs     
+            [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
+            ts          = cat(2, ts, thists);
+            conditions  = cat(2, conditions, this_conditions);
+    end
 
 
 %% PREPROCESS DATA
@@ -182,21 +182,21 @@ sensorData = permute(sensorData, [3 1 2]);
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
 % If requested: Save data
-if save_data
-fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-parsave([fname '_bb_full70.mat'], 'results', results, 'evalout', evalout, ...
-    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-    'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
-end
+    if save_data
+    fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
+    parsave([fname '_bb_full70.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+    end
 
   Denoise for stimulus-locked analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
 
-if save_data
-parsave([fname '_sl_full.mat'], 'results', results, 'evalout', evalout, ...
-    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-    'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
-end
+    if save_data
+    parsave([fname '_sl_full.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+    end
 
 
 %% Visualize
