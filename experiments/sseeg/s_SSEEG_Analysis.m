@@ -72,47 +72,13 @@ for ii = 1:length(tmp), impedances{ii} = el_data.(fields{tmp(ii)}); end
 
 clear el_data;
 
-%% Get conditions
-
-% Make a flicker sequence as presented in the experiment
-if isempty(strfind(session_name, '20150129'))
-    init_series = load('rand_init');
-    init = init_series.start_signal;
-else 
-    init_series = load('regular_init'); % for 'Pilot_SSEEG_20150129_wl_subj001' only
-    init = init_series.init_seq.old;
-end 
-
-% Get events file in useful units (seconds)
-ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
-
-% Extract the triggers from the file, and put them in timeseries
-[ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
-    s_rate_eeg, s_rate_monitor, runs, eeg_ts, init, plot_figures);
-
-clear ev_pth start_signal init;
-
-%% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
-%       NOTE: This function changed to accomodate pilot data set
-%  'Pilot_SSEEG_20150129_wl_subj001' The pilot data set had no DIN events
-%  during the off periods. Look inside the function for instructions, if
-%  you are analyzing data with DIN events across all conditions (on and off
-%  periods)
-if isempty(strfind(session_name, '20150129'))
-    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
-                                                                epochs_per_block);
-else
-    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
-                                                 blocks_per_run, epochs_per_block);
-end                             
-    
-%% Extract conditions from behavioral matfiles, remove epochs with timing errors
+%% Extract conditions and initializing sequence from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 dir = what(directory_name);
 which_mats = dir.mat(runs);
 
-conditions = cell(1,nr_runs);
+conditions  = cell(1,nr_runs);
 for ii = 1:nr_runs
       stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
       sequence        = find(stimulus_file.stimulus.trigSeq > 0);
@@ -121,6 +87,36 @@ for ii = 1:nr_runs
         else 
            conditions{ii} = conditions{ii}(1:12:end);
         end
+end
+
+init_seq    = stimulus_file.stimulus.flashTimes.flip;
+init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+init_ts     = ones(1, init_times(end)+40);
+
+for jj = 1:2:size(init_times,2)-1
+        init_ts(init_times(jj):init_times(jj+1)) = false;
+end
+
+%% Extract event times and define epoch onset times in samples (or ms if sampling at 1000Hz)
+
+ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
+
+% Extract the triggers from the file, and put them in timeseries
+[ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
+    s_rate_eeg, s_rate_monitor, runs, eeg_ts, init_ts, plot_figures);
+
+if isempty(strfind(session_name, '20150129'))
+    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
+                                                                epochs_per_block);
+else
+    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
+                                                 blocks_per_run, epochs_per_block);
+end      
+
+clear ev_pth init_ts;    
+%% Remove epochs with timing errors
+
+for ii = 1:nr_runs
       lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
       early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
       time_errors     = cat(2, lag_epochs, early_epochs);
