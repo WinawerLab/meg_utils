@@ -39,9 +39,17 @@ data = ft_data.trial{1};
 data(badChannels,:) = 0;
 
 % extract trials
-[trl,Events] = trialDef.trialFunHandle(struct('dataset',dataset,'trialdef',...
-    struct('prestim',trialDef.prestim,'poststim',trialDef.poststim,'trig',trialDef.trig)), ...
-    2.5, trialDef.nTrigsExpected);
+
+% ------ HACK  ------
+threshold = 50;
+cfg.trialdef.nTrigsExpected = 1080;
+cfg.trialdef.trig = 161:167;
+cfg.trialdef.prestim = 0;
+cfg.trialdef.poststim = 1;
+
+% ------ HACK  ------
+
+[trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
 
 % data inclusion
 WorkFlow.data_continuous_block = [1 length(data)];
