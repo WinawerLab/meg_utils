@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;    
 verbose               = true;
-which_subject         = 'wlsubj004';
+which_subject         = 'wlsubj019';
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
@@ -166,10 +166,10 @@ design     = design(~badEpochs,:);
 freq = megGetSLandABfrequencies((0:150)/.995, .995, 12/.995);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose           = 1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
-opt.npoolmethod       = {'r2','n',70};
+opt.pcchoose          = -10; %1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
+opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
-opt.pcn                 = 70;
+opt.pcn               = 10;
 optsl = opt;
 optbb = opt;
 optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
@@ -206,6 +206,10 @@ sensorData = permute(sensorData, [3 1 2]);
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
     end
 
+data_to_plot = zeros(1,128);
+tmp = find(badChannels);
+data_to_plot(~badChannels) = results.origmodel.r2;
+figure; plotOnEgi(data_to_plot);
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
