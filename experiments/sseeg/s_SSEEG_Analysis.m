@@ -35,12 +35,18 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;    
 verbose               = true;
+<<<<<<< HEAD
+which_subject         = 'wlsubj004';
+=======
+>>>>>>> 07a4c764d3520d58bd8725077b23c9c562e52b64
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
 
 
 %% Define variables for this particular subject's session
+<<<<<<< HEAD
+=======
 session_name   = 'Session_20150417_wlsubj019';
 session_prefix = 'Session_20150417_1351';
 runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
@@ -48,7 +54,18 @@ runs           = 1:15;  % In case there are irrelevant runs recorderd to check s
 session_name   = 'SSEEG_20150403_wl_subj004';
 session_prefix = 'Session_20150403_1145';
 runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+>>>>>>> 07a4c764d3520d58bd8725077b23c9c562e52b64
 
+switch which_subject
+    case 'wlsubj019'
+        session_name   = 'Session_20150417_wlsubj019';
+        session_prefix = 'Session_20150417_1351';
+        runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+    case 'wlsubj004'
+        session_name   = 'SSEEG_20150403_wl_subj004';
+        session_prefix = 'Session_20150403_1145';
+        runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+end
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
 el_data = load(fullfile(project_path,'Data', session_name, 'raw', session_prefix));
@@ -113,8 +130,14 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
                                                  blocks_per_run, epochs_per_block);
     end      
 
+<<<<<<< HEAD
+directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+thisdir = what(directory_name);
+which_mats = thisdir.mat(runs);
+=======
 clear ev_pth init_ts;    
 %% Remove epochs with timing errors
+>>>>>>> 07a4c764d3520d58bd8725077b23c9c562e52b64
 
     for ii = 1:nr_runs
           lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;

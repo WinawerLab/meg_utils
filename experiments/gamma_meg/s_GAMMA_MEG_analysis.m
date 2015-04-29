@@ -73,7 +73,6 @@ condition_names               = {   ...
 which_data_sets_to_analyze = 6;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
-me
 
 %change server-1 back to server
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
