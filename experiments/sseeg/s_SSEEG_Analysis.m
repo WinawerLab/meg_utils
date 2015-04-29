@@ -163,13 +163,14 @@ design     = design(~badEpochs,:);
 
 % Get 'freq' struct to define stimulus locked and broadband frequencies
 %  This struct is needed as input args for getstimlocked and getbroadband
-freq = megGetSLandABfrequencies((0:150)/.995, .995, 12/.995);
+T = diff(epoch_time)+ 1/s_rate_eeg;
+freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose           = 1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
-opt.npoolmethod       = {'r2','n',70};
+opt.pcchoose          = -10; %1.05;  
+opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
-opt.pcn                 = 70;
+opt.pcn               = 10;
 optsl = opt;
 optbb = opt;
 optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
@@ -189,6 +190,11 @@ sensorData = permute(sensorData, [3 1 2]);
 %   Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
+figure; 
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.finalmodel.r2;
+plotOnEgi(data_to_plot)
+
 % If requested: Save data
     if save_data
     fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
@@ -197,7 +203,7 @@ sensorData = permute(sensorData, [3 1 2]);
         'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
     end
 
-  Denoise for stimulus-locked analysis
+%  Denoise for stimulus-locked analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
 
     if save_data
@@ -206,6 +212,20 @@ sensorData = permute(sensorData, [3 1 2]);
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
     end
 
+figure; 
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.finalmodel.r2;
+plotOnEgi(data_to_plot)
+
+figure; 
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.origmodel.r2;
+plotOnEgi(data_to_plot)
+
+figure; 
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
+plotOnEgi(data_to_plot)
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
