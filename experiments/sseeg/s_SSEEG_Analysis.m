@@ -123,7 +123,8 @@ clear ev_pth init_ts;
           epoch_starts{ii}(time_errors) = [];
           conditions{ii}(time_errors) = [];
     end
-
+    
+clear lag_epochs early_epochs time_errors;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
 onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
@@ -135,7 +136,6 @@ ts = [];  conditions=[];
             ts          = cat(2, ts, thists);
             conditions  = cat(2, conditions, this_conditions);
     end
-
 
 %% PREPROCESS DATA
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
