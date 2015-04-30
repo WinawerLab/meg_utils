@@ -206,10 +206,14 @@ sensorData = permute(sensorData, [3 1 2]);
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
     end
 
-data_to_plot = zeros(1,128);
+data_orig = zeros(1,128);
+data_final = zeros(1,128);
 tmp = find(badChannels);
-data_to_plot(~badChannels) = results.origmodel.r2;
-figure; plotOnEgi(data_to_plot);
+data_orig(~badChannels) = results.origmodel.r2;
+data_final(~badChannels) = results.finalmodel.r2;
+figure(1); plotOnEgi(data_orig); title('Original'); colorbar; 
+figure(2); plotOnEgi(data_final); title('Final'); colorbar; 
+figure(3); plotOnEgi(data_final - data_orig); title('Final minus Original'); colorbar; 
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
