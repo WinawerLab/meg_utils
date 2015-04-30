@@ -217,3 +217,23 @@ figure(3); plotOnEgi(data_final - data_orig); title('Final minus Original'); col
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
+
+%% Visually compare EEG data from before and after denoising
+
+ts_denoised = permute(denoisedts{1}, [2 3 1]);
+
+visual_channels = 55:95;
+ts_cat = [];
+for ii = 73:85
+    ts_cat = cat(1, ts_cat, sensorData(:, ii, visual_channels));
+end
+
+denoised_ts_cat = [];
+for ii = 73:85
+    denoised_ts_cat = cat(1, denoised_ts_cat, ts_denoised(:, ii, visual_channels));
+end
+
+figure(8); plot(squeeze(denoised_ts_cat)); title('Denoised'); 
+
+figure(9); plot(squeeze(ts_cat)); title('Original');
+
