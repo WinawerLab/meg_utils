@@ -166,8 +166,8 @@ design     = design(~badEpochs,:);
 freq = megGetSLandABfrequencies((0:150)/.995, .995, 12/.995);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose          = -10; %1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
-opt.npoolmethod       = {'r2','n',60};
+opt.pcchoose          = -7;  % denoise with exactly 10 PCs for stimulus locked and BB
+opt.npoolmethod       = {'r2','n',55};
 opt.verbose           = true;
 opt.pcn               = 10;
 optsl = opt;
@@ -205,15 +205,21 @@ sensorData = permute(sensorData, [3 1 2]);
         'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
     end
+%% Visualize results and noise pool
+% manually define noise pool
+
+% what was your noise pool?
+noise_pool = zeros(1,128);
+noise_pool(results.noisepool) = true;
+figure; plotOnEgi(noise_pool); title('Noise pool'); 
 
 data_orig = zeros(1,128);
 data_final = zeros(1,128);
-tmp = find(badChannels);
-data_orig(~badChannels) = results.origmodel.r2;
-data_final(~badChannels) = results.finalmodel.r2;
-figure(1); plotOnEgi(data_orig); title('Original'); colorbar; 
-figure(2); plotOnEgi(data_final); title('Final'); colorbar; 
-figure(3); plotOnEgi(data_final - data_orig); title('Final minus Original'); colorbar; 
+data_orig = results.origmodel.r2;
+data_final = results.finalmodel.r2;
+figure(5507); plotOnEgi(data_orig); title('Original (55chan, 7PCs)'); colorbar; 
+figure(5607); plotOnEgi(data_final); title('Final (55chan, 7PCs)'); colorbar; 
+figure(5707); plotOnEgi(data_final - data_orig); title('Final minus Original (55chan, 7PCs)'); colorbar; 
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
@@ -233,7 +239,6 @@ for ii = 73:85
     denoised_ts_cat = cat(1, denoised_ts_cat, ts_denoised(:, ii, visual_channels));
 end
 
-figure(8); plot(squeeze(denoised_ts_cat)); title('Denoised'); 
-
-figure(9); plot(squeeze(ts_cat)); title('Original');
+figure(13); plot(squeeze(denoised_ts_cat)); title('Denoised'); 
+figure(14); plot(squeeze(ts_cat)); title('Original');
 
