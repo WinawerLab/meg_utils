@@ -33,12 +33,12 @@ blocks_per_run        = 12;       % number of blocks in one experimental run
 var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
 bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
-data_channels         = 1:128;    
+data_channels         = 1:128;
 verbose               = true;
 which_subject         = 'wlsubj019';
 
-late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
-early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
+late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
+early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
 
 
 %% Define variables for this particular subject's session
@@ -64,10 +64,10 @@ which_fields = find(~cellfun(@isempty, strfind(fields, session_prefix)));
 which_fields = which_fields(runs);
 
 % pull out eeg data from el_data structure and store in cell array eeg_ts
-    for ii = 1:nr_runs 
-        this_field = fields{which_fields(ii)};
-        eeg_ts{ii} = el_data.(this_field)'; % tranpose so that eeg_ts is time x channels
-    end
+for ii = 1:nr_runs
+    this_field = fields{which_fields(ii)};
+    eeg_ts{ii} = el_data.(this_field)'; % tranpose so that eeg_ts is time x channels
+end
 
 % pull out the impedance maps
 tmp =  find(~cellfun(@isempty, strfind(fields, 'Impedances')));
@@ -83,25 +83,25 @@ dir = what(directory_name);
 which_mats = dir.mat(runs);
 
 conditions  = cell(1,nr_runs);
-    for ii = 1:nr_runs
-          stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
-          sequence        = find(stimulus_file.stimulus.trigSeq > 0);
-          conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';      
-            if isempty(strfind(session_name, '20150129'))
-            else 
-               conditions{ii} = conditions{ii}(1:12:end);
-            end
+for ii = 1:nr_runs
+    stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+    sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+    conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+    if isempty(strfind(session_name, '20150129'))
+    else
+        conditions{ii} = conditions{ii}(1:12:end);
     end
+end
 
 init_seq    = stimulus_file.stimulus.flashTimes.flip;
 init_times  = round((init_seq - init_seq(1)) * 1000)+1;
 init_ts     = ones(1, init_times(end)+40);
 
-    for jj = 1:2:size(init_times,2)-1
-            init_ts(init_times(jj):init_times(jj+1)) = false;
-    end
+for jj = 1:2:size(init_times,2)-1
+    init_ts(init_times(jj):init_times(jj+1)) = false;
+end
 
-%% Extract event times from .evt file, and define epoch onset times in samples 
+%% Extract event times from .evt file, and define epoch onset times in samples
 %  (or in ms if you have sampled at 1000Hz)
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
@@ -109,29 +109,29 @@ ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.ev
 [ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
     s_rate_eeg, s_rate_monitor, runs, eeg_ts, init_ts, plot_figures);
 
-    if isempty(strfind(session_name, '20150129'))
-        epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
-                                                                epochs_per_block);
-    else
-        epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
-                                                 blocks_per_run, epochs_per_block);
-    end      
+if isempty(strfind(session_name, '20150129'))
+    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
+        epochs_per_block);
+else
+    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
+        blocks_per_run, epochs_per_block);
+end
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 thisdir = what(directory_name);
 which_mats = thisdir.mat(runs);
 
-clear ev_pth init_ts;    
+clear ev_pth init_ts;
 %% Remove epochs with timing errors
 
-    for ii = 1:nr_runs
-          lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
-          early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
-          time_errors     = cat(2, lag_epochs, early_epochs);
-          epoch_starts{ii}(time_errors) = [];
-          conditions{ii}(time_errors) = [];
-    end
-    
+for ii = 1:nr_runs
+    lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
+    early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
+    time_errors     = cat(2, lag_epochs, early_epochs);
+    epoch_starts{ii}(time_errors) = [];
+    conditions{ii}(time_errors) = [];
+end
+
 clear lag_epochs early_epochs time_errors;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
@@ -139,25 +139,19 @@ onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
 
 epoch_time  = [0  mode(diff(epoch_starts{1}))-1]/s_rate_eeg;
 ts = [];  conditions=[];
-    for ii = 1:nr_runs     
-            [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
-            ts          = cat(2, ts, thists);
-            conditions  = cat(2, conditions, this_conditions);
-    end
+for ii = 1:nr_runs
+    [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
+    ts          = cat(2, ts, thists);
+    conditions  = cat(2, conditions, this_conditions);
+end
 
 %% PREPROCESS DATA
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
 
-% ******** Which option is better? **********
-% this turns the bad epochs and bad channels in sensorData into NaN's, so
-% we have the same dimensionality later on when plotting, not sure if
-% better than the below option.
-    sensorData(:, badEpochs, :) = NaN;
-    sensorData(:, :, badChannels) = NaN;
 
 % this removes the bad epochs and bad channels from the sensorData matrix
-%   sensorData = sensorData(:,~badEpochs,~badChannels);
+sensorData = sensorData(:,~badEpochs,~badChannels);
 
 %% ********* Prepare and solve GLM *********
 
@@ -167,9 +161,7 @@ design(conditions==1,1) = 1; % condition 1 is full field
 design(conditions==5,2) = 1; % condition 5 is right (??)
 design(conditions==7,3) = 1; % condition 7 is left (??)
 
-% similar decision as above
-    design(badEpochs, :) = NaN;
-%   design     = design(~badEpochs,:);
+design = design(~badEpochs,:);
 
 % Get 'freq' struct to define stimulus locked and broadband frequencies
 %  This struct is needed as input args for getstimlocked and getbroadband
@@ -177,19 +169,14 @@ T = diff(epoch_time)+ 1/s_rate_eeg;
 freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
-<<<<<<< HEAD
-opt.pcchoose          = -10; %1.05;  
-opt.npoolmethod       = {'r2','n',60};
-=======
-opt.pcchoose          = -7;  % denoise with exactly 10 PCs for stimulus locked and BB
+opt.pcchoose          = -10; %1.05;
 opt.npoolmethod       = {'r2','n',55};
->>>>>>> de679eac43dda49a0cb3823fb82699f89a4015c0
 opt.verbose           = true;
 opt.pcn               = 10;
-opt.savepcs           = 1;
+opt.savepcs           = 0;
 optsl = opt;
 optbb = opt;
-optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
+optbb.preprocessfun   = @(x) hpf(x, freq.sl);      % preprocess data with a high pass filter for broadband analysis
 evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
 
@@ -201,65 +188,80 @@ evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite
 % Permute sensorData for denoising
 sensorData = permute(sensorData, [3 1 2]);
 
-%% ********* Denoise the data *********
+%% ********* Denoise the broadband data *********
 
 %   Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
-figure; 
+%% Plot results broadband results
+fH = figure(1); clf, set(fH, 'Name', 'Denoised')
+subplot(2,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot)
+plotOnEgi(data_to_plot), title('R2'), colorbar
 
-% If requested: Save data
-    if save_data
-    fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-    parsave([fname '_bb_full70.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
-    end
+for ii = 1:3
+    subplot(2,3,1+ii)
+    data_to_plot = zeros(1, 128);
+    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
+       results.finalmodel.beta_se(ii,:)  ;
+    plotOnEgi(data_to_plot), title(sprintf('SNR, condition %d ', ii))
+    set(gca, 'CLim', [-3 3])
+    colorbar
+end
 
-%  Denoise for stimulus-locked analysis
-[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
-
-    if save_data
-    parsave([fname '_sl_full.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
-    end
-<<<<<<< HEAD
-
-figure; 
-data_to_plot = zeros(1, 128);
-data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot)
-
-figure; 
+figure;
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.origmodel.r2;
 plotOnEgi(data_to_plot)
 
-figure; 
+% If requested: Save data
+if save_data
+    fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
+    parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+end
+
+%%  Denoise for stimulus-locked analysis
+[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
+
+if save_data
+    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+end
+
+
+figure;
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.finalmodel.r2;
+plotOnEgi(data_to_plot)
+
+figure;
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.origmodel.r2;
+plotOnEgi(data_to_plot)
+
+figure;
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot)
-=======
 %% Visualize results and noise pool
 % manually define noise pool
 
 % what was your noise pool?
 noise_pool = zeros(1,128);
 noise_pool(results.noisepool) = true;
-figure; plotOnEgi(noise_pool); title('Noise pool'); 
+figure; plotOnEgi(noise_pool); title('Noise pool');
 
-data_orig = zeros(1,128);
-data_final = zeros(1,128);
-data_orig = results.origmodel.r2;
-data_final = results.finalmodel.r2;
-figure(5507); plotOnEgi(data_orig); title('Original (55chan, 7PCs)'); colorbar; 
-figure(5607); plotOnEgi(data_final); title('Final (55chan, 7PCs)'); colorbar; 
-figure(5707); plotOnEgi(data_final - data_orig); title('Final minus Original (55chan, 7PCs)'); colorbar; 
->>>>>>> de679eac43dda49a0cb3823fb82699f89a4015c0
+data_orig     = zeros(1,128);
+data_final    = zeros(1,128);
+data_orig     = results.origmodel.r2;
+data_final    = results.finalmodel.r2;
+figure(5507); plotOnEgi(data_orig); title('Original (55chan, 7PCs)'); colorbar;
+figure(5607); plotOnEgi(data_final); title('Final (55chan, 7PCs)'); colorbar;
+figure(5707); plotOnEgi(data_final - data_orig); title('Final minus Original (55chan, 7PCs)'); colorbar;
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
@@ -276,6 +278,6 @@ for ii = 1:24
 end
 
 figure(13); plot(ts_cat'); title('Original');
-figure(14); plot(denoised_ts_cat'); title('Denoised'); 
+figure(14); plot(denoised_ts_cat'); title('Denoised');
 
 
