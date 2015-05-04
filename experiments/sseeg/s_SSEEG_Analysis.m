@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;    
 verbose               = true;
-which_subject         = 'wlsubj004';
+which_subject         = 'wlsubj019';
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
@@ -167,8 +167,13 @@ T = diff(epoch_time)+ 1/s_rate_eeg;
 freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
+<<<<<<< HEAD
 opt.pcchoose          = -10; %1.05;  
 opt.npoolmethod       = {'r2','n',60};
+=======
+opt.pcchoose          = -7;  % denoise with exactly 10 PCs for stimulus locked and BB
+opt.npoolmethod       = {'r2','n',55};
+>>>>>>> de679eac43dda49a0cb3823fb82699f89a4015c0
 opt.verbose           = true;
 opt.pcn               = 10;
 optsl = opt;
@@ -211,6 +216,7 @@ plotOnEgi(data_to_plot)
         'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
     end
+<<<<<<< HEAD
 
 figure; 
 data_to_plot = zeros(1, 128);
@@ -226,6 +232,42 @@ figure;
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot)
+=======
+%% Visualize results and noise pool
+% manually define noise pool
+
+% what was your noise pool?
+noise_pool = zeros(1,128);
+noise_pool(results.noisepool) = true;
+figure; plotOnEgi(noise_pool); title('Noise pool'); 
+
+data_orig = zeros(1,128);
+data_final = zeros(1,128);
+data_orig = results.origmodel.r2;
+data_final = results.finalmodel.r2;
+figure(5507); plotOnEgi(data_orig); title('Original (55chan, 7PCs)'); colorbar; 
+figure(5607); plotOnEgi(data_final); title('Final (55chan, 7PCs)'); colorbar; 
+figure(5707); plotOnEgi(data_final - data_orig); title('Final minus Original (55chan, 7PCs)'); colorbar; 
+>>>>>>> de679eac43dda49a0cb3823fb82699f89a4015c0
 
 %% Visualize
 % sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
+
+%% Visually compare EEG data from before and after denoising
+
+ts_denoised = permute(denoisedts{1}, [2 3 1]);
+
+visual_channels = 55:95;
+ts_cat = [];
+for ii = 73:85
+    ts_cat = cat(1, ts_cat, sensorData(:, ii, visual_channels));
+end
+
+denoised_ts_cat = [];
+for ii = 73:85
+    denoised_ts_cat = cat(1, denoised_ts_cat, ts_denoised(:, ii, visual_channels));
+end
+
+figure(13); plot(squeeze(denoised_ts_cat)); title('Denoised'); 
+figure(14); plot(squeeze(ts_cat)); title('Original');
+
