@@ -149,7 +149,15 @@ ts = [];  conditions=[];
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
 
-sensorData = sensorData(:,~badEpochs,~badChannels);
+% ******** Which option is better? **********
+% this turns the bad epochs and bad channels in sensorData into NaN's, so
+% we have the same dimensionality later on when plotting, not sure if
+% better than the below option.
+    sensorData(:, badEpochs, :) = NaN;
+    sensorData(:, :, badChannels) = NaN;
+
+% this removes the bad epochs and bad channels from the sensorData matrix
+%   sensorData = sensorData(:,~badEpochs,~badChannels);
 
 %% ********* Prepare and solve GLM *********
 
@@ -159,7 +167,9 @@ design(conditions==1,1) = 1; % condition 1 is full field
 design(conditions==5,2) = 1; % condition 5 is right (??)
 design(conditions==7,3) = 1; % condition 7 is left (??)
 
-design     = design(~badEpochs,:);
+% similar decision as above
+    design(badEpochs, :) = NaN;
+%   design     = design(~badEpochs,:);
 
 % Get 'freq' struct to define stimulus locked and broadband frequencies
 %  This struct is needed as input args for getstimlocked and getbroadband
@@ -176,6 +186,7 @@ opt.npoolmethod       = {'r2','n',55};
 >>>>>>> de679eac43dda49a0cb3823fb82699f89a4015c0
 opt.verbose           = true;
 opt.pcn               = 10;
+opt.savepcs           = 1;
 optsl = opt;
 optbb = opt;
 optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
@@ -255,19 +266,16 @@ figure(5707); plotOnEgi(data_final - data_orig); title('Final minus Original (55
 
 %% Visually compare EEG data from before and after denoising
 
-ts_denoised = permute(denoisedts{1}, [2 3 1]);
-
 visual_channels = 55:95;
 ts_cat = [];
-for ii = 73:85
-    ts_cat = cat(1, ts_cat, sensorData(:, ii, visual_channels));
-end
-
 denoised_ts_cat = [];
-for ii = 73:85
-    denoised_ts_cat = cat(1, denoised_ts_cat, ts_denoised(:, ii, visual_channels));
+
+for ii = 1:24
+    ts_cat          = cat(2, ts_cat, sensorData(visual_channels, :, ii));
+    denoised_ts_cat = cat(2, denoised_ts_cat, denoisedts{1}(visual_channels, :, ii));
 end
 
-figure(13); plot(squeeze(denoised_ts_cat)); title('Denoised'); 
-figure(14); plot(squeeze(ts_cat)); title('Original');
+figure(13); plot(ts_cat'); title('Original');
+figure(14); plot(denoised_ts_cat'); title('Denoised'); 
+
 
