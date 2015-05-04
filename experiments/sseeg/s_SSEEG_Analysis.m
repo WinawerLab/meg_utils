@@ -139,7 +139,7 @@ for ii = 1:nr_runs
     epoch_starts{ii}(time_errors) = [];
     conditions{ii}(time_errors) = [];
 end
-
+sprintf('%d epochs were removed due to timing errors',size(time_errors,2))
 clear lag_epochs early_epochs time_errors;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
@@ -153,15 +153,14 @@ for ii = 1:nr_runs
     conditions  = cat(2, conditions, this_conditions);
 end
 
-%% PREPROCESS DATA
+%% Preprocess data
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
-
 
 % this removes the bad epochs and bad channels from the sensorData matrix
 sensorData = sensorData(:,~badEpochs,~badChannels);
 
-%% ********* Prepare and solve GLM *********
+%% Prepare and solve GLM
 
 % add denoiseproject path
 addpath(genpath('/Users/winawerlab/matlab/git/denoiseproject/'));
@@ -181,16 +180,16 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
+opt.npcs2try          = 20;
 opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
-opt.pcn               = 10;
+opt.pcn               = 20;
 opt.savepcs           = 0;
 optsl = opt;
 optbb = opt;
-optbb.preprocessfun   = @(x) hpf(x, freq.sl);      % preprocess data with a high pass filter for broadband analysis
+optbb.preprocessfun   = @(x)hpf(x, freq.sl);       % preprocess data with a high pass filter for broadband analysis
 evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
-
 
 % The denoise algorithm needs:
 % data      : time series [channel x time samples x epoch]
@@ -205,27 +204,31 @@ sensorData = permute(sensorData, [3 1 2]);
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
 %% Plot broadband results
-fH = figure(1); clf, set(fH, 'Name', 'Denoised')
-subplot(2,3,1)
+fH = figure(3); clf, set(fH, 'Name', 'Denoised')
+subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.origmodel.r2;
 plotOnEgi(data_to_plot), title('original R2'), colorbar
-subplot(2,3,2)
+subplot(3,3,4)
 data_to_plot(~badChannels) = results.finalmodel.r2;
 plotOnEgi(data_to_plot), title('final R2'), colorbar
-subplot(2,3,3)
+subplot(3,3,7)
 data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar
 
+a = [2 5 8];
+cond = {'Full', 'Right', 'Left'}
 for ii = 1:3
-    subplot(2,3,3+ii)
-    data_to_plot = zeros(1, 128);
+        subplot(3,3,a(ii))
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+    results.finalmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+        subplot(3,3,a(ii)+1);
     data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
-       results.finalmodel.beta_se(ii,:)  ;
-    plotOnEgi(data_to_plot), title(sprintf('SNR, condition %d ', ii))
-    set(gca, 'CLim', [-3 3])
-    colorbar
+    results.finalmodel.beta_se(ii,:); 
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
 end
+
 
 % If requested: Save data
 if save_data
