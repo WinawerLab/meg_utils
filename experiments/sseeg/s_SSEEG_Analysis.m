@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj001';
+which_subject         = 'wlsubj004';
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
@@ -109,8 +109,8 @@ end
 %  (or in ms if you have sampled at 1000Hz)
 
 % for eline's data only
-init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
-init_ts = init.init_seq.old;
+% init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+% init_ts = init.init_seq.old;
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
@@ -131,16 +131,16 @@ which_mats = thisdir.mat(runs);
 
 clear ev_pth init_ts;
 %% Remove epochs with timing errors
-
+time_errors = cell(1,nr_runs);
 for ii = 1:nr_runs
     lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
     early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
-    time_errors     = cat(2, lag_epochs, early_epochs);
-    epoch_starts{ii}(time_errors) = [];
-    conditions{ii}(time_errors) = [];
+    time_errors{ii} = sort(cat(2, lag_epochs, early_epochs));
+    epoch_starts{ii}(time_errors{ii}) = [];
+    conditions{ii}(time_errors{ii})   = [];
 end
-sprintf('%d epochs were removed due to timing errors',size(time_errors,2))
-clear lag_epochs early_epochs time_errors;
+sprintf('%d epochs were removed due to timing errors',sum(cellfun(@numel, time_errors)))
+clear lag_epochs early_epochs;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
 onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
