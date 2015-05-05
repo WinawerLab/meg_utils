@@ -75,7 +75,7 @@ blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
 %change server-1 back to server
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
+meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
@@ -185,13 +185,14 @@ for subject_num = which_data_sets_to_analyze
     
     f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
+    num_time_points = epoch_start_end(2)-epoch_start_end(1)+0.001;
     
     num_channels = length(data_channels);
     out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
-    fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
+    fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
     
     warning off 'MATLAB:subsassigndimmismatch'
     
