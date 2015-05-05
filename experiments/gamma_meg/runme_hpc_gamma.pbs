@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=4:ppn=4
+#PBS -l nodes=1:ppn=4
 #PBS -l walltime=20:00:00
 #PBS -l mem=120GB
 #PBS -N HPC_Gamma
@@ -13,6 +13,6 @@ cd /scratch/ek99/meg_utils/experiments/gamma_meg
 # If the files you are running are not in the same folder as this script,
 # you can insert "addpath(genpath('/PATH/TO/FILES/'));" before the command
 # you want to run.
-matlab -nodisplay -r "addpath(genpath('/scratch/ek99/meg_utils')); HPC_Gamma([1:2],1000); exit()"
+matlab -nodisplay -r "addpath(genpath('/scratch/ek99/meg_utils')); HPC_Gamma(1,1000); exit()"
 
 exit
