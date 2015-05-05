@@ -64,8 +64,9 @@ set(handle,'userdata','plotOnEgi');
 % colormap(jmaColors('usadarkblue'));
 
 if showNumbers,
-    for ii = 1:size(tEpos,1); text(tEpos(ii,1), tEpos(ii,2), num2str(ii)); end
+    for ii = 1:size(tEpos,1); text(tEpos(ii,1), tEpos(ii,2), num2str(ii), 'FontSize', 10); end
 end
+
 
 if nargout >= 1
 varargout{1} = handle;

@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj004';
+which_subject         = 'wlsubj019';
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
@@ -179,8 +179,8 @@ T = diff(epoch_time)+ 1/s_rate_eeg;
 freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose          = 1.05;
-opt.npcs2try          = 20;
+opt.pcchoose          = -10;
+opt.npcs2try          = 10;
 opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
 opt.pcn               = 20;
@@ -204,7 +204,8 @@ sensorData = permute(sensorData, [3 1 2]);
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
 %% Plot broadband results
-fH = figure(3); clf, set(fH, 'Name', 'Denoised')
+
+fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband 10pcs')
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.origmodel.r2;
@@ -217,7 +218,7 @@ data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar
 
 a = [2 5 8];
-cond = {'Full', 'Right', 'Left'}
+cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
         subplot(3,3,a(ii))
     data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
@@ -243,20 +244,29 @@ end
 
 %% Plot stimulus locked results
 
-fH = figure(1); clf, set(fH, 'Name', 'Denoised')
-subplot(2,3,1)
+fH = figure(3); clf, set(fH, 'Name', 'Stim-Locked Denoised')
+subplot(3,3,1)
 data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.origmodel.r2;
+plotOnEgi(data_to_plot), title('original R2'), colorbar
+subplot(3,3,4)
 data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot), title('R2'), colorbar
+plotOnEgi(data_to_plot), title('final R2'), colorbar
+subplot(3,3,7)
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
+plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar
 
+a = [2 5 8];
+cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
-    subplot(2,3,1+ii)
-    data_to_plot = zeros(1, 128);
+        subplot(3,3,a(ii))
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+    results.origmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+        subplot(3,3,a(ii)+1);
     data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
-       results.finalmodel.beta_se(ii,:)  ;
-    plotOnEgi(data_to_plot), title(sprintf('SNR, condition %d ', ii))
-    set(gca, 'CLim', [-3 3])
-    colorbar
+    results.finalmodel.beta_se(ii,:); 
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
 end
 
 % save data
@@ -266,8 +276,8 @@ if save_data
         'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
 end
 
-%% Visualize results and noise pool
-% what was your noise pool?
+%% Visualize the noise pool
+
 noise_pool = zeros(1,128);
 noise_pool(results.noisepool) = true;
 figure; plotOnEgi(noise_pool); title('Noise pool');
