@@ -56,7 +56,7 @@ parfor subject_num = which_data_sets_to_analyze
     
     if subject_num == 5 || subject_num == 6 
         intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
-        epoch_start_end        = [0.55 1.049];% start and end of epoch, relative to trigger, in seconds
+        epoch_start_end        = [0.05 .549]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
 
     else
         intertrial_trigger_num = 10;
@@ -234,7 +234,7 @@ parfor subject_num = which_data_sets_to_analyze
     fit_f2_sd  = nanstd(fit_f2,[],4);
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData',subject_num));
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_first500',subject_num));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);
