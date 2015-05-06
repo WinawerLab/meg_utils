@@ -52,7 +52,7 @@ d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 %% Loops over datasets
-for subject_num = which_data_sets_to_analyze
+parfor subject_num = which_data_sets_to_analyze
     
     if subject_num == 5 || subject_num == 6 
         intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
