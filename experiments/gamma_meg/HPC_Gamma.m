@@ -234,7 +234,7 @@ parfor subject_num = which_data_sets_to_analyze
     fit_f2_sd  = nanstd(fit_f2,[],4);
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData',which_data_sets_to_analyze));
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData',subject_num));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);
