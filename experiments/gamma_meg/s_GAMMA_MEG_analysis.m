@@ -51,11 +51,11 @@ produce_figures               = true;        % If you want figures in case of de
 denoise_via_pca               = false;       % Do you want to use megde noise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [0.550 1.049];% start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [0.050 0.549];% start and end of epoch, relative to trigger, in seconds
 
-intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
+intertrial_trigger_num        = 10;          % the MEG trigger value that corresponds to the intertrial interval
 
-save_images                   = true;
+save_images                   = false;
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -70,10 +70,9 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 6;
+which_data_sets_to_analyze = 5;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
-me
 
 %change server-1 back to server
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip', 'yokogawa_defaults')
@@ -321,10 +320,91 @@ for subject_num = which_data_sets_to_analyze
     for c = 1:12
         subplot(3,4,c)
         data_to_plot = snr_w_gauss(:,c)';
-        data_to_plot(abs(data_to_plot) < threshold) = 0;
+        %data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(data_to_plot, contrastnames{c});
         set(gca, 'CLim', [-1 1]* 10)
     end
+    
+    %% Plots for URC poster
+    
+    threshold = 1;
+%     fH = figure(1); clf, set(fH, 'name', 'Gamma weight')
+    % noise gamma
+    data_to_plot = snr_w_gauss(:,1)';
+    data_to_plot(abs(data_to_plot) < threshold) = 0;
+    
+    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+
+    makeprettyaxes(gca,9,9);
+    set(ch,'ytick',-10:10:10);
+%     makeprettyaxes(ch,9,9);
+    title(contrastnames{1})
+    
+    hgexport(fH, fullfile(project_pth,'figure_gammapower_noise_s1.eps'));
+    
+    
+    %%
+%         fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
+    % Gratings gamma
+    data_to_plot = snr_w_gauss(:,2)';
+    data_to_plot(abs(data_to_plot) < threshold) = 0;
+    
+    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+
+    makeprettyaxes(gca,9,9);
+    set(ch,'ytick',-10:10:10);
+%     makeprettyaxes(ch,9,9);
+    title(contrastnames{2})
+    
+
+    hgexport(fH, fullfile(project_pth,'figure_gammapower_gratings_s1.eps')); 
+    %% Broadband noise and gratings
+    
+%     fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
+%     for c = [2 1]
+%         subplot(1,2,c)
+        data_to_plot = snr_w_pwr(:,2)';
+        data_to_plot(abs(data_to_plot) < threshold) = 0;
+%         ft_plotOnMesh(data_to_plot, contrastnames{c});
+%         set(gca, 'CLim', [-1 1]* 10)
+%     end
+    
+    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+
+    makeprettyaxes(gca,9,9);
+    set(ch,'ytick',-10:10:10);
+%     makeprettyaxes(ch,9,9);
+    title(contrastnames{2})
+    
+
+    
+     hgexport(fH, fullfile(project_pth,'figure_bbpower_gratings_s1.eps'));   
+    
+
+
+    
+    
+    
+    
+    %% Broadband noise and gratings
+    
+%     fH = figure(4); clf, set(fH, 'name', 'Broadband weight')
+%     for c = [2 1]
+%         subplot(1,2,c)
+        data_to_plot = snr_w_pwr(:,1)';
+        data_to_plot(abs(data_to_plot) < threshold) = 0;
+%         ft_plotOnMesh(data_to_plot, contrastnames{c});
+%         set(gca, 'CLim', [-1 1]* 10)
+%     end
+    
+    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+
+    makeprettyaxes(gca,9,9);
+    set(ch,'ytick',-10:10:10);
+%     makeprettyaxes(ch,9,9);
+    title(contrastnames{1})
+    
+     hgexport(fH, fullfile(project_pth,'figure_bbpower_noise_s1.eps'));   
     
     %% Plot Gaussian fits
     line_width = 2; % line width for
