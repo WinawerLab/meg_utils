@@ -40,11 +40,11 @@ data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
-denoise_with_nonphys_channels = true;        % Regress out time series from 3 nuissance channels
+denoise_with_nonphys_channels = false;        % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 5; % number of bootstrap samples
+nboot                         = 1; % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -55,7 +55,7 @@ epoch_start_end               = [0.550 1.049];% start and end of epoch, relative
 
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
-save_images                   = true;
+save_images                   = false;
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -157,21 +157,25 @@ for subject_num = which_data_sets_to_analyze
         % spectral data, time points x epochs x channel
         these_data = spectral_data(:,these_epochs,data_channels);
         
-        % reshape so that epochs are in rows (needed for bootstrp)
-        these_data = permute(these_data, [2 1 3]);
+        if nboot > 1
+            % reshape so that epochs are in rows (needed for bootstrp)
+            these_data = permute(these_data, [2 1 3]);
+            
+            % log normalized mean of spectral power
+            bootfun = @(x) squeeze(exp(nanmean(log(x),1)));
+            
+            % bootstat by definition is a matrix: nboot x (freq x channel)
+            bootstat = bootstrp(nboot, bootfun, these_data);
+            
+            % reshape bootstat to 3D-array: nboot x freq x channel
+            bootstat = reshape(bootstat, nboot, length(t), []);
+            
+            % spectral_data_boots is freq x condition x channel x boot
+            spectral_data_boots(:,ii,:,:) = permute(bootstat,[2 3 1]);
         
-        % log normalized mean of spectral power
-        bootfun = @(x) squeeze(exp(nanmean(log(x),1)));
-        
-        % bootstat by definition is a matrix: nboot x (freq x channel)
-        bootstat = bootstrp(nboot, bootfun, these_data);
-        
-        % reshape bootstat to 3D-array: nboot x freq x channel
-        bootstat = reshape(bootstat, nboot, length(t), []);
-        
-        % spectral_data_boots is freq x condition x channel x boot
-        spectral_data_boots(:,ii,:,:) = permute(bootstat,[2 3 1]);
-        
+        else
+            spectral_data_boots(:,ii,:,:) = exp(nanmean(log(these_data),2));
+        end
     end
     fprintf('Done!\n');
     
@@ -185,7 +189,7 @@ for subject_num = which_data_sets_to_analyze
     
     f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
-    num_time_points = epoch_start_end(2)-epoch_start_end(1)+0.001;
+    num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
     
     num_channels = length(data_channels);
     out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
@@ -254,6 +258,11 @@ for subject_num = which_data_sets_to_analyze
     
     
     %% Calculating SNR contrasts
+    if nboot > 1,
+        summary_stat = @(x) nanmean(x,3) ./ nanstd(x, [], 3);
+    else
+        summary_stat = @(x) nanmean(x,3);
+    end
     
     contrasts = [...
         1 1 1 1 0 0 0 0 0 -4; ...    % noise - baseline
@@ -301,28 +310,27 @@ for subject_num = which_data_sets_to_analyze
     tmp_data = reshape(tmp_data, num_conditions, []);
     tmp = contrasts*tmp_data;
     tmp = reshape(tmp, num_contrasts, num_channels, nboot);
-    snr_w_pwr  = nanmean(tmp,3)./nanstd(tmp, [], 3);
-    snr_w_pwr = snr_w_pwr';
+
+    
+    snr_w_pwr = summary_stat(tmp)';
 
     tmp_data = permute(w_gauss, [2 1 3]);
     tmp_data = reshape(tmp_data, num_conditions, []);
     tmp = contrasts*tmp_data;
     tmp = reshape(tmp, num_contrasts, num_channels, nboot);
-    snr_w_gauss  = nanmean(tmp,3)./nanstd(tmp, [], 3);
-    snr_w_gauss  = snr_w_gauss';
+    snr_w_gauss  = summary_stat(tmp)';    
     
     % threshold (replace SNR values < 2 or > 20 with 0)
-        
-    
+            
     %% SNR Mesh (WIP)
-    threshold = 3;
+    threshold = 0;%3;
     % gaussing weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for c = 1:12
         subplot(3,4,c)
         data_to_plot = snr_w_gauss(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
-        ft_plotOnMesh(data_to_plot, contrastnames{c});
+        ft_plotOnMesh(data_to_plot', contrastnames{c});
         set(gca, 'CLim', [-1 1]* 10)
     end
     

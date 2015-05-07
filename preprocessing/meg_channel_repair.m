@@ -43,7 +43,7 @@ sensorDataOut(:,epochsAllGood,:) = sensorDataIn(:,epochsAllGood,:);
 % Interpolate the rest
 for ii = 1:length(epochsToInterpolate)
     thisEpoch = epochsToInterpolate(ii);
-    badChannels = outliers(thisEpoch,:);
+    badChannels = logical(outliers(thisEpoch,:));
     goodChannels = ~badChannels;
     
     weightMatrix = connectivityMatrix;
@@ -53,4 +53,5 @@ for ii = 1:length(epochsToInterpolate)
     
     thisdata = weightMatrix*permute(sensorDataIn(:,thisEpoch,:), [3 1 2]);
     sensorDataOut(:,thisEpoch,:) = thisdata';
+end
 end
