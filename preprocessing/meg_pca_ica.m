@@ -1,4 +1,4 @@
-function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef)
+function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef, onsets, conditions)
 %
 % function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef)
 %
@@ -39,17 +39,13 @@ data = ft_data.trial{1};
 data(badChannels,:) = 0;
 
 % extract trials
+% [trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
 
-% ------ HACK  ------
-threshold = 50;
-cfg.trialdef.nTrigsExpected = 1080;
-cfg.trialdef.trig = 161:167;
-cfg.trialdef.prestim = 0;
-cfg.trialdef.poststim = 1;
-
-% ------ HACK  ------
-
-[trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
+% --- HACK ---
+cfg.trialdef.pre = 0;
+cfg.trialdef.post = 1;
+[trl, Events] = trialDef.trialFunHandle(cfg, onsets, conditions);
+% --- HACK ---
 
 % data inclusion
 WorkFlow.data_continuous_block = [1 length(data)];
@@ -61,14 +57,19 @@ DataDemean = data - repmat(mean(data,2),1,size(data,2));
 [EigenVectors,EigenValues]=pcsquash(DataDemean);            % pca eigenvectors from eeglab
 WorkFlow.PCAmixing = EigenVectors';
 
-ft_data.trial{1} = DataDemean;
+ft_data.trial{1} = DataDemean; %is the whole experiment. 
 ft_PCA = ft_componentanalysis(struct('demean','no','unmixing',EigenVectors','topolabel',{ft_data.label}),ft_data);
 
 % view PCA
 layout = ft_prepare_layout(ft_data.cfg,ft_data);
 WorkFlow.layout = layout;
 
-figure(1);Aft_plot_component_rd(ft_PCA,1:5,layout,trl,WorkFlow.data_continuous_block(1)-1,1000,3,[1 5 800 1364]);
+
+% inputs in Aft_plot_components_rd --> PC/IC components, Channels, Layout,
+%                       trials, shift, fs, Nsec to plot, Position of figure
+% We might want a different shift: shift is the difference between the data and trial events (if you didn't
+% change the data start position use shift =0)
+figure(1); clf; Aft_plot_component_rd(ft_PCA,1:5,layout,trl,WorkFlow.data_continuous_block(1)-1,1000,3,[1 5 800 1364]);
 
 saveas(gcf,'output','jpg');
 WorkFlow.PCA_screenshot = imread('output.jpg');
@@ -127,7 +128,7 @@ end
 reject_ICA_comps = input('\nInput ICA components to reject (e.g. [1 4] or []): ');
 
 if ~isempty(reject_ICA_comps)
-    figure(3);Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,Pos1);
+    figure;Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,Pos1);
     saveas(gcf,'output','jpg');
     WorkFlow.ICA_rejected_screenshot = imread('output.jpg');
 end
@@ -144,6 +145,6 @@ ft_PCA_ICA.trial{1}(1:ncomps,:) = ICA_postreject;
 ft_cleandata = ft_rejectcomponent(struct('component',[],'demean','no'),ft_PCA_ICA);
 
 %% view cleandata (blue) and original data (red)
-windowSize = [1 5 2560 1392];
-eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',ft_data.trial{1}./1e-13);
+% windowSize = [1 5 2560 1392];
+% eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',ft_data.trial{1}./1e-13);
 
