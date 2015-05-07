@@ -25,9 +25,6 @@ produce_figures               = true;        % If you want figures in case of de
 denoise_via_pca               = false;       % Do you want to use megdenoise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [0.550 1.05];% start and end of epoch, relative to trigger, in seconds
-
-intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
 verbose                       = false;
@@ -57,6 +54,16 @@ subj_pths = subj_pths(1,:);
 %% Loops over datasets
 parfor subject_num = which_data_sets_to_analyze
     
+    if subject_num == 5 || subject_num == 6 
+        intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
+        epoch_start_end        = [0.05 .549]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
+
+    else
+        intertrial_trigger_num = 10;
+        epoch_start_end        = [0.05 .549];% start and end of epoch, relative to trigger, in seconds
+
+    end
+    
     save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
     if ~exist(save_pth, 'dir'), mkdir(save_pth); end
     
@@ -72,35 +79,34 @@ parfor subject_num = which_data_sets_to_analyze
     %% Make epochs
     [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
     % remove intertrial intervals
-    iti               = conditions == intertrial_trigger_num;
-    ts                = ts(:,~iti, :);
-    conditions        = conditions(~iti);
+    if intertrial_trigger_num == 11 % in this case, the blanks in between images have trigger number 11
+        iti               = conditions == intertrial_trigger_num;
+        ts                = ts(:,~iti, :);
+        conditions        = conditions(~iti);
+    else % in this case, the blanks in between images have trigger number 10
+        ts                = ts(:,1:2:end, :);
+        conditions        = conditions(1:2:end);
+    end
+
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
     %% Find bad epochs
     if remove_bad_epochs
         
-        % This identifies any epochs whos variance is outside some multiple of the
-        % grand variance
-        bad_epochs = meg_find_bad_epochs(ts(:,:,data_channels), [.05 20]);
+        var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
+        bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
+        bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
+        verbose               = true;
         
-        % any epoch in which more than 10% of channels were bad should be removed
-        % entirely
-        epochs_to_remove = mean(bad_epochs,2)>.1;
+        [ts(:,:,data_channels), badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
+            var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
         
-        % once we remove 'epochs_to_remove', check whether any channels have more
-        % than 10% bad epochs, and we will remove these
-        channels_to_remove = mean(bad_epochs(~epochs_to_remove,:),1)>.1;
+        ts = ts(:,~badEpochs,:);
+        ts(:,:, badChannels) = NaN;
         
-        bad_epochs(epochs_to_remove,:) = 1;
-        bad_epochs(:,channels_to_remove) = 1;
+        conditions = conditions(~badEpochs);
         
-        if verbose
-            figure; imagesc(bad_epochs); xlabel('channel number'); ylabel('epoch number')
-        end
-        
-        ts = meg_remove_bad_epochs(bad_epochs, ts);
     end
     
     
@@ -168,6 +174,8 @@ parfor subject_num = which_data_sets_to_analyze
     
     f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
+%     num_time_points = double(epoch_start_end(2)-epoch_start_end(1))*1000;
+
     
     num_channels = length(data_channels);
     out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
@@ -176,7 +184,6 @@ parfor subject_num = which_data_sets_to_analyze
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
     fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
     
-%     warning off 'MATLAB:subsassigndimmismatch'
     warning off 'MATLAB:subsassigndimmismatch'
     
     % For each channel, fit each condition separatley
@@ -227,13 +234,10 @@ parfor subject_num = which_data_sets_to_analyze
     fit_f2_sd  = nanstd(fit_f2,[],4);
     
     % Save data
-    fname = sprintf(fullfile(rootPath,'HPC','Data','s0%d_bootstrappedData'),which_data_sets_to_analyze);
-    parsave([fname '.mat'], 'out_exp_mn', out_exp_mn, 'w_pwr_mn', w_pwr_mn, ...
-        'w_gauss_mn', w_gauss_mn, 'gauss_f_mn', gauss_f_mn,...
-        'fit_f2_mn', fit_f2_mn, ...
-        'out_exp_sd', out_exp_sd, 'w_pwr_sd', w_pwr_sd, ...
-        'w_gauss_sd', w_gauss_sd, 'gauss_f_sd', gauss_f_sd,...
-        'fit_f2_sd', fit_f2_sd, 'nboot', nboot);
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_first500',subject_num));
+    parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
+        'w_gauss', w_gauss, 'gauss_f', gauss_f,...
+        'fit_f2', fit_f2, 'nboot', nboot);
 
     
     

@@ -33,22 +33,30 @@ blocks_per_run        = 12;       % number of blocks in one experimental run
 var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
 bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
-data_channels         = 1:128;    
+data_channels         = 1:128;
 verbose               = true;
+which_subject         = 'wlsubj001';
 
-late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch 
-early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch 
+late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
+early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
 
 
 %% Define variables for this particular subject's session
-session_name   = 'Session_20150417_wlsubj019';
-session_prefix = 'Session_20150417_1351';
-runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
 
-session_name   = 'SSEEG_20150403_wl_subj004';
-session_prefix = 'Session_20150403_1145';
-runs           = [2:11 13:17]; % This is for wl_subj001: 2:9;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
-
+switch which_subject
+    case 'wlsubj019'
+        session_name   = 'Session_20150417_wlsubj019';
+        session_prefix = 'Session_20150417_1351';
+        runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
+    case 'wlsubj004'
+        session_name   = 'SSEEG_20150403_wl_subj004';
+        session_prefix = 'Session_20150403_1145';
+        runs           = [2:11 13:17]; 
+    case 'wlsubj001' 
+        session_name   = 'Pilot_SSEEG_20150129_wl_subj001';
+        session_prefix = 'Session_20150129_1007_pt2';
+        runs           = [2:9];
+end
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
 el_data = load(fullfile(project_path,'Data', session_name, 'raw', session_prefix));
@@ -60,7 +68,7 @@ which_fields = find(~cellfun(@isempty, strfind(fields, session_prefix)));
 which_fields = which_fields(runs);
 
 % pull out eeg data from el_data structure and store in cell array eeg_ts
-for ii = 1:nr_runs 
+for ii = 1:nr_runs
     this_field = fields{which_fields(ii)};
     eeg_ts{ii} = el_data.(this_field)'; % tranpose so that eeg_ts is time x channels
 end
@@ -72,82 +80,90 @@ for ii = 1:length(tmp), impedances{ii} = el_data.(fields{tmp(ii)}); end
 
 clear el_data;
 
-%% Get conditions
-
-% Make a flicker sequence as presented in the experiment
-if isempty(strfind(session_name, '20150129'))
-    init_series = load('rand_init');
-    init = init_series.start_signal;
-else 
-    init_series = load('regular_init'); % for 'Pilot_SSEEG_20150129_wl_subj001' only
-    init = init_series.init_seq.old;
-end 
-
-% Get events file in useful units (seconds)
-ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
-
-% Extract the triggers from the file, and put them in timeseries
-[ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
-    s_rate_eeg, s_rate_monitor, runs, eeg_ts, init, plot_figures);
-
-clear ev_pth start_signal init;
-
-%% Find epoch onset times in samples (if we record at 1000 Hz, then also in ms)
-%       NOTE: This function changed to accomodate pilot data set
-%  'Pilot_SSEEG_20150129_wl_subj001' The pilot data set had no DIN events
-%  during the off periods. Look inside the function for instructions, if
-%  you are analyzing data with DIN events across all conditions (on and off
-%  periods)
-if isempty(strfind(session_name, '20150129'))
-    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
-                                                                epochs_per_block);
-else
-    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
-                                                 blocks_per_run, epochs_per_block);
-end                             
-    
-%% Extract conditions from behavioral matfiles, remove epochs with timing errors
+%% Extract conditions and initializing sequence from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
 dir = what(directory_name);
 which_mats = dir.mat(runs);
 
-conditions = cell(1,nr_runs);
+conditions  = cell(1,nr_runs);
 for ii = 1:nr_runs
-      stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
-      sequence        = find(stimulus_file.stimulus.trigSeq > 0);
-      conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';      
-        if isempty(strfind(session_name, '20150129'))
-        else 
-           conditions{ii} = conditions{ii}(1:12:end);
-        end
-      lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
-      early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
-      time_errors     = cat(2, lag_epochs, early_epochs);
-      epoch_starts{ii}(time_errors) = [];
-      conditions{ii}(time_errors) = [];
+    stimulus_file   = load(fullfile(directory_name, which_mats{ii}),'stimulus');
+    sequence        = find(stimulus_file.stimulus.trigSeq > 0);
+    conditions{ii}  = stimulus_file.stimulus.trigSeq(sequence)';
+    if isempty(strfind(session_name, '20150129'))
+    else
+        conditions{ii} = conditions{ii}(1:12:end);
+    end
 end
 
+init_seq    = stimulus_file.stimulus.flashTimes.flip;
+init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+init_ts     = ones(1, init_times(end)+40);
+
+for jj = 1:2:size(init_times,2)-1
+    init_ts(init_times(jj):init_times(jj+1)) = false;
+end
+
+%% Extract event times from .evt file, and define epoch onset times in samples
+%  (or in ms if you have sampled at 1000Hz)
+
+% for eline's data only
+init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+init_ts = init.init_seq.old;
+
+ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
+
+[ev_ts, start_inds] = eeg_get_triggers(ev_pth,...
+    s_rate_eeg, s_rate_monitor, runs, eeg_ts, init_ts, plot_figures);
+
+if isempty(strfind(session_name, '20150129'))
+    epoch_starts = sseeg_find_epochs(ev_ts, images_per_block, blocks_per_run,...
+        epochs_per_block);
+else
+    epoch_starts = sseeg_find_epochs_pilot_eline(ev_ts, images_per_block, ...
+        blocks_per_run, epochs_per_block);
+end
+
+directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
+thisdir = what(directory_name);
+which_mats = thisdir.mat(runs);
+
+clear ev_pth init_ts;
+%% Remove epochs with timing errors
+time_errors = cell(1,nr_runs);
+for ii = 1:nr_runs
+    lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
+    early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
+    time_errors{ii} = sort(cat(2, lag_epochs, early_epochs));
+    epoch_starts{ii}(time_errors{ii}) = [];
+    conditions{ii}(time_errors{ii})   = [];
+end
+sprintf('%d epochs were removed due to timing errors',sum(cellfun(@numel, time_errors)))
+clear lag_epochs early_epochs;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
 onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
 
 epoch_time  = [0  mode(diff(epoch_starts{1}))-1]/s_rate_eeg;
 ts = [];  conditions=[];
-for ii = 1:nr_runs     
-        [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
-        ts          = cat(2, ts, thists);
-        conditions  = cat(2, conditions, this_conditions);
+for ii = 1:nr_runs
+    [thists, this_conditions] = meg_make_epochs(eeg_ts{ii}, onsets{ii}, epoch_time, s_rate_eeg);
+    ts          = cat(2, ts, thists);
+    conditions  = cat(2, conditions, this_conditions);
 end
 
-
-%% PREPROCESS DATA
+%% Preprocess data
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
 
+% this removes the bad epochs and bad channels from the sensorData matrix
 sensorData = sensorData(:,~badEpochs,~badChannels);
 
-%% ********* Prepare and solve GLM *********
+%% Prepare and solve GLM
+
+% add denoiseproject path
+addpath(genpath('/Users/winawerlab/matlab/git/denoiseproject/'));
 
 % Make design matrix
 design = zeros(length(conditions), 3);
@@ -155,23 +171,25 @@ design(conditions==1,1) = 1; % condition 1 is full field
 design(conditions==5,2) = 1; % condition 5 is right (??)
 design(conditions==7,3) = 1; % condition 7 is left (??)
 
-design     = design(~badEpochs,:);
+design = design(~badEpochs,:);
 
 % Get 'freq' struct to define stimulus locked and broadband frequencies
 %  This struct is needed as input args for getstimlocked and getbroadband
-freq = megGetSLandABfrequencies((0:150)/.995, .995, 12/.995);
+T = diff(epoch_time)+ 1/s_rate_eeg;
+freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose           = 1.05;  % denoise with exactly 10 PCs for stimulus locked and BB
-opt.npoolmethod       = {'r2','n',70};
+opt.pcchoose          = 1.05;
+opt.npcs2try          = 10;
+opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
-opt.pcn                 = 70;
+opt.pcn               = 20;
+opt.savepcs           = 0;
 optsl = opt;
 optbb = opt;
-optbb.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broadband analysis
+optbb.preprocessfun   = @(x)hpf(x, freq.sl);       % preprocess data with a high pass filter for broadband analysis
 evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
-
 
 % The denoise algorithm needs:
 % data      : time series [channel x time samples x epoch]
@@ -180,28 +198,27 @@ evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite
 % Permute sensorData for denoising
 sensorData = permute(sensorData, [3 1 2]);
 
-%% ********* Denoise the data *********
+%% ********* Denoise the broadband data *********
 
 %   Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
 
+
 % If requested: Save data
 if save_data
-fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-parsave([fname '_bb_full70.mat'], 'results', results, 'evalout', evalout, ...
-    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-    'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+    fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
+    parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
 end
 
-  Denoise for stimulus-locked analysis
+%%  Denoise for stimulus-locked analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
 
+
+% save data
 if save_data
-parsave([fname '_sl_full.mat'], 'results', results, 'evalout', evalout, ...
-    'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-    'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
 end
-
-
-%% Visualize
-% sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
