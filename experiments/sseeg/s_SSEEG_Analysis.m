@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj019';
+which_subject         = 'wlsubj001';
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
@@ -109,8 +109,8 @@ end
 %  (or in ms if you have sampled at 1000Hz)
 
 % for eline's data only
-% init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
-% init_ts = init.init_seq.old;
+init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+init_ts = init.init_seq.old;
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
@@ -179,7 +179,7 @@ T = diff(epoch_time)+ 1/s_rate_eeg;
 freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
-opt.pcchoose          = -10;
+opt.pcchoose          = 1.05;
 opt.npcs2try          = 10;
 opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
@@ -205,7 +205,7 @@ sensorData = permute(sensorData, [3 1 2]);
 
 %% Plot broadband results
 
-fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband 10pcs')
+fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband 3pcs')
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.origmodel.r2;
@@ -244,17 +244,17 @@ end
 
 %% Plot stimulus locked results
 
-fH = figure(3); clf, set(fH, 'Name', 'Stim-Locked Denoised')
+fH = figure(3); clf, set(fH, 'Name', 'Stim-Locked Denoised 6pcs')
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~badChannels) = results.origmodel.r2;
-plotOnEgi(data_to_plot), title('original R2'), colorbar
+plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
 subplot(3,3,4)
 data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot), title('final R2'), colorbar
+plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
 subplot(3,3,7)
 data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
-plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar
+plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
 
 a = [2 5 8];
 cond = {'Full', 'Right', 'Left'};
@@ -262,11 +262,11 @@ for ii = 1:3
         subplot(3,3,a(ii))
     data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
     results.origmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
-        subplot(3,3,a(ii)+1);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
+        subplot(3,3,a(ii)+1); 
     data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
     results.finalmodel.beta_se(ii,:); 
-    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
 end
 
 % save data
