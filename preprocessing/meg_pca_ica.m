@@ -1,4 +1,4 @@
-function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef, onsets, conditions)
+function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef)
 %
 % function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef)
 %
@@ -42,9 +42,7 @@ data(badChannels,:) = 0;
 % [trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
 
 % --- HACK ---
-cfg.trialdef.pre = 0;
-cfg.trialdef.post = 1;
-[trl, Events] = trialDef.trialFunHandle(cfg, onsets, conditions);
+[trl, Events] = trialDef.trialFunHandle(cfg, trialDef);
 % --- HACK ---
 
 % data inclusion
