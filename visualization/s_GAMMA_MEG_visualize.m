@@ -17,6 +17,19 @@ d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 
+condition_names               = {   ...
+    'White Noise' ...
+    'Binarized White Noise' ...
+    'Pink Noise' ...
+    'Brown Noise' ...
+    'Gratings(0.36 cpd)' ...
+    'Gratings(0.73 cpd)' ...
+    'Gratings(1.45 cpd)' ...
+    'Gratings(2.90 cpd)' ...
+    'Plaid'...
+    'Blank'};
+
+%% Loop over data sets
 for subject_num = which_data_to_visualize
     %% Load Data
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
@@ -68,6 +81,11 @@ for subject_num = which_data_to_visualize
     
     num_contrasts = size(contrasts,1);
     
+    % compute means
+    
+    w_gauss_mn = nanmean(res.w_gauss,3);
+    w_pwr_mn   = nanmean(res.w_pwr,3);
+    
     % compute SNR
     
     snr_out_exp = zeros(num_channels, num_contrasts);
@@ -88,7 +106,7 @@ for subject_num = which_data_to_visualize
     
     % threshold (replace SNR values < 2 or > 20 with 0)
     
-    %% SNR Mesh (WIP)
+    %% SNR Mesh
     threshold = 0;%3;
     % gaussian weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
@@ -100,7 +118,7 @@ for subject_num = which_data_to_visualize
         set(gca, 'CLim', [-1 1]* 10)
     end
     
-    %% Plots for URC poster
+    %% Noise (Gamma SNR - baseline)
     
     threshold = 1;
     %     fH = figure(1); clf, set(fH, 'name', 'Gamma weight')
@@ -118,7 +136,7 @@ for subject_num = which_data_to_visualize
     hgexport(fH, fullfile(project_pth,'figure_gammapower_noise_s1.eps'));
     
     
-    %%
+    %% Gratings (gamma SNR - Baseline)
     %         fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
     % Gratings gamma
     data_to_plot = snr_w_gauss(:,2)';
@@ -133,7 +151,7 @@ for subject_num = which_data_to_visualize
     
     
     hgexport(fH, fullfile(project_pth,'figure_gammapower_gratings_s1.eps'));
-    %% Broadband noise and gratings
+    %% Gratings (Broadband SNR - Baseline)
     
     %     fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
     %     for c = [2 1]
@@ -161,7 +179,7 @@ for subject_num = which_data_to_visualize
     
     
     
-    %% Broadband noise and gratings
+    %% Noise (Broadband SNR - Baseline)
     
     %     fH = figure(4); clf, set(fH, 'name', 'Broadband weight')
     %     for c = [2 1]
@@ -182,6 +200,10 @@ for subject_num = which_data_to_visualize
     hgexport(fH, fullfile(project_pth,'figure_bbpower_noise_s1.eps'));
     
     %% Plot Gaussian fits
+    
+    % include spectral_data_boots to the HPC save script to produce
+    % spectral_data_mean
+    
     line_width = 2; % line width for
     for chan = data_channels
         fH = figure(10); clf, set(gcf, 'Position', [100 100 800 800], 'Color', 'w')
@@ -261,7 +283,7 @@ for subject_num = which_data_to_visualize
     end
     %axis tight
     
-    %% Mesh visualization of model fits
+    %% Meshes of Gaussian/Broadband Weight
     
     % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
     
