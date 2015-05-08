@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj019';
+which_subject         = 'wlsubj004';
 interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
@@ -158,13 +158,15 @@ end
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
 
+% interpolate a signal for bad channels from its neighbors, or simply 
+% remove those channels before denoising
 if interp_bad_channels == true
     outliers = zeros(size(sensorData,2), size(sensorData,3));
     outliers(badEpochs,:) = true;
     outliers(:,badChannels) = true;
     sensorDataInterp = meg_channel_repair(sensorData, outliers, 'eeg128xyz');
     sensorData       = sensorDataInterp(:,~badEpochs,:);
-elseif interp_bad_channels == false
+else    
     sensorData = sensorData(:,~badEpochs,~badChannels);
 end
 
@@ -209,11 +211,9 @@ evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite
 % Permute sensorData for denoising
 sensorData = permute(sensorData, [3 1 2]);
 
-%% ********* Denoise the broadband data *********
+%% Denoise the broadband data
 
-%   Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
-
 
 % If requested: Save data
 if save_data
@@ -223,10 +223,21 @@ if save_data
         'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
 end
 
+%%  Denoise for stimulus-locked analysis
+
+[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
+
+% save data
+if save_data
+    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
+        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+end
+
 %% Plot broadband results
-% keeping this here in case we dont want to save the our denoising results
-% but we do want to visualize them. Also the below only works if the
-% variable interp_bad_channels equals true. 
+% keeping this here for now in case we dont want to save the our denoising
+% results but we do want to visualize them. Also the below only works if
+% the variable interp_bad_channels equals true.
 
 fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband')
 subplot(3,3,1)
@@ -253,13 +264,29 @@ for ii = 1:3
     plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
 end
 
-%%  Denoise for stimulus-locked analysis
-[results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
+%% Plot stimulus locked results
 
+fH = figure(10); clf, set(fH, 'name', 'Denoised Stimulus Locked')
+subplot(3,3,1)
+data_to_plot = zeros(1, 128);
+data_to_plot = results.origmodel.r2;
+plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+subplot(3,3,4)
+data_to_plot = results.finalmodel.r2;
+plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+subplot(3,3,7)
+data_to_plot = results.finalmodel.r2 - results.origmodel.r2;
+plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
 
-% save data
-if save_data
-    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+a = [2 5 8];
+cond = {'Full', 'Right', 'Left'};
+for ii = 1:3
+    subplot(3,3,a(ii))
+    data_to_plot = results.origmodel.beta_md(ii,:) ./ ...
+        results.finalmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+    subplot(3,3,a(ii)+1);
+    data_to_plot = results.finalmodel.beta_md(ii,:) ./ ...
+        results.finalmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
 end
