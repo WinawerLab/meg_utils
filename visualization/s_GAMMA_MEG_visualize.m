@@ -4,10 +4,13 @@
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_channels                 = 1:157;
+num_channels                  = length(data_channels);
 fs                            = 1000;
 intertrial_trigger_num        = 10;
+which_data_to_visualize       = 5; 
+save_images                   = false;
 
-subject_num                   = 5; 
+for subject_num = which_data_to_visualize
 %% Load Data
 
 load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
@@ -65,8 +68,6 @@ load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
     tmp_data = reshape(tmp_data, num_conditions, []);
     tmp = contrasts*tmp_data;
     tmp = reshape(tmp, num_contrasts, num_channels, nboot);
-
-    
     snr_w_pwr = summary_stat(tmp)';
 
     tmp_data = permute(w_gauss, [2 1 3]);
@@ -330,3 +331,5 @@ load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
         hgexport(fH, fullfile(save_pth, 'Mesh_Gamma_Gratings_M_Baseline.eps'));
         
     end
+    
+end
