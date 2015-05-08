@@ -3,20 +3,30 @@
 % Visualizes summary statistics computed in s_GAMMA_MEG_analysis.m
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
+data_pth                      = '*_Gamma_*subj*';
+
 data_channels                 = 1:157;
 num_channels                  = length(data_channels);
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 5; 
+which_data_to_visualize       = 5;
 save_images                   = false;
 
+
+d = dir(fullfile(project_pth, data_pth));
+subj_pths = struct2cell(d);
+subj_pths = subj_pths(1,:);
+
 for subject_num = which_data_to_visualize
-%% Load Data
-
-load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
-
-%% Calculating SNR contrasts
-    if nboot > 1,
+    %% Load Data
+    load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
+    d           =  dir(fullfile(load_pth, '*boot*'));
+    res         = load(fullfile(load_pth, d(1).name));
+    
+    num_conditions = size(res.out_exp,2);
+    
+    %% Calculating SNR contrasts
+    if res.nboot > 1,
         summary_stat = @(x) nanmean(x,3) ./ nanstd(x, [], 3);
     else
         summary_stat = @(x) nanmean(x,3);
@@ -64,23 +74,23 @@ load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
     snr_w_gauss = zeros(num_channels, num_contrasts);
     snr_gauss_f = zeros(num_channels, num_contrasts);
     
-    tmp_data = permute(w_pwr, [2 1 3]);
+    tmp_data = permute(res.w_pwr, [2 1 3]);
     tmp_data = reshape(tmp_data, num_conditions, []);
     tmp = contrasts*tmp_data;
-    tmp = reshape(tmp, num_contrasts, num_channels, nboot);
+    tmp = reshape(tmp, num_contrasts, num_channels, res.nboot);
     snr_w_pwr = summary_stat(tmp)';
-
-    tmp_data = permute(w_gauss, [2 1 3]);
+    
+    tmp_data = permute(res.w_gauss, [2 1 3]);
     tmp_data = reshape(tmp_data, num_conditions, []);
     tmp = contrasts*tmp_data;
-    tmp = reshape(tmp, num_contrasts, num_channels, nboot);
-    snr_w_gauss  = summary_stat(tmp)';    
+    tmp = reshape(tmp, num_contrasts, num_channels, res.nboot);
+    snr_w_gauss  = summary_stat(tmp)';
     
     % threshold (replace SNR values < 2 or > 20 with 0)
-            
+    
     %% SNR Mesh (WIP)
     threshold = 0;%3;
-    % gaussing weight for each stimuli
+    % gaussian weight for each stimuli
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for c = 1:12
         subplot(3,4,c)
@@ -93,83 +103,83 @@ load(fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num)));
     %% Plots for URC poster
     
     threshold = 1;
-%     fH = figure(1); clf, set(fH, 'name', 'Gamma weight')
+    %     fH = figure(1); clf, set(fH, 'name', 'Gamma weight')
     % noise gamma
     data_to_plot = snr_w_gauss(:,1)';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     
     [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
-
+    
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
-%     makeprettyaxes(ch,9,9);
+    %     makeprettyaxes(ch,9,9);
     title(contrastnames{1})
     
     hgexport(fH, fullfile(project_pth,'figure_gammapower_noise_s1.eps'));
     
     
     %%
-%         fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
+    %         fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
     % Gratings gamma
     data_to_plot = snr_w_gauss(:,2)';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     
     [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
-
+    
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
-%     makeprettyaxes(ch,9,9);
+    %     makeprettyaxes(ch,9,9);
     title(contrastnames{2})
     
-
-    hgexport(fH, fullfile(project_pth,'figure_gammapower_gratings_s1.eps')); 
+    
+    hgexport(fH, fullfile(project_pth,'figure_gammapower_gratings_s1.eps'));
     %% Broadband noise and gratings
     
-%     fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
-%     for c = [2 1]
-%         subplot(1,2,c)
-        data_to_plot = snr_w_pwr(:,2)';
-        data_to_plot(abs(data_to_plot) < threshold) = 0;
-%         ft_plotOnMesh(data_to_plot, contrastnames{c});
-%         set(gca, 'CLim', [-1 1]* 10)
-%     end
+    %     fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
+    %     for c = [2 1]
+    %         subplot(1,2,c)
+    data_to_plot = snr_w_pwr(:,2)';
+    data_to_plot(abs(data_to_plot) < threshold) = 0;
+    %         ft_plotOnMesh(data_to_plot, contrastnames{c});
+    %         set(gca, 'CLim', [-1 1]* 10)
+    %     end
     
     [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
-
+    
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
-%     makeprettyaxes(ch,9,9);
+    %     makeprettyaxes(ch,9,9);
     title(contrastnames{2})
     
-
     
-     hgexport(fH, fullfile(project_pth,'figure_bbpower_gratings_s1.eps'));   
     
-
-
+    hgexport(fH, fullfile(project_pth,'figure_bbpower_gratings_s1.eps'));
+    
+    
+    
     
     
     
     
     %% Broadband noise and gratings
     
-%     fH = figure(4); clf, set(fH, 'name', 'Broadband weight')
-%     for c = [2 1]
-%         subplot(1,2,c)
-        data_to_plot = snr_w_pwr(:,1)';
-        data_to_plot(abs(data_to_plot) < threshold) = 0;
-%         ft_plotOnMesh(data_to_plot, contrastnames{c});
-%         set(gca, 'CLim', [-1 1]* 10)
-%     end
+    %     fH = figure(4); clf, set(fH, 'name', 'Broadband weight')
+    %     for c = [2 1]
+    %         subplot(1,2,c)
+    data_to_plot = snr_w_pwr(:,1)';
+    data_to_plot(abs(data_to_plot) < threshold) = 0;
+    %         ft_plotOnMesh(data_to_plot, contrastnames{c});
+    %         set(gca, 'CLim', [-1 1]* 10)
+    %     end
     
     [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
-
+    
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
-%     makeprettyaxes(ch,9,9);
+    %     makeprettyaxes(ch,9,9);
     title(contrastnames{1})
     
-     hgexport(fH, fullfile(project_pth,'figure_bbpower_noise_s1.eps'));   
+    hgexport(fH, fullfile(project_pth,'figure_bbpower_noise_s1.eps'));
     
     %% Plot Gaussian fits
     line_width = 2; % line width for

@@ -18,16 +18,9 @@ trigger_channels              = 161:164;
 
 denoise_with_nonphys_channels = true;        % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
-remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
-
-produce_figures               = true;        % If you want figures in case of debugging, set to true
-
-denoise_via_pca               = false;       % Do you want to use megdenoise?
 
 fs                            = 1000;        % sample rate
 
-save_images                   = false;
-verbose                       = false;
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -162,10 +155,6 @@ parfor subject_num = which_data_sets_to_analyze
     end
     if verbose; fprintf('Done!\n'); end;
     
-    % Summarize bootstrapped spectral by mean and std over bootstraps
-    spectral_data_mean = mean(spectral_data_boots, 4);
-    spectral_data_std  =  std(spectral_data_boots, [], 4);
-    spectral_data_snr   = spectral_data_mean./spectral_data_std;
     
     %% Broadband and Gaussian Fit
     
@@ -173,8 +162,6 @@ parfor subject_num = which_data_sets_to_analyze
     % numbers, one for broadband and one for gamma
     
     f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
-    f_sel=ismember(f,f_use4fit);
-%     num_time_points = double(epoch_start_end(2)-epoch_start_end(1))*1000;
 
     
     num_channels = length(data_channels);
@@ -220,18 +207,6 @@ parfor subject_num = which_data_sets_to_analyze
 %     warning on 'MATLAB:subsassigndimmismatch'
     warning on 'MATLAB:subsassigndimmismatch'
     
-    % summarize bootstrapped fits
-    out_exp_mn = nanmean(out_exp,3);
-    w_pwr_mn   = nanmean(w_pwr,3);
-    w_gauss_mn = nanmean(w_gauss,3);
-    gauss_f_mn = nanmean(gauss_f,3);
-    fit_f2_mn  = nanmean(fit_f2,4);
-    
-    out_exp_sd = nanstd(out_exp,[],3);
-    w_pwr_sd   = nanstd(w_pwr,[],3);
-    w_gauss_sd = nanstd(w_gauss,[],3);
-    gauss_f_sd = nanstd(gauss_f,[],3);
-    fit_f2_sd  = nanstd(fit_f2,[],4);
     
     % Save data
     fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_first500',subject_num));
@@ -242,19 +217,5 @@ parfor subject_num = which_data_sets_to_analyze
     
     
 end
-
-function ts = meg_remove_bad_epochs(outliers, ts)
-% epochs x channel
-num_time_points = size(ts,1);
-num_epochs      = size(ts,2);
-num_channels    = size(ts,3);
-
-ts = reshape(ts, [num_time_points, num_epochs*num_channels]);
-
-ts(:, logical(outliers(:))) = NaN;
-
-ts = reshape(ts, [num_time_points, num_epochs, num_channels]);
-
-return
 
 
