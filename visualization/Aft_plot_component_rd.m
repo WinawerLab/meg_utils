@@ -60,6 +60,7 @@ if nargin<7, Nsec = 3; end
            plot(run_this(i,1:round(Nsec*fs)));
        end
        title(ft_comp.label(channels(i)));
+       xlabel(sprintf('First %d s of first trial in milliseconds',Nsec));
        subplot(M,3,cnt);cnt  = cnt+1;
        
        if norm
@@ -69,6 +70,7 @@ if nargin<7, Nsec = 3; end
             plot(EventRelatedX_axis,avg(i,:));
        end
        xlim([EventRelatedX_axis(1) EventRelatedX_axis(end)]);
+       xlabel('Average of all trials in milliseconds');
        
        subplot(M,3,cnt);cnt  = cnt+1; 
        plot(F(Psel),Pxx(Psel)./max(Pxx(Psel))*100);
@@ -91,5 +93,8 @@ if nargin<7, Nsec = 3; end
      if exist('Position')
          set(gcf,'Position',Position);
      end
+     
+     
+     
 end
 
