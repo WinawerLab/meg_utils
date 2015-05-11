@@ -12,6 +12,7 @@ intertrial_trigger_num        = 10;
 which_data_to_visualize       = 5;
 save_images                   = false;
 
+meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
