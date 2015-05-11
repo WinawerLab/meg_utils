@@ -1,7 +1,7 @@
 %% Visualize  SSEEG results after denoising
 
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
-which_subject         = 'subj004';
+which_subject         = 'subj001';
 
 %% Find the stored data
 tmp = dir(fullfile(project_path, 'Data', 'Session*'));
@@ -27,7 +27,7 @@ end
 
 bb=load(data_path_bb);
 
-fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband')
+fH = figure(1); clf, set(fH, 'name', 'Denoised Broadband')
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~bb.badChannels) = bb.results.origmodel.r2;
@@ -56,7 +56,7 @@ end
 
 sl = load(data_path_sl);
 
-fH = figure(3); clf, set(fH, 'Name', 'Stim-Locked Denoised')
+fH = figure(2); clf, set(fH, 'Name', 'Stim-Locked Denoised')
     subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~sl.badChannels) = sl.results.origmodel.r2;
@@ -96,12 +96,12 @@ visual_channels = 55:95;
 ts_cat = [];
 denoised_ts_cat = [];
 
-for ii = 1:size(bb.denoisedts{1},3)
+for ii = 1:72
     % ts_cat          = cat(2, ts_cat, sensorData(visual_channels, :, ii));
     denoised_ts_cat = cat(2, denoised_ts_cat, bb.denoisedts{1}(visual_channels, :, ii));
 end
 
 % figure(13); plot(ts_cat'); title('Original'); hold all;
-figure(14); plot(denoised_ts_cat'); title('Denoised');
-
-
+figure(10); plot(denoised_ts_cat'); title('Denoised electrode data');
+xlabel('frames (ms)')
+ylabel('Voltage (microvolts?)')
