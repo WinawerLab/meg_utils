@@ -58,5 +58,6 @@ end
 % Run the ft_defaults which will load the necessary paths:
 ft_defaults
 
+addpath(fullfile(fileparts(which(mfilename)), 'field_trip'));
 return
 

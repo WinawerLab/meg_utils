@@ -84,8 +84,8 @@ clear el_data;
 %% Extract conditions and initializing sequence from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
-dir = what(directory_name);
-which_mats = dir.mat(runs);
+direct = what(directory_name);
+which_mats = direct.mat(runs);
 
 conditions  = cell(1,nr_runs);
 for ii = 1:nr_runs
@@ -158,19 +158,8 @@ end
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
 
-% interpolate a signal for bad channels from its neighbors, or simply 
-% remove those channels before denoising
-if interp_bad_channels == true
-    outliers = zeros(size(sensorData,2), size(sensorData,3));
-    outliers(badEpochs,:) = true;
-    outliers(:,badChannels) = true;
-    sensorDataInterp = meg_channel_repair(sensorData, outliers, 'eeg128xyz');
-    sensorData       = sensorDataInterp(:,~badEpochs,:);
-else    
-    sensorData = sensorData(:,~badEpochs,~badChannels);
-end
-
 % this removes the bad epochs and bad channels from the sensorData matrix
+sensorData = sensorData(:,~badEpochs,~badChannels);
 
 
 %% Prepare and solve GLM
