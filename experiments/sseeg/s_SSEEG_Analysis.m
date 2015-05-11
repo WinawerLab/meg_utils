@@ -84,8 +84,8 @@ clear el_data;
 %% Extract conditions and initializing sequence from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
-dir = what(directory_name);
-which_mats = dir.mat(runs);
+direct = what(directory_name);
+which_mats = direct.mat(runs);
 
 conditions  = cell(1,nr_runs);
 for ii = 1:nr_runs
