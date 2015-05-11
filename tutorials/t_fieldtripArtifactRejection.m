@@ -34,4 +34,32 @@ cfg.method = 'runica'; % this is the default and uses the implementation from EE
 
 comp = ft_componentanalysis(cfg, data);
 
-TO BE CONTINUED
+
+% Redefine cfg
+cfg = [];
+cfg.method = 'wavelet';
+    
+% Get either the Fourier spectrum 
+freq = ft_freqanalysis(cfg, comp);
+
+% ... or timelocked averaged events
+cfg = [];
+timelock = ft_timelockanalysis(cfg, comp);
+
+% plot the components for visual inspection
+figure
+cfg = [];
+cfg.component = [1:20];       % specify the component(s) that should be plotted
+cfg.layout    = 'CTF151.lay'; % specify the layout file that should be used for plotting
+cfg.comment   = 'no';
+ft_topoplotIC(cfg, comp)
+
+cfg = [];
+cfg.layout = 'CTF151.lay'; % specify the layout file that should be used for plotting
+cfg.viewmode = 'component';
+ft_databrowser(cfg, comp)
+
+% remove the bad components and backproject the data
+cfg = [];
+cfg.component = [9 10 14 24]; % to be removed component(s)
+data = ft_rejectcomponent(cfg, comp, data);

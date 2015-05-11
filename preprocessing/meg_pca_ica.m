@@ -39,10 +39,10 @@ data = ft_data.trial{1};
 data(badChannels,:) = 0;
 
 % extract trials
-% [trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
+[trl,Events] = trialDef.trialFunHandle(cfg,2.5,cfg.trialdef.nTrigsExpected);
 
 % --- HACK ---
-[trl, Events] = trialDef.trialFunHandle(cfg, trialDef);
+% [trl, Events] = trialDef.trialFunHandle(cfg, trialDef);
 % --- HACK ---
 
 % data inclusion
