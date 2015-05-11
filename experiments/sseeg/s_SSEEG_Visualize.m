@@ -1,7 +1,7 @@
 %% Visualize  SSEEG results after denoising
 
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
-which_subject         = 'subj001';
+which_subject         = 'subj004';
 
 %% Find the stored data
 tmp = dir(fullfile(project_path, 'Data', 'Session*'));
@@ -43,12 +43,12 @@ a = [2 5 8];
 cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
     subplot(3,3,a(ii))
-    data_to_plot(~bb.badChannels) = bb.results.origmodel.beta_md(ii,:) ./ ...
-        bb.results.finalmodel.beta_se(ii,:);
+    data_to_plot(~bb.badChannels) = bb.results.origmodel.beta_md(ii,:);% ./ ...
+        %bb.results.finalmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
     subplot(3,3,a(ii)+1);
-    data_to_plot(~bb.badChannels) = bb.results.finalmodel.beta_md(ii,:) ./ ...
-        bb.results.finalmodel.beta_se(ii,:);
+    data_to_plot(~bb.badChannels) = bb.results.finalmodel.beta_md(ii,:);% ./ ...
+        %bb.results.finalmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
 end
 
@@ -73,12 +73,15 @@ cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
     subplot(3,3,a(ii))
     data_to_plot(~sl.badChannels) = sl.results.origmodel.beta_md(ii,:) ./ ...
-        sl.results.origmodel.beta_se(ii,:);
+        sl.results.origmodel.beta_se(ii,:);        
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+    set(gca, 'CLim', [ 0 16])
+    
     subplot(3,3,a(ii)+1);
     data_to_plot(~sl.badChannels) = sl.results.finalmodel.beta_md(ii,:) ./ ...
         sl.results.finalmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar;
+    set(gca, 'CLim', [ 0 16])
 end
 
 %% Visualize the noise pool
