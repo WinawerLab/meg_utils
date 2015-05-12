@@ -183,7 +183,7 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
 opt.npcs2try          = 5;
-opt.npoolmethod       = {'r2','n',33};
+opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
 opt.pcn               = 20;
 opt.savepcs           = 0;
