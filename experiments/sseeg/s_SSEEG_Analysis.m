@@ -182,8 +182,8 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
-opt.npcs2try          = 10;
-opt.npoolmethod       = {'r2','n',60};
+opt.npcs2try          = 5;
+opt.npoolmethod       = {'r2','n',33};
 opt.verbose           = true;
 opt.pcn               = 20;
 opt.savepcs           = 0;
@@ -225,57 +225,77 @@ end
 
 %% Plot broadband results
 % keeping this here for now in case we dont want to save the our denoising
-% results but we do want to visualize them. Also the below only works if
-% the variable interp_bad_channels equals true.
+% results but we do want to visualize them. 
 
-fH = figure(10); clf, set(fH, 'name', 'Denoised Broadband')
+fH = figure(11); clf, set(fH, 'name', 'Denoised Broadband')
+
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
-data_to_plot = results.origmodel.r2;
+data_to_plot(~badChannels) = results.origmodel.r2;
 plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+
 subplot(3,3,4)
-data_to_plot = results.finalmodel.r2;
+data_to_plot(~badChannels) = results.finalmodel.r2;
 plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+
 subplot(3,3,7)
-data_to_plot = results.finalmodel.r2 - results.origmodel.r2;
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
 
 a = [2 5 8];
 cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
     subplot(3,3,a(ii))
-    data_to_plot = results.origmodel.beta_md(ii,:) ./ ...
-        results.finalmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+        results.origmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii}));
+    colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
+    
     subplot(3,3,a(ii)+1);
-    data_to_plot = results.finalmodel.beta_md(ii,:) ./ ...
+    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
         results.finalmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})); 
+    colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
 end
+
 
 %% Plot stimulus locked results
 
 fH = figure(10); clf, set(fH, 'name', 'Denoised Stimulus Locked')
+
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
-data_to_plot = results.origmodel.r2;
+data_to_plot(~badChannels) = results.origmodel.r2;
 plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+
 subplot(3,3,4)
-data_to_plot = results.finalmodel.r2;
+data_to_plot(~badChannels) = results.finalmodel.r2;
 plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+
 subplot(3,3,7)
-data_to_plot = results.finalmodel.r2 - results.origmodel.r2;
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
 plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
 
 a = [2 5 8];
 cond = {'Full', 'Right', 'Left'};
 for ii = 1:3
     subplot(3,3,a(ii))
-    data_to_plot = results.origmodel.beta_md(ii,:) ./ ...
-        results.finalmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+        results.origmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})); 
+    colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
+    
     subplot(3,3,a(ii)+1);
-    data_to_plot = results.finalmodel.beta_md(ii,:) ./ ...
+    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
         results.finalmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar; 
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii}));
+    colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
 end
+
+%% Visualize noise pool and impedances
+
+noise_pool = zeros(1,128);
+noise_pool(results.noisepool) = true;
+figure; plotOnEgi(noise_pool); title('Noise pool');
+
+figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar
