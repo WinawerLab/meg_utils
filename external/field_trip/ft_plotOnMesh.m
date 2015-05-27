@@ -28,10 +28,10 @@ else                           fH = gcf; end
 
 
 
-% add fieldtrip matlab code
-if isempty(which('ft_analysispipeline')),
-    addpath(genpath('/Volumes/server/Projects/MEG/code/fieldtrip'));
-end
+% % add fieldtrip matlab code
+% if isempty(which('ft_analysispipeline')),
+%     addpath(genpath('/Volumes/server/Projects/MEG/code/fieldtrip'));
+% end
 
 switch lower(plotType)
     case '3d'
@@ -49,7 +49,7 @@ switch lower(plotType)
         zlabel('    Inferior       Superior     ')
         
         ft_plot_topo3d(xyz,sensor_data); hold on;
-        label_add(xyz)
+        % label_add(xyz)
         
         % add a title if requested
         if exist('title_txt', 'var') && ~isempty(title_txt), title(title_txt); end
@@ -66,6 +66,10 @@ switch lower(plotType)
         cfg.layout          = ft_prepare_layout(cfg, data_hdr);
         cfg.style           ='straight';
         %cfg.electrodes      ='numbers';
+        cfg.electrodes      = 'dotnum';
+        cfg.emarkersize     = 5;
+        cfg.efontsize       = 15;
+        cfg.ecolor          = 'k';
         cfg.colorbar        ='yes';
         cfg.maplimits       ='maxmin';
         cfg.data            = sensor_data';
