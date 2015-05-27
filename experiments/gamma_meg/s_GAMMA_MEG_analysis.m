@@ -51,9 +51,9 @@ produce_figures               = true;        % If you want figures in case of de
 denoise_via_pca               = false;       % Do you want to use megde noise?
 
 fs                            = 1000;        % sample rate
-epoch_start_end               = [0.050 0.549];% start and end of epoch, relative to trigger, in seconds
+epoch_start_end               = [0.050 1.049];% start and end of epoch, relative to trigger, in seconds
 
-intertrial_trigger_num        = 10;          % the MEG trigger value that corresponds to the intertrial interval
+intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
 
