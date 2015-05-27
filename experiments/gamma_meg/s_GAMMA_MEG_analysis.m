@@ -1,6 +1,6 @@
 % s_GAMMA_MEG_analysis
 
-% Analyze and visualize data from MEG Gamma experiments. Subjects saw
+% Analyze data from MEG Gamma experiments. Subjects saw
 % several kinds of stimuli, including gratings of various spatial
 % frequencies, plaids, and noise patterns (phase-randomized with 1/f^n
 % spectral power distrubutions)
@@ -12,17 +12,11 @@
 % mixture of a line and gaussian in log power / log frequency (meaning, a
 % power law and a narrowband response)
 %
-% TODO:
-%   1. Summarize and SAVE the responses from each subject, for example as
-%   images on meshes showing the gaussian response and the broadband
-%   response for each separate type of image, as well as for contrasts of
-%   several stimulus categories (e.g., grating v noise, or grating v blank)
+% See also s_GAMMA_MEG_visualize
 %
-%   2. Denoise with environmental noise channels
+% TODO:
 %
 %   3. MAYBE: summarize the EVOKED response from each stimulus
-%
-%   4. Make a POSTER!
 %
 %   5. MAYBE: a grand average where you average the mesh images across
 %   subjects
