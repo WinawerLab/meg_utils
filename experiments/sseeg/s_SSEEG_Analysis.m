@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj004';
+which_subject         = 'wlsubj001';
 interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
@@ -56,7 +56,7 @@ switch which_subject
     case 'wlsubj001' 
         session_name   = 'Session_20150129_wl_subj001';
         session_prefix = 'Session_20150129_1007_pt2';
-        runs           = [2:9];
+        runs           = 2:9;
 end
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
@@ -98,20 +98,20 @@ for ii = 1:nr_runs
     end
 end
 
-init_seq    = stimulus_file.stimulus.flashTimes.flip;
-init_times  = round((init_seq - init_seq(1)) * 1000)+1;
-init_ts     = ones(1, init_times(end)+40);
-
-for jj = 1:2:size(init_times,2)-1
-    init_ts(init_times(jj):init_times(jj+1)) = false;
-end
+% init_seq    = stimulus_file.stimulus.flashTimes.flip;
+% init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+% init_ts     = ones(1, init_times(end)+40);
+% 
+% for jj = 1:2:size(init_times,2)-1
+%     init_ts(init_times(jj):init_times(jj+1)) = false;
+% end
 
 %% Extract event times from .evt file, and define epoch onset times in samples
 %  (or in ms if you have sampled at 1000Hz)
 
 % for eline's data only
-% init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
-% init_ts = init.init_seq.old;
+init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+init_ts = init.init_seq.old;
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
@@ -182,10 +182,10 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
-opt.npcs2try          = 5;
+opt.npcs2try          = 10;
 opt.npoolmethod       = {'r2','n',60};
 opt.verbose           = true;
-opt.pcn               = 20;
+opt.pcn               = 10;
 opt.savepcs           = 0;
 optsl = opt;
 optbb = opt;
@@ -299,3 +299,4 @@ noise_pool(results.noisepool) = true;
 figure; plotOnEgi(noise_pool); title('Noise pool');
 
 figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar
+

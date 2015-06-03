@@ -1,7 +1,7 @@
 %% Visualize  SSEEG results after denoising
 
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
-which_subject         = 'subj004';
+which_subject         = 'subj019';
 
 %% Find the stored data
 tmp = dir(fullfile(project_path, 'Data', 'Session*'));
@@ -107,10 +107,25 @@ denoised_ts_cat = [];
 
 for ii = 1:72
     % ts_cat          = cat(2, ts_cat, sensorData(visual_channels, :, ii));
-    denoised_ts_cat = cat(2, denoised_ts_cat, bb.denoisedts{1}(visual_channels, :, ii));
+    denoised_ts_cat = cat(2, denoised_ts_cat, sl.denoisedts{1}(visual_channels, :, ii));
 end
 
 % figure(13); plot(ts_cat'); title('Original'); hold all;
 figure(10); plot(denoised_ts_cat'); title('Denoised electrode data');
 xlabel('frames (ms)')
 ylabel('Voltage (microvolts?)')
+
+
+%% Plot spectra of non-denoised timeseries
+
+t = size(ts,1);
+num_epoch_time_pts = t;
+data_channels = 1:128;
+channels_to_plot = data_channels;
+produce_figures = 1;
+
+
+[amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right, ...
+    amps_off_left] = sseeg_fourier(t, num_epoch_time_pts, ts, conditions, ...
+       data_channels, channels_to_plot, produce_figures);
+
