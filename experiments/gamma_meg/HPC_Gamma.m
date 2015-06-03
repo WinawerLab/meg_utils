@@ -90,7 +90,7 @@ parfor subject_num = which_data_sets_to_analyze
         var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
         bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
         bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
-        verbose               = true;
+        verbose               = false;
         
         [ts(:,:,data_channels), badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
             var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
