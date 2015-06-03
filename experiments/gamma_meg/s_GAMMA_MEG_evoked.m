@@ -45,7 +45,7 @@ condition_names               = {   ...
     'Gratings(0.73 cpd)' ...
     'Gratings(1.45 cpd)' ...
     'Gratings(2.90 cpd)' ...
-    'Plaid'...
+    'Plaid(1.45 cpd)'...
     'Blank'};
 
 which_data_sets_to_analyze = 5;
@@ -139,12 +139,20 @@ for subject_num = which_data_sets_to_analyze
     %channel_to_plot = 133;
     figure(100), clf, hold all
     plot(bsxfun(@plus, evoked(:,:, channel_to_plot), 150*(1:num_conditions)), 'r')    
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)+evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)-evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
+    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)+1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
+    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)-1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
     set(gca, 'YTick', 150*(1:num_conditions), 'YGrid', 'on');
+    for ii = 1:length(conditions_unique)
+       text(1, 150*ii+50, condition_names{ii}, 'FontSize', 20) 
+    end
     
+    figure(99)
+    for ii = 1:1000
+        ft_plotOnMesh(squeeze(evoked(ii,2,:))'); title(ii); 
+        set(gca, 'CLim', [-100 100]);    pause(.001)
+    end
     
-    
+    figure; plot(nanmedian(abs(evoked(:,:,1:157))./evoked_sem(:,:,1:157), 3)); ylim([0 4])
     %%
 end
 

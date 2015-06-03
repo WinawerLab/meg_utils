@@ -66,7 +66,8 @@ switch lower(plotType)
         cfg.layout          = ft_prepare_layout(cfg, data_hdr);
         cfg.style           ='straight';
         %cfg.electrodes      ='numbers';
-        cfg.electrodes      = 'dotnum';
+        %cfg.electrodes      = 'dotnum';
+        cfg.electrodes      = 'on';
         cfg.emarkersize     = 5;
         cfg.efontsize       = 15;
         cfg.ecolor          = 'k';
