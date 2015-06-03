@@ -1,7 +1,7 @@
 %% Visualize  SSEEG results after denoising
 
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
-which_subject         = 'subj019';
+which_subject         = 'subj004';
 
 %% Find the stored data
 tmp = dir(fullfile(project_path, 'Data', 'Session*'));
@@ -118,14 +118,15 @@ ylabel('Voltage (microvolts?)')
 
 %% Plot spectra of non-denoised timeseries
 
-t = size(ts,1);
+denoisedts = reshape(denoisedts{1},2,3,1);
+t = size(denoisedts,1);
 num_epoch_time_pts = t;
 data_channels = 1:128;
-channels_to_plot = data_channels;
+channels_to_plot = 70:75;
 produce_figures = 1;
 
 
 [amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right, ...
-    amps_off_left] = sseeg_fourier(t, num_epoch_time_pts, ts, conditions, ...
+    amps_off_left] = sseeg_fourier(t, num_epoch_time_pts, denoisedts, conditions, ...
        data_channels, channels_to_plot, produce_figures);
 

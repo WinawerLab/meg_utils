@@ -98,13 +98,13 @@ for ii = 1:nr_runs
     end
 end
 
-% init_seq    = stimulus_file.stimulus.flashTimes.flip;
-% init_times  = round((init_seq - init_seq(1)) * 1000)+1;
-% init_ts     = ones(1, init_times(end)+40);
-% 
-% for jj = 1:2:size(init_times,2)-1
-%     init_ts(init_times(jj):init_times(jj+1)) = false;
-% end
+init_seq    = stimulus_file.stimulus.flashTimes.flip;
+init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+init_ts     = ones(1, init_times(end)+40);
+
+for jj = 1:2:size(init_times,2)-1
+    init_ts(init_times(jj):init_times(jj+1)) = false;
+end
 
 %% Extract event times from .evt file, and define epoch onset times in samples
 %  (or in ms if you have sampled at 1000Hz)
@@ -153,6 +153,12 @@ for ii = 1:nr_runs
     ts          = cat(2, ts, thists);
     conditions  = cat(2, conditions, this_conditions);
 end
+
+% remove first epoch of every 
+cond_transitions = false(size(conditions));
+cond_transitions(find(diff(conditions))+1) = true;
+conditions = conditions(~cond_transitions);
+ts = ts(:, ~cond_transitions, :);
 
 %% Preprocess data
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
