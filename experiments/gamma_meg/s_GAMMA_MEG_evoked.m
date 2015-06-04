@@ -76,14 +76,14 @@ for subject_num = which_data_sets_to_analyze
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
     
     %% Make epochs
-    [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
+    [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);        
     % remove intertrial intervals
     iti               = conditions == intertrial_trigger_num;
     ts                = ts(:,~iti, :);
     conditions        = conditions(~iti);
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
-    
+    num_time_points   = size(ts, 1);
     %% Remove bad epochs
     var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
     bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
@@ -127,75 +127,31 @@ for subject_num = which_data_sets_to_analyze
     ts_f = filter(df,ts_f);                   % Append D zeros to the input data
     ts_f = ts_f(D+1:end,:, :);                % Shift data to compensate for delay
     
-    evoked = zeros(size(ts,1), num_conditions, size(ts,3));
-    evoked_sem = zeros(size(ts,1), num_conditions, size(ts,3));
+    blank_trials     = conditions == find(blank_condition);
+    evoked_grand     = squeeze(nanmean(ts_f(:, ~blank_trials, :) , 2));
+    evoked_grand_sem = squeeze(nanstd(ts_f(:, ~blank_trials, :), [],  2)) / sqrt(sum(~blank_trials));
+        
+    evoked_grand_rms = sqrt(nansum(evoked_grand(:,data_channels).^2,2));
+    [~, grand_idx] = max(evoked_grand_rms);
+    peak_window = [-30:30] + grand_idx;
+    figure; plot(evoked_grand_rms); hold on;
+    % add plot lines for peak_window
     
-    for c = 1:length(conditions_unique)
-        evoked(:,c, :) = nanmean(ts_f(:, conditions == c, :) , 2);
-        evoked_sem(:,c, :) = nanstd(ts_f(:, conditions == c, :), [],  2) / sqrt(sum(conditions==c));
-    end
+    [~, which_time_point] = max(abs(evoked_grand(peak_window, data_channels)));
+    which_time_point = which_time_point + min(peak_window) -1;
     
-    channel_to_plot = 1;
-    %channel_to_plot = 133;
-    figure(100), clf, hold all
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot), 150*(1:num_conditions)), 'r')
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)+1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot)-1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
-    set(gca, 'YTick', 150*(1:num_conditions), 'YGrid', 'on');
-    for ii = 1:length(conditions_unique)
-        text(1, 150*ii+50, condition_names{ii}, 'FontSize', 20)
-    end
+    linearInd = sub2ind([num_time_points size(evoked_grand,2)], which_time_point, data_channels);
     
-    figure(99)
-    for ii = 1:1000
-        ft_plotOnMesh(squeeze(evoked(ii,2,:))'); title(ii);
-        set(gca, 'CLim', [-100 100]);    pause(.001)
-    end
+    channel_peaks = abs(evoked_grand(linearInd)) ./ evoked_grand_sem(linearInd);
     
-    figure; plot(nanmedian(abs(evoked(:,:,1:157))./evoked_sem(:,:,1:157), 3)); ylim([0 4])
+    figure;
+    ft_plotOnMesh(channel_peaks); title('Z scores of highest evoked signal in conditions');
+    set(gca, 'CLim', [0 30]);
     
-    %%
     
-    % get median responce from each condition of each channel for baseline
-    evoked_median = squeeze(nanmedian(evoked(:,:,1:157), 1));
-    wn = 1:200;
-    
-    peaks = zeros(length(conditions_unique),length(data_channels));
-    
-    % find highest peak for each condition of each channel
-    
-    for jj = 1:length(data_channels)
-        for jjj = 1:length(conditions_unique);
-            a = max(findpeaks(abs(evoked(wn,jjj,jj))));
-            if isempty(a)
-                peaks(jjj,jj) = 0;
-            else
-                peaks(jjj,jj) = a;
-            end
-        end
-    end
-    
-    % difference between peaks and median
-    
-    difference = peaks - evoked_median;
-    
-    % sort and take mean from 5 conditions with largest difference for each chan
-    
-    a = sort(difference,1,'descend');
-    diff_mn = nanmean(a(1:3,:),1);
-    
-    % std and mean across channels
-    
-    chan_diff_std = nanstd(diff_mn);
-    chan_diff_mn  = nanmean(diff_mn);
-    
-    % z-scores for each channel
-    
-    z = (diff_mn - chan_diff_mn)'/chan_diff_std;
-    
-    z=-z;    
-    ft_plotOnMesh(z'); title('Z scores of highest evoked signal in conditions');
-    set(gca, 'CLim', [-4 4]);
+    figure;
+    noise_pool = channel_peaks < 5;
+    ft_plotOnMesh(double(noise_pool)); title('noise pool');
     
     
     
