@@ -122,38 +122,84 @@ for subject_num = which_data_sets_to_analyze
     %   Design a 70th order lowpass FIR filter with cutoff frequency of 75 Hz.
     df = designfilt('lowpassfir','FilterOrder',70,'CutoffFrequency',50, 'SampleRate', fs);
     D = mean(grpdelay(df)); % filter delay in samples
-
+    
     ts_f = padarray(ts, [D 0 0], 0, 'post');
     ts_f = filter(df,ts_f);                   % Append D zeros to the input data
     ts_f = ts_f(D+1:end,:, :);                % Shift data to compensate for delay
     
     evoked = zeros(size(ts,1), num_conditions, size(ts,3));
     evoked_sem = zeros(size(ts,1), num_conditions, size(ts,3));
-
+    
     for c = 1:length(conditions_unique)
-       evoked(:,c, :) = nanmean(ts_f(:, conditions == c, :) , 2); 
-       evoked_sem(:,c, :) = nanstd(ts_f(:, conditions == c, :), [],  2) / sqrt(sum(conditions==c));
+        evoked(:,c, :) = nanmean(ts_f(:, conditions == c, :) , 2);
+        evoked_sem(:,c, :) = nanstd(ts_f(:, conditions == c, :), [],  2) / sqrt(sum(conditions==c));
     end
     
-    channel_to_plot = 47;
+    channel_to_plot = 1;
     %channel_to_plot = 133;
     figure(100), clf, hold all
-    plot(bsxfun(@plus, evoked(:,:, channel_to_plot), 150*(1:num_conditions)), 'r')    
+    plot(bsxfun(@plus, evoked(:,:, channel_to_plot), 150*(1:num_conditions)), 'r')
     plot(bsxfun(@plus, evoked(:,:, channel_to_plot)+1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
     plot(bsxfun(@plus, evoked(:,:, channel_to_plot)-1*evoked_sem(:,:, channel_to_plot), 150*(1:num_conditions)), 'k--')
     set(gca, 'YTick', 150*(1:num_conditions), 'YGrid', 'on');
     for ii = 1:length(conditions_unique)
-       text(1, 150*ii+50, condition_names{ii}, 'FontSize', 20) 
+        text(1, 150*ii+50, condition_names{ii}, 'FontSize', 20)
     end
     
     figure(99)
     for ii = 1:1000
-        ft_plotOnMesh(squeeze(evoked(ii,2,:))'); title(ii); 
+        ft_plotOnMesh(squeeze(evoked(ii,2,:))'); title(ii);
         set(gca, 'CLim', [-100 100]);    pause(.001)
     end
     
     figure; plot(nanmedian(abs(evoked(:,:,1:157))./evoked_sem(:,:,1:157), 3)); ylim([0 4])
+    
     %%
+    
+    % get median responce from each condition of each channel for baseline
+    evoked_median = squeeze(nanmedian(evoked(:,:,1:157), 1));
+    wn = 1:200;
+    
+    peaks = zeros(length(conditions_unique),length(data_channels));
+    
+    % find highest peak for each condition of each channel
+    
+    for jj = 1:length(data_channels)
+        for jjj = 1:length(conditions_unique);
+            a = max(findpeaks(abs(evoked(wn,jjj,jj))));
+            if isempty(a)
+                peaks(jjj,jj) = 0;
+            else
+                peaks(jjj,jj) = a;
+            end
+        end
+    end
+    
+    % difference between peaks and median
+    
+    difference = peaks - evoked_median;
+    
+    % sort and take mean from 5 conditions with largest difference for each chan
+    
+    a = sort(difference,1,'descend');
+    diff_mn = nanmean(a(1:3,:),1);
+    
+    % std and mean across channels
+    
+    chan_diff_std = nanstd(diff_mn);
+    chan_diff_mn  = nanmean(diff_mn);
+    
+    % z-scores for each channel
+    
+    z = (diff_mn - chan_diff_mn)'/chan_diff_std;
+    
+    z=-z;    
+    ft_plotOnMesh(z'); title('Z scores of highest evoked signal in conditions');
+    set(gca, 'CLim', [-4 4]);
+    
+    
+    
+    
 end
 
 
