@@ -73,7 +73,7 @@ switch lower(plotType)
         cfg.layout          = ft_prepare_layout(cfg, data_hdr);
         cfg.style           ='straight';
         % cfg.style         ='blank';
-        cfg.electrodes      ='numbers';
+%         cfg.electrodes      ='numbers';
         cfg.colorbar        ='yes';
         cfg.maplimits       ='maxmin';
         cfg.data            = sensor_data';
