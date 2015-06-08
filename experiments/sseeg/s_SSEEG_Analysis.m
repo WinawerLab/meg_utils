@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj004';
+which_subject         = 'wlsubj001';
 interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
@@ -213,7 +213,7 @@ sensorData = permute(sensorData, [3 1 2]);
 % If requested: Save data
 if save_data
     fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-    parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
+    parsave([fname '_bb_cond_correct.mat'], 'results', results, 'evalout', evalout, ...
         'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
         'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
 end
@@ -233,7 +233,7 @@ end
 % keeping this here for now in case we dont want to save the our denoising
 % results but we do want to visualize them. 
 
-fH = figure(6); clf, set(fH, 'name', 'Denoised Broadband 60 noise channels')
+fH = figure(5); clf, set(fH, 'name', 'Denoised Broadband 20 noise channels')
 
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
@@ -305,5 +305,4 @@ noise_pool = zeros(1,128);
 noise_pool(results_50_noise.noisepool) = true;
 figure(4); plotOnEgi(noise_pool); title('Noise pool');
 
-figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar
-
+figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar;

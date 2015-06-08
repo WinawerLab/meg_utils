@@ -1,7 +1,7 @@
 %% Visualize  SSEEG results after denoising
 
 project_path          = '/Volumes/server/Projects/EEG/SSEEG/';
-which_subject         = 'subj004';
+which_subject         = 'subj001';
 
 %% Find the stored data
 tmp = dir(fullfile(project_path, 'Data', 'Session*'));
@@ -12,7 +12,7 @@ which_path = ~cellfun(@isempty, strfind(subject_paths, which_subject));
 subject_path = subject_paths{which_path};
 
 % results of denoising broadband data
-tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb.mat'));
+tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb2.mat'));
 if numel(tmp)>0,
     data_path_bb = fullfile(project_path, 'data', subject_path, 'processed', tmp(1).name);
 end
@@ -95,7 +95,7 @@ end
 %% Visualize the noise pool
 
 noise_pool = zeros(1,128);
-noise_pool(bb.results.noisepool) = true;
+noise_pool(results_60_noise.noisepool) = true;
 figure; plotOnEgi(noise_pool); title('Noise pool');
 
 %% Visualize
@@ -118,13 +118,32 @@ xlabel('frames (ms)')
 ylabel('Voltage (microvolts?)')
 
 
+%% Plot left minus right SNR values
+
+SNR_right = bb.results.origmodel.beta_md(2,:) ./  bb.results.origmodel.beta_se(2,:);
+SNR_left  = bb.results.origmodel.beta_md(3,:) ./  bb.results.origmodel.beta_se(3,:);
+
+Left_minus_Right = zeros(1, 128); Right_minus_Left = zeros(1, 128);
+Left_minus_Right(~bb.badChannels) = SNR_left - SNR_right;
+Right_minus_Left(~bb.badChannels) = SNR_right - SNR_left;
+
+fH = figure(1); clf, set(fH, 'name', 'SNR Left Minus Right')
+plotOnEgi(Left_minus_Right, 0); title(sprintf('Left Minus Right SNR')); 
+colorbar; clim = get(colorbar, 'Limits'); clim(2) = -clim(1);
+set(colorbar, 'Limits', clim);
+
+fH = figure(2); clf, set(fH, 'name', 'SNR Right Minus Left')
+plotOnEgi(Right_minus_Left, 0); title(sprintf('Right Minus Left SNR'));
+colorbar; clim = get(colorbar, 'Limits'); clim(2) = -clim(1);
+set(colorbar, 'Limits', clim);
+
 %% Plot spectra of non-denoised timeseries
 
 denoisedts = reshape(denoisedts{1},2,3,1);
 t = size(denoisedts,1);
 num_epoch_time_pts = t;
 data_channels = 1:128;
-channels_to_plot = 70:75;
+channels_to_plot =75;
 produce_figures = 1;
 
 
