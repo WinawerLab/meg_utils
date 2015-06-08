@@ -137,6 +137,10 @@ plotOnEgi(Right_minus_Left, 0); title(sprintf('Right Minus Left SNR'));
 colorbar; clim = get(colorbar, 'Limits'); clim(2) = -clim(1);
 set(colorbar, 'Limits', clim);
 
+%% Headplot of difference in SNR between left and right conditions
+
+dfdMakeFigure9();
+
 %% Plot spectra of non-denoised timeseries
 
 denoisedts = reshape(denoisedts{1},2,3,1);
