@@ -46,7 +46,8 @@ for ii = 1:3
     data_to_plot(~bb.badChannels) = bb.results.origmodel.beta_md(ii,:) ./ ...
         bb.results.origmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
-    clim = get(subplot(3,3,a(ii)), 'CLim');
+    clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
+    set(subplot(3,3,a(ii)), 'CLim', clim);
     
     subplot(3,3,a(ii)+1);
     data_to_plot(~bb.badChannels) = bb.results.finalmodel.beta_md(ii,:) ./ ...
@@ -81,7 +82,8 @@ for ii = 1:3
     data_to_plot(~sl.badChannels) = sl.results.origmodel.beta_md(ii,:) ./ ...
         sl.results.origmodel.beta_se(ii,:);        
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})); 
-    colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
+    colorbar; clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
+    set(subplot(3,3,a(ii)), 'CLim', clim);
     
     subplot(3,3,a(ii)+1);
     data_to_plot(~sl.badChannels) = sl.results.finalmodel.beta_md(ii,:) ./ ...

@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj001';
+which_subject         = 'wlsubj004';
 interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
@@ -154,7 +154,7 @@ for ii = 1:nr_runs
     conditions  = cat(2, conditions, this_conditions);
 end
 
-% remove first epoch of every 
+% remove first epoch of every six in a condition block
 cond_transitions = false(size(conditions));
 cond_transitions(find(diff(conditions))+1) = true;
 conditions = conditions(~cond_transitions);
@@ -233,7 +233,7 @@ end
 % keeping this here for now in case we dont want to save the our denoising
 % results but we do want to visualize them. 
 
-fH = figure(11); clf, set(fH, 'name', 'Denoised Broadband')
+fH = figure(6); clf, set(fH, 'name', 'Denoised Broadband 60 noise channels')
 
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
@@ -255,8 +255,9 @@ for ii = 1:3
     data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
         results.origmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii}));
-    colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
-    
+    colorbar; clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
+    set(subplot(3,3,a(ii)), 'CLim', clim);
+
     subplot(3,3,a(ii)+1);
     data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
         results.finalmodel.beta_se(ii,:);
@@ -301,8 +302,8 @@ end
 %% Visualize noise pool and impedances
 
 noise_pool = zeros(1,128);
-noise_pool(results.noisepool) = true;
-figure; plotOnEgi(noise_pool); title('Noise pool');
+noise_pool(results_50_noise.noisepool) = true;
+figure(4); plotOnEgi(noise_pool); title('Noise pool');
 
 figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar
 
