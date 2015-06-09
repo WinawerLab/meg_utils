@@ -12,13 +12,13 @@ which_path = ~cellfun(@isempty, strfind(subject_paths, which_subject));
 subject_path = subject_paths{which_path};
 
 % results of denoising broadband data
-tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb2.mat'));
+tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb40.mat'));
 if numel(tmp)>0,
     data_path_bb = fullfile(project_path, 'data', subject_path, 'processed', tmp(1).name);
 end
 
 % results of denoising stimulus locked data
-tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*sl.mat'));
+tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*sl40.mat'));
 if numel(tmp)>0,
     data_path_sl = fullfile(project_path, 'data', subject_path, 'processed', tmp(1).name);
 end
@@ -31,13 +31,13 @@ fH = figure(1); clf, set(fH, 'name', 'Denoised Broadband')
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~bb.badChannels) = bb.results.origmodel.r2;
-plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+plotOnEgi(data_to_plot), title('original R2'), colorbar; caxis([0 4]);
 subplot(3,3,4)
 data_to_plot(~bb.badChannels) = bb.results.finalmodel.r2;
-plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+plotOnEgi(data_to_plot), title('final R2'), colorbar; caxis([0 4]);
 subplot(3,3,7)
 data_to_plot(~bb.badChannels) = bb.results.finalmodel.r2 - bb.results.origmodel.r2;
-plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
+plotOnEgi(data_to_plot, true), title('final R2 - original R2'), colorbar; caxis([0 4]);
 
 a = [2 5 8];
 cond = {'Full', 'Right', 'Left'};
@@ -45,23 +45,24 @@ for ii = 1:3
     subplot(3,3,a(ii))
     data_to_plot(~bb.badChannels) = bb.results.origmodel.beta_md(ii,:) ./ ...
         bb.results.origmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})), colorbar;
-    clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
-    set(subplot(3,3,a(ii)), 'CLim', clim);
+    plotOnEgi(data_to_plot); title(sprintf('SNR original %s ', cond{ii})); 
+    colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
     
     subplot(3,3,a(ii)+1);
     data_to_plot(~bb.badChannels) = bb.results.finalmodel.beta_md(ii,:) ./ ...
         bb.results.finalmodel.beta_se(ii,:);
-    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), colorbar;
-    set(subplot(3,3,a(ii)+1), 'CLim', clim);
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})), 
+    colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
 end
 
-%% Plot stimulus locked results
+%% Load stimulus locked results
 
 sl = load(data_path_sl);
 
+%% Plot stimulus locked results
 fH = figure(2); clf, set(fH, 'Name', 'Stim-Locked Denoised');
-
     subplot(3,3,1)
 data_to_plot = zeros(1, 128);
 data_to_plot(~sl.badChannels) = sl.results.origmodel.r2;
@@ -82,14 +83,15 @@ for ii = 1:3
     data_to_plot(~sl.badChannels) = sl.results.origmodel.beta_md(ii,:) ./ ...
         sl.results.origmodel.beta_se(ii,:);        
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})); 
-    colorbar; clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
-    set(subplot(3,3,a(ii)), 'CLim', clim);
+    colorbar; set(colorbar, 'Limits', [0 10]);
+    caxis([0 10]);
     
     subplot(3,3,a(ii)+1);
     data_to_plot(~sl.badChannels) = sl.results.finalmodel.beta_md(ii,:) ./ ...
         sl.results.finalmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii}));
-    colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
+    colorbar; set(colorbar, 'Limits', [0 10]);
+    caxis([0 10]);
 end
 
 %% Visualize the noise pool
@@ -98,8 +100,45 @@ noise_pool = zeros(1,128);
 noise_pool(results_60_noise.noisepool) = true;
 figure; plotOnEgi(noise_pool); title('Noise pool');
 
-%% Visualize
-% sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
+%% Headplot of difference in SNR between left and right conditions
+
+cond_diff_headplot(bb, 'left_right', 'finalmodel', 'SNR');
+
+%% Plot spectra of non-denoised versus denoised timeseries
+
+ts_orig = permute(sensorData, [2 3 1]);
+ts_den = permute(sl.denoisedts{1}, [2 3 1]);
+t = size(ts,1);
+num_epoch_time_pts = t;
+data_channels = 1:128;
+channels_to_plot = [84 128] ;
+produce_figures = 1;
+
+addpath(genpath('/Volumes/server/Projects/MEG/SSMEG/code/'));
+freq                    = (0:num_epoch_time_pts-1)/(num_epoch_time_pts/1000); 
+on_full_orig            = ts_orig(:, find(conditions == 1), :); 
+on_full_den             = ts_den(:, find(conditions == 1), :); 
+ft_on_epoched_full_orig = fft(on_full_orig) / length(t)*2;   
+ft_on_epoched_full_den  = fft(on_full_den) / length(t)*2;   
+amps_on_full_orig       = abs(ft_on_epoched_full_orig);    clear ft_on_epoched_full;
+amps_on_full_den        = abs(ft_on_epoched_full_den);    clear ft_on_epoched_full;
+
+    figure(206);
+    clf; set(gcf, 'Color', 'w')
+    set(gca, 'FontSize', 20, 'ColorOrder', jet(length(channels_to_plot)))
+    hold all;
+    plot(freq, squeeze(nanmedian(amps_on_full_orig(:,:,channels_to_plot), 2)), 'LineWidth', 2)
+    plot(freq, squeeze(nanmedian(amps_on_full_den(:,:,channels_to_plot), 2)), 'LineWidth', 2)
+    xlim([0 85])
+    yl = get(gca, 'YLim');
+    for ii = 1:7; plot(ii*freq(1)*[12 12], yl, 'k-'); end
+    xlabel('Frequency (Hz)')
+    ylabel('Amplitude (microvolts)')
+    title('Subj001 channel 84 and 128 spectra before and after stim-locked denoising')
+    get_MEG_axes('True'); 
+    sub_head = axes('position', [.15 .2 .2 .2]);
+    temp = zeros(1,128); temp(channels_to_plot) = 1;
+    plotOnEgi(temp);
 
 %% Visually compare EEG data from before and after denoising
 
@@ -116,42 +155,3 @@ end
 figure(10); plot(denoised_ts_cat'); title('Denoised electrode data');
 xlabel('frames (ms)')
 ylabel('Voltage (microvolts?)')
-
-
-%% Plot left minus right SNR values
-
-SNR_right = bb.results.origmodel.beta_md(2,:) ./  bb.results.origmodel.beta_se(2,:);
-SNR_left  = bb.results.origmodel.beta_md(3,:) ./  bb.results.origmodel.beta_se(3,:);
-
-Left_minus_Right = zeros(1, 128); Right_minus_Left = zeros(1, 128);
-Left_minus_Right(~bb.badChannels) = SNR_left - SNR_right;
-Right_minus_Left(~bb.badChannels) = SNR_right - SNR_left;
-
-fH = figure(1); clf, set(fH, 'name', 'SNR Left Minus Right')
-plotOnEgi(Left_minus_Right, 0); title(sprintf('Left Minus Right SNR')); 
-colorbar; clim = get(colorbar, 'Limits'); clim(2) = -clim(1);
-set(colorbar, 'Limits', clim);
-
-fH = figure(2); clf, set(fH, 'name', 'SNR Right Minus Left')
-plotOnEgi(Right_minus_Left, 0); title(sprintf('Right Minus Left SNR'));
-colorbar; clim = get(colorbar, 'Limits'); clim(2) = -clim(1);
-set(colorbar, 'Limits', clim);
-
-%% Headplot of difference in SNR between left and right conditions
-
-dfdMakeFigure9();
-
-%% Plot spectra of non-denoised timeseries
-
-denoisedts = reshape(denoisedts{1},2,3,1);
-t = size(denoisedts,1);
-num_epoch_time_pts = t;
-data_channels = 1:128;
-channels_to_plot =75;
-produce_figures = 1;
-
-
-[amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right, ...
-    amps_off_left] = sseeg_fourier(t, num_epoch_time_pts, denoisedts, conditions, ...
-       data_channels, channels_to_plot, produce_figures);
-

@@ -1,4 +1,4 @@
-function makeRLheadplot()
+function RLheadplot()
 %% Function to reproduce Figure 9 (Spatialmap) for right minus left denoised activations 
 %
 % makeRLheadplot()

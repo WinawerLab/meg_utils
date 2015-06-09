@@ -98,13 +98,13 @@ for ii = 1:nr_runs
     end
 end
 
-init_seq    = stimulus_file.stimulus.flashTimes.flip;
-init_times  = round((init_seq - init_seq(1)) * 1000)+1;
-init_ts     = ones(1, init_times(end)+40);
-
-for jj = 1:2:size(init_times,2)-1
-    init_ts(init_times(jj):init_times(jj+1)) = false;
-end
+% init_seq    = stimulus_file.stimulus.flashTimes.flip;
+% init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+% init_ts     = ones(1, init_times(end)+40);
+% 
+% for jj = 1:2:size(init_times,2)-1
+%     init_ts(init_times(jj):init_times(jj+1)) = false;
+% end
 
 %% Extract event times from .evt file, and define epoch onset times in samples
 %  (or in ms if you have sampled at 1000Hz)
@@ -189,7 +189,7 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
 opt.npcs2try          = 10;
-opt.npoolmethod       = {'r2','n',60};
+opt.npoolmethod       = {'r2','n',40};
 opt.verbose           = true;
 opt.pcn               = 10;
 opt.savepcs           = 0;
@@ -213,9 +213,10 @@ sensorData = permute(sensorData, [3 1 2]);
 % If requested: Save data
 if save_data
     fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-    parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+    parsave([fname '_bb60.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,... 
+        'conditions', conditions, 'badChannels', badChannels,...
+        'badEpochs', badEpochs, 'opt', optbb)
 end
 
 %%  Denoise for stimulus-locked analysis
@@ -224,16 +225,17 @@ end
 
 % save data
 if save_data
-    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+    parsave([fname '_sl40.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,... 
+        'conditions', conditions, 'badChannels', badChannels,...
+        'badEpochs', badEpochs, 'opt', optsl)
 end
 
 %% Plot broadband results
 % keeping this here for now in case we dont want to save the our denoising
 % results but we do want to visualize them. 
 
-fH = figure(5); clf, set(fH, 'name', 'Denoised Broadband 20 noise channels')
+fH = figure(6); clf, set(fH, 'name', 'Denoised Broadband 60 noise channels')
 
 subplot(3,3,1)
 data_to_plot = zeros(1, 128);
@@ -255,14 +257,15 @@ for ii = 1:3
     data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
         results.origmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii}));
-    colorbar; clim = get(subplot(3,3,a(1)), 'CLim'); clim(2) = -clim(1);
-    set(subplot(3,3,a(ii)), 'CLim', clim);
+    colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
 
     subplot(3,3,a(ii)+1);
     data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
         results.finalmodel.beta_se(ii,:);
     plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})); 
-    colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
+        colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
 end
 
 
