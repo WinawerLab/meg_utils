@@ -1,5 +1,14 @@
 % s_GAMMA_MEG_analysis
 
+% OBSOLETE: A slightly modified version of this script now runs on the HPC.
+% Because we compute many bootstrapped solutions, the calculations are
+% slow. 
+%
+% The HPC script is callled HPC_Gamma. After running this script, results
+% can be visualized with s_GAMMA_MEG_visualize.m
+
+return
+
 % Analyze data from MEG Gamma experiments. Subjects saw
 % several kinds of stimuli, including gratings of various spatial
 % frequencies, plaids, and noise patterns (phase-randomized with 1/f^n
@@ -64,7 +73,7 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 5;
+which_data_sets_to_analyze = 6;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 

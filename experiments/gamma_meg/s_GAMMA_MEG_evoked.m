@@ -145,17 +145,14 @@ for subject_num = which_data_sets_to_analyze
     channel_peaks = abs(evoked_grand(linearInd)) ./ evoked_grand_sem(linearInd);
     
     figure;
-    ft_plotOnMesh(channel_peaks); title('Z scores of highest evoked signal in conditions');
+    ft_plotOnMesh(channel_peaks); title('Evoked response (mean(peak)/sem(peak))');
     set(gca, 'CLim', [0 30]);
     
     
     figure;
     noise_pool = channel_peaks < 5;
-    ft_plotOnMesh(double(noise_pool)); title('noise pool');
-    
-    
-    
-    
+    ft_plotOnMesh(double(noise_pool), [], [], [], 'interpolation', 'nearest'); title('noise pool');
+                
 end
 
 

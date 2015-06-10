@@ -10,7 +10,7 @@ data_channels                 = 1:157;
 num_channels                  = length(data_channels);
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 5;
+which_data_to_visualize       = 6;
 save_images                   = false;
 
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})

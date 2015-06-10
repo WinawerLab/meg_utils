@@ -1,4 +1,4 @@
-function fH = ft_plotOnMesh(sensor_data, title_txt, figure_num, plotType)
+function fH = ft_plotOnMesh(sensor_data, title_txt, figure_num, plotType, varargin)
 %Plot a surface map of the MEG sensor data
 % fH = ft_plotOnMesh(sensor_data, [title_txt], [figure_num], [plotType])
 %
@@ -17,14 +17,14 @@ function fH = ft_plotOnMesh(sensor_data, title_txt, figure_num, plotType)
 
 
 % check inputs
-if ~exist('plotType', 'var') || isempty(plotType), plotType = '2d'; end
+if notDefined('plotType'), plotType = '2d'; end
 
 % check length of sensor data
 if length(sensor_data) > 157, sensor_data = sensor_data(1:157); end
 
 % set up figure
-if exist('figure_num', 'var'), fH = figure(figure_num); clf; set(fH, 'Color', 'w')
-else                           fH = gcf; end
+if notDefined('figure_num'), fH = gcf;
+else fH = figure(figure_num); clf; set(fH, 'Color', 'w'), end
 
 
 
@@ -61,8 +61,8 @@ switch lower(plotType)
             data_hdr = load('hdr'); data_hdr = data_hdr.hdr;
         end
         
-        cfg=[];
-        
+        % Default CFG
+        cfg=[];        
         cfg.layout          = ft_prepare_layout(cfg, data_hdr);
         cfg.style           ='straight';
         %cfg.electrodes      ='numbers';
@@ -73,9 +73,20 @@ switch lower(plotType)
         cfg.ecolor          = 'k';
         cfg.colorbar        ='yes';
         cfg.maplimits       ='maxmin';
-        cfg.data            = sensor_data';
         cfg.interpolation   = 'v4';
+
+        cfg.data            = sensor_data';
         
+        % Add custom options if requested
+        if exist('varargin', 'var') 
+           for ii = 1:2:length(varargin)
+              switch varargin{ii} 
+                  case 'electrodes', cfg.electrodes = varargin{ii+1};
+                  case 'interpolation', cfg.interpolation = varargin{ii+1};                      
+                  case 'colorbar', cfg.colorbar = varargin{ii+1};
+              end    
+           end            
+        end
         
         for ii = 1:length(cfg.data)
             if isnan(cfg.data(ii))
