@@ -22,8 +22,12 @@ project_pth                   = fullfile(rootPath,'HPC','Data');
 
 % Get 'freq' struct to define stimulus locked and broadband frequencies
 %  This struct is needed as input args for getstimlocked and getbroadband
+epoch_time = [0 0.9940];
+s_rate_eeg = 1000;
 T = diff(epoch_time)+ 1/s_rate_eeg;
 freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
+
+
 
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
