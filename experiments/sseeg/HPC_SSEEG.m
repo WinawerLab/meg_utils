@@ -57,7 +57,7 @@ for whichSubject = subjects
     sensorData = permute(sensorData, [3 1 2]);
     
     %% Denoise the broadband data
-    for nr_pc = npc_used
+    for nr_pc = 1:length(npc_used)
         optbb.pcstop = -npc_used(nr_pc);
         fprintf('\tnpcs = %d\n', npcs(jj));
         
@@ -78,9 +78,9 @@ for whichSubject = subjects
     allEvalout            = [];
     
     
-    for nr_pc = npc_used
+    for nr_pc = 1:length(npc_used)
         optbb.pcstop = -npc_used(nr_pc);
-        fprintf('\tnpcs = %d\n', npcs(jj));
+        fprintf('\tnpcs = %d\n', npcs(nr_pc));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optsl);
         allResults{nr_pc} = results;
