@@ -12,7 +12,7 @@ which_path = ~cellfun(@isempty, strfind(subject_paths, which_subject));
 subject_path = subject_paths{which_path};
 
 % results of denoising broadband data
-tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb40.mat'));
+tmp = dir(fullfile(project_path, 'data', subject_path, 'processed', '*bb50.mat'));
 if numel(tmp)>0,
     data_path_bb = fullfile(project_path, 'data', subject_path, 'processed', tmp(1).name);
 end
@@ -23,9 +23,11 @@ if numel(tmp)>0,
     data_path_sl = fullfile(project_path, 'data', subject_path, 'processed', tmp(1).name);
 end
 
-%% Plot broadband results
+%% Load broadband results
 
 bb=load(data_path_bb);
+
+%% Plot broadband results
 
 fH = figure(1); clf, set(fH, 'name', 'Denoised Broadband')
 subplot(3,3,1)
@@ -106,7 +108,7 @@ cond_diff_headplot(bb, 'left_right', 'finalmodel', 'SNR');
 
 %% Plot spectra of non-denoised versus denoised timeseries
 
-ts_orig = permute(sensorData, [2 3 1]);
+ts_orig = sensorData;
 ts_den = permute(sl.denoisedts{1}, [2 3 1]);
 t = size(ts,1);
 num_epoch_time_pts = t;
@@ -127,13 +129,16 @@ amps_on_full_den        = abs(ft_on_epoched_full_den);    clear ft_on_epoched_fu
     clf; set(gcf, 'Color', 'w')
     set(gca, 'FontSize', 20, 'ColorOrder', jet(length(channels_to_plot)))
     hold all;
-    plot(freq, squeeze(nanmedian(amps_on_full_orig(:,:,channels_to_plot), 2)), 'LineWidth', 2)
-    plot(freq, squeeze(nanmedian(amps_on_full_den(:,:,channels_to_plot), 2)), 'LineWidth', 2)
+    pre_84 = plot(freq, squeeze(nanmedian(amps_on_full_orig(:,:,channels_to_plot(1)), 2)), 'LineWidth', 2, 'Color', 'r');
+    post_84 = plot(freq, squeeze(nanmedian(amps_on_full_den(:,:,channels_to_plot(1)), 2)), 'LineWidth', 2, 'Color', 'g');
+    pre_128 = plot(freq, squeeze(nanmedian(amps_on_full_orig(:,:,channels_to_plot(2)), 2)), 'LineWidth', 2, 'Color', 'b');
+    post_128 = plot(freq, squeeze(nanmedian(amps_on_full_den(:,:,channels_to_plot(2)), 2)), 'LineWidth', 2, 'Color', 'c');
     xlim([0 85])
     yl = get(gca, 'YLim');
     for ii = 1:7; plot(ii*freq(1)*[12 12], yl, 'k-'); end
     xlabel('Frequency (Hz)')
     ylabel('Amplitude (microvolts)')
+    legend('channel 84 pre', 'channel 84 post','channel 128 pre', 'channel 128 post');
     title('Subj001 channel 84 and 128 spectra before and after stim-locked denoising')
     get_MEG_axes('True'); 
     sub_head = axes('position', [.15 .2 .2 .2]);
