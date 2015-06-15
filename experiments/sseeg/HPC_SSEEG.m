@@ -16,7 +16,7 @@ use3Channels        = false;
 rootPath                      = which('HPC_SSEEG');
 rootPath                      = fileparts(rootPath);
 
-project_pth                   = fullfile(rootPath,'HPC','Data');
+project_pth                   = fullfile(rootPath,'Data');
 
 %% Prepare and solve GLM
 
@@ -52,43 +52,43 @@ for whichSubject = subjects
     % ------------------ Load data and design ----------------------------
     tmp = load(sprintf(fullfile(project_pth, 's0%d_sensorData.mat'),whichSubject)); sensorData = tmp.sensorData;
     tmp = load(sprintf(fullfile(project_pth, 's0%d_design.mat'),whichSubject)); design = tmp.design;
-
+    
     % Permute sensorData for denoising
     sensorData = permute(sensorData, [3 1 2]);
     
-%% Denoise the broadband data
-for nr_pc = npc_used
+    %% Denoise the broadband data
+    for nr_pc = npc_used
         optbb.pcstop = -npc_used(nr_pc);
         fprintf('\tnpcs = %d\n', npcs(jj));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optbb);
         allResults{nr_pc} = results;
         allEvalout{nr_pc} = evalout;
-
+        
         clear results; clear evalout;
-end
-
-
-fname = sprintf(fullfile(project_path, 's0%d_denoisedData_varynpcs'),whichSubject);
-parsave([fname '_bb.mat'], 'allResults', allResults, 'allEvalout', allEvalout, 'opt', optbb)
-
-
-%%  Denoise for stimulus-locked analysis
-allResults            = [];
-allEvalout            = [];
-
-
-for nr_pc = npc_used
+    end
+    
+    
+    fname = sprintf(fullfile(project_path, 's0%d_denoisedData_varynpcs'),whichSubject);
+    parsave([fname '_bb.mat'], 'allResults', allResults, 'allEvalout', allEvalout, 'opt', optbb)
+    
+    
+    %%  Denoise for stimulus-locked analysis
+    allResults            = [];
+    allEvalout            = [];
+    
+    
+    for nr_pc = npc_used
         optbb.pcstop = -npc_used(nr_pc);
         fprintf('\tnpcs = %d\n', npcs(jj));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optsl);
         allResults{nr_pc} = results;
         allEvalout{nr_pc} = evalout;
-
+        
         clear results;
-end
+    end
     fname = sprintf(fullfile(project_path, 's0%d_denoisedData_varynpcs'),whichSubject);
     parsave([fname '_sl.mat'], 'allResults', allResults, 'allEvalout', allEvalout, 'opt', optsl)
-
+    
 end
