@@ -59,7 +59,7 @@ for whichSubject = subjects
     %% Denoise the broadband data
     for nr_pc = 1:length(npc_used)
         optbb.pcstop = -npc_used(nr_pc);
-        fprintf('\tnpcs = %d\n', npcs(jj));
+        fprintf('\tnpcs = %d\n', npcs(nr_pc));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optbb);
         allResults{nr_pc} = results;
