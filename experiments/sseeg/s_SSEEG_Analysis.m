@@ -35,7 +35,7 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj001';
+which_subject         = 'wlsubj019';
 interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
@@ -98,20 +98,20 @@ for ii = 1:nr_runs
     end
 end
 
-% init_seq    = stimulus_file.stimulus.flashTimes.flip;
-% init_times  = round((init_seq - init_seq(1)) * 1000)+1;
-% init_ts     = ones(1, init_times(end)+40);
-% 
-% for jj = 1:2:size(init_times,2)-1
-%     init_ts(init_times(jj):init_times(jj+1)) = false;
-% end
+init_seq    = stimulus_file.stimulus.flashTimes.flip;
+init_times  = round((init_seq - init_seq(1)) * 1000)+1;
+init_ts     = ones(1, init_times(end)+40);
+
+for jj = 1:2:size(init_times,2)-1
+    init_ts(init_times(jj):init_times(jj+1)) = false;
+end
 
 %% Extract event times from .evt file, and define epoch onset times in samples
 %  (or in ms if you have sampled at 1000Hz)
 
 % for eline's data only
-init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
-init_ts = init.init_seq.old;
+% init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+% init_ts = init.init_seq.old;
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
