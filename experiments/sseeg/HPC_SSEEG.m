@@ -41,7 +41,7 @@ optbb = opt;
 optbb.preprocessfun   = @(x)hpf(x, freq.sl);       % preprocess data with a high pass filter for broadband analysis
 evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
-npc_used              = [20,25,30,35,40,45,50,60];
+noisepool_used              = [20,25,30,35,40,45,50,60];
 allResults            = [];
 allEvalout            = [];
 
@@ -57,13 +57,13 @@ for whichSubject = subjects
     sensorData = permute(sensorData, [3 1 2]);
     
     %% Denoise the broadband data
-    for nr_pc = 1:length(npc_used)
-        optbb.pcstop = -npc_used(nr_pc);
-        fprintf('\tnpcs = %d\n', npcs(nr_pc));
+    for jj = 1:length(noisepool_used)
+        optbb.npoolmethod = {'snr','n',noisepool_used(jj)};
+        fprintf('\tnpcs = %d\n', noisepool_used(jj));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optbb);
-        allResults{nr_pc} = results;
-        allEvalout{nr_pc} = evalout;
+        allResults{jj} = results;
+        allEvalout{jj} = evalout;
         
         clear results; clear evalout;
     end
@@ -76,15 +76,14 @@ for whichSubject = subjects
     %%  Denoise for stimulus-locked analysis
     allResults            = [];
     allEvalout            = [];
-    
-    
-    for nr_pc = 1:length(npc_used)
-        optbb.pcstop = -npc_used(nr_pc);
-        fprintf('\tnpcs = %d\n', npcs(nr_pc));
+        
+    for jj = 1:length(noisepool_used)
+        optsl.npoolmethod = {'snr','n',noisepool_used(jj)};
+        fprintf('\tnpcs = %d\n', noisepool_used(jj));
         
         [results, evalout] = denoisedata(design,sensorData,noisepooldef,evalfun,optsl);
-        allResults{nr_pc} = results;
-        allEvalout{nr_pc} = evalout;
+        allResults{jj} = results;
+        allEvalout{jj} = evalout;
         
         clear results;
     end
