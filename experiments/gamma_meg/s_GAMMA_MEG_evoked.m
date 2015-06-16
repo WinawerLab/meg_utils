@@ -54,7 +54,10 @@ blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
 %change server-1 back to server
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+if isempty(which('ft_defaults'))
+    meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',...
+        {'yokogawa', 'sqdproject'})
+end
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);

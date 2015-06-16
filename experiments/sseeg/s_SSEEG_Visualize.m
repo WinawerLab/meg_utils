@@ -100,7 +100,9 @@ end
 
 noise_pool = zeros(1,128);
 noise_pool(results_60_noise.noisepool) = true;
-figure; plotOnEgi(noise_pool); title('Noise pool');
+figure; plotOnEgi(noise_pool, noise_pool); title('Noise pool');
+
+noise_pool(results.noisepool) = true;
 
 %% Headplot of difference in SNR between left and right conditions
 

@@ -47,10 +47,9 @@ end
 patchList = findobj(gca,'type','patch');
 netList   = findobj(patchList,'UserData','plotOnEgi');
 
-
 if isempty(netList),    
     handle = patch( 'Vertices', [ tEpos(1:nChan,1:2), zeros(nChan,1) ], ...
-        'Faces', tEGIfaces,'EdgeColor', [ 0.5 0.5 0.5 ], ...
+        'Faces', tEGIfaces,'EdgeColor', [0.5 0.5 0.5],  ...
         'FaceColor', 'interp');
     axis equal;
     axis off;
