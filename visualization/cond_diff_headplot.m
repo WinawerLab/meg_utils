@@ -18,6 +18,14 @@ function cond_diff_headplot(data, which_conditions, which_model, type)
 % each channel for the broadband signals in the contrast right minus left
 % after using the denoising algorithm. 
 
+%%
+% Condition numbers refer to:
+%   1: Full field (bilateral)
+%   2: Left (from stimulus numbers 5 and 6)
+%   3: Right (from stimulus numbers 7 and 8) 
+%
+% See s_SSEEG_Analysis and stimulus files such as onOffLeftRight_600x600params*
+
 switch which_conditions
     case 'left_right'
         first_cond = 2; second_cond = 3;
