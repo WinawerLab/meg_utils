@@ -176,8 +176,8 @@ addpath(genpath('/Users/winawerlab/matlab/git/denoiseproject/'));
 % Make design matrix
 design = zeros(length(conditions), 3);
 design(conditions==1,1) = 1; % condition 1 is full field
-design(conditions==5,2) = 1; % condition 5 is right (??)
-design(conditions==7,3) = 1; % condition 7 is left (??)
+design(conditions==5,2) = 1; % condition 5 is LEFT
+design(conditions==7,3) = 1; % condition 7 is RIGHT
 
 design = design(~badEpochs,:);
 
