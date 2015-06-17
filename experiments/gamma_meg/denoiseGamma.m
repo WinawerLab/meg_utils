@@ -44,7 +44,7 @@ opt.preprocessfun   = @hpf;  % preprocess data with a high pass filter for broad
 
 
 % 2. We need a new evoked function that extracts the evoked amplitude
-evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
+evokedfun             = @(x)getevoked(data,opts); % function handle to determine noise pool
 
 % 3. We need a new eval function that extracts gamma and broadband
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
