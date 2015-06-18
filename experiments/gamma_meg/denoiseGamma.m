@@ -1,17 +1,21 @@
-function denoiseGamma(subject)
+function [results,evalout,denoisedspec,denoisedts] = denoiseGamma(subject)
 %
-% denoiseGamma(subject)
+% [results,evalout,denoisedspec,denoisedts] = denoiseGamma(subject)
 %
 % INPUTS:
-% subjects  : Subject number to denoise
+%   subjects  : Subject number to denoise
+%
+% OUTPUTS:
+%   results: solution to the undenoised and densoised data sets
+%   evalout: solutions from denoising 0 through n PCs
+%   denoisedspec: ????
+%   denoisedts: denoised time series
 %
 % DESCRIPTION: Wrapper function to denoise  MEG visual gamma data sets.
 
 
 % TODO:
-%      1. function should return something
 %      2. write a preprocessing function
-%      3. add environmental denoising
 
 project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
@@ -31,7 +35,7 @@ fs                     = 1000;        % sample rate
 intertrial_trigger_num = 11;          % the MEG trigger value that corresponds to the intertrial interval
 blank_condition        = 10;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                = true;
-
+denoise_with_nonphys_channels = true;
 
 
 d = dir(fullfile(project_pth, data_pth));
@@ -47,6 +51,7 @@ raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*G
 trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
 
 %% Make epochs
+%   ts is [time points by epochs x channels]
 [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
 % remove intertrial intervals
 iti               = conditions == intertrial_trigger_num;
@@ -65,6 +70,11 @@ conditions = conditions(~bad_epochs);
 
 design_mtrx = conditions2design(conditions);
 
+
+% Denoise data with 3 noise channels
+if denoise_with_nonphys_channels
+    ts = meg_environmental_denoising(ts, environmental_channels,data_channels);
+end
 %% Denoise the data
 
 % denoise parameters (see denoisedata.m)
@@ -86,7 +96,7 @@ f                   = (0:length(t)-1)*fs/length(t);
 keep_timepts        = t(t>.250);
 keep_frequencies    = f((f>=35 & f < 40) |(f > 40 & f <= 57) | ...
                    (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
-opt.preprocessfun   = @(x)gammapreprocess(x, keep_timepts, keep_frequencies);  % preprocess data by clipping 1st
+opt.preprocessfun   = @(x)gammapreprocess(x, t, f, keep_timepts, keep_frequencies);  % preprocess data by clipping 1st
 
 % 2. We need a new evoked function that extracts the evoked amplitude
 evokedfun           = @(x)getevoked(x, fs, design_mtrx, [-30 30]); % function handle to determine noise pool
@@ -98,6 +108,7 @@ evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite
 
 
 % Permute sensorData for denoising
+%   [time points by epochs x channels] => [channels x time points x epochs]
 ts = permute(ts, [3 1 2]);
 
 % Denoise for broadband analysis

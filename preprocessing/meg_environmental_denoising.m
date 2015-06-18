@@ -1,14 +1,12 @@
 function ts_denoised = meg_environmental_denoising(ts,...
     environmental_channels, data_channels, ...
     produce_figures, save_data, verbose)
-
-%% Description of function
-
-% This function uses the timeseries of the three MEG noise channels
-% (sitting on top of the other 157, so they get environmental/external
-% noise). The timeseries will be used in a linear regression, where the
-% residuals will be used as the new 'denoised' data. It will make some
-% before and after denoising plots.
+% This function uses the timeseries of the three MEG non-physiological
+% channels to denoise the physiological channels. 
+%  
+% ts_denoised = meg_environmental_denoising(ts,...
+%     environmental_channels, data_channels, ...
+%     [produce_figures=0], [save_data=0], [verbose=0])
 %
 % INPUTS:
 %  ts                        MEG timeseries (number of timepoints by number 
@@ -19,9 +17,11 @@ function ts_denoised = meg_environmental_denoising(ts,...
 %  data_channels             vector of channel numbers to denoise
 %  produce_figures           boolean. If true, make some plots to compare
 %                               pre and post denoising
+%  save_data
+%  verbose
 %
 % OUTPUTS:
-%  ts                        denoised time series
+%  ts_denoised               denoised time series
 
 %% Deal with inputs
 if ~exist('produce_figures', 'var') || isempty(produce_figures), 
