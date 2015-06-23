@@ -21,7 +21,7 @@ function evoked = getevoked(data,fs, design_mtrx, peak_window)
 
 % check input 
 if notDefined('fs'),     fs     = 1000; end
-if notDefined('design'), design_mtrx = ones(size(data, 2), 1); end
+if notDefined('design_mtrx'), design_mtrx = ones(size(data, 2), 1); end
 if notDefined('window'), peak_window = [-30 30]; end
 
 % reshape data
@@ -53,6 +53,11 @@ evoked_grand_rms = sqrt(nansum(evoked_grand.^2,2));
 
 % We expand the seach window so that the peak of each channel can vary a bit 
 peak_window = peak_window + grand_idx;
+
+% We clip the window if it is bigger than the actual epoch length
+if peak_window(2) > size(data,1)
+    peak_window(2) = size(data,1);
+end
 
 % which_time_point is a vector of length num_channels that tells us which
 % time point is the peak for each channel

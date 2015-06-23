@@ -1,4 +1,4 @@
-function data = gammapreprocess(data, t, f, evoked_cutoff, keep_frequencies)
+function [newdata, t] = gammapreprocess(data, t, f, evoked_cutoff, keep_frequencies)
 % Clip and filter time series prior to denoising for gamma experiment. We
 % clip the early part of the epoch to remove the evoked response. From the
 % remaining response, we filter out all frequencies that are not used for
@@ -9,7 +9,17 @@ function data = gammapreprocess(data, t, f, evoked_cutoff, keep_frequencies)
 % data is [channels x time points x epochs]
 
 % clip the data and time vector
-data    = data(:, t>evoked_cutoff, :);
-t       = t(t>evoked_cutoff);
+data    = data(:, t>evoked_cutoff(2), :);
+t       = t(t>evoked_cutoff(2));
+ln      = 60; % line noise
 
-error('Not yet finished')
+% harmonics of of the stimulus locked
+tmp = (1:10) * ln; 
+drop_frequencies  = [f(sort(unique([tmp-1 tmp tmp+1]))), ~keep_frequencies];
+% high pass filter with cutoff of 62 Hz, sharp cutoff, and excluding
+% harmonics
+newdata = filterdata(data,1000,62,1,drop_frequencies);
+
+t = size(t,2);
+
+return
