@@ -80,10 +80,11 @@ switch lower(plotType)
         % Add custom options if requested
         if exist('varargin', 'var') 
            for ii = 1:2:length(varargin)
-              switch varargin{ii} 
+              switch lower(varargin{ii}) 
                   case 'electrodes', cfg.electrodes = varargin{ii+1};
                   case 'interpolation', cfg.interpolation = varargin{ii+1};                      
                   case 'colorbar', cfg.colorbar = varargin{ii+1};
+                  case 'clim', clim = varargin{ii+1};
               end    
            end            
         end
@@ -97,6 +98,6 @@ switch lower(plotType)
         
         % add a title if requested
         if exist('title_txt', 'var') && ~isempty(title_txt), title(title_txt); end
-        
+        if exist('clim', 'var'), set(gca, 'CLim', clim); end
 end
 

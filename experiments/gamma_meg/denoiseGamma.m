@@ -14,7 +14,7 @@ project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 5; % Fifth folder in project path, not neccarily session 5.
+subject                       = 5; % Fifth folder in project path, not necessarily session 5.
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -28,7 +28,7 @@ fs                            = 1000;        % sample rate
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 blank_condition               = 10;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                       = true;
-denoise_with_nonphys_channels = false;
+denoise_with_nonphys_channels = true;
 
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
@@ -53,9 +53,14 @@ trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
 iti               = conditions == intertrial_trigger_num;
 ts                = ts(:,~iti, :);
 conditions        = conditions(~iti);
-conditions(blank_condition) = 0;
+conditions(conditions==blank_condition) = 0;
 
 %% Remove bad epochs and bad channels
+
+% Denoise data with 3 noise channels
+if denoise_with_nonphys_channels
+    ts = meg_environmental_denoising(ts, environmental_channels,data_channels);
+end
 
 [ts(:,:,data_channels), bad_channels, bad_epochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
@@ -65,13 +70,6 @@ ts = ts(:,~bad_epochs,~bad_channels);
 conditions = conditions(~bad_epochs);
 
 design_mtrx = conditions2design(conditions);
-
-
-% Denoise data with 3 noise channels
-if denoise_with_nonphys_channels
-    ts = meg_environmental_denoising(ts, environmental_channels,data_channels(~bad_channels));
-end
-
 
 %% -----------------------------------------------------------------------
 % -------------------------- Denoise data --------------------------------
@@ -87,17 +85,18 @@ if verbose; opt.verbose = true; end
 t                   = epoch_start_end(1):1/fs:epoch_start_end(2);
 f                   = (0:length(t)-1)*fs/length(t);
 keep_timepts        = t(t>.250);
-keep_frequencies    = f((f>=35 & f < 40) |(f > 40 & f <= 57) | ...
-                   (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
-opt.preprocessfun   = @(x)gammapreprocess(x, t, f, keep_timepts, keep_frequencies);  % preprocess data by clipping 1st
+keep_frequencies    = @(x) x((x>=35 & x < 40) |(x > 40 & x <= 57) | ...
+                   (x>=65 & x <= 115) | (x>=126 & x<= 175) | (x>=186 & x<= 200));
+               
+opt.preprocessfun   = @(x)gammapreprocess(x, t, f, keep_timepts, keep_frequencies(f));  % preprocess data by clipping 1st
 
 % A new evoked function that extracts the evoked amplitude
 evokedfun           = @(x)getevoked(x, fs, design_mtrx, [-30 30]); % function handle to determine noise pool
 
 % Eval function that extracts broadband
-f                   = (0:length(keep_timepts)-3)*fs/length(keep_timepts);
-freq                = megGetSLandABfrequencies(f,[],60);
-evalfun             = @(x)getbroadband(x,freq);  % function handle to compuite broadband
+f                   = (0:length(keep_timepts)-1)*fs/length(keep_timepts);
+freq                = megGetSLandABfrequencies(keep_frequencies(f), [], [], .5);
+evalfun             = @(x)getbroadband(x,freq);  % function handle to compute broadband
 
 % Permute sensorData for denoising
 %   [time points by epochs x channels] => [channels x time points x epochs]
@@ -106,5 +105,36 @@ ts = permute(ts, [3 1 2]);
 % Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
 
+%% Look at results
+figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
+    'Noise Pool', [],'2d', 'interpolation', 'nearest');
 
+figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
+    'Denoised Broadband R2',  [], [],  'CLim', [0 3]);
+
+figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
+    'Original Broadband R2', [], [],  'CLim', [0 3]);
+
+
+snr = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
+figure, 
+for ii = 1:9
+    subplot(3,3,ii)
+    ft_plotOnMesh(to157chan(snr(ii,:), ~bad_channels, 0), ...
+        'Denoised Broadband SNR',  [], [], 'CLim', [-3 3]);
+end
+
+
+snr = results.origmodel.beta_md  ./ results.origmodel.beta_se;
+figure, 
+for ii = 1:9
+    subplot(3,3,ii)
+    ft_plotOnMesh(to157chan(snr(ii,:), ~bad_channels, 0), ...
+        'Original Broadband SNR',  [], [], 'CLim', [-3 3]);
+end
+
+
+
+figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
+    'Broadband R2 0 PCs', [], []);
 
