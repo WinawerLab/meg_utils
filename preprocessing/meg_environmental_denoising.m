@@ -1,6 +1,6 @@
 function ts_denoised = meg_environmental_denoising(ts,...
     environmental_channels, data_channels, ...
-    produce_figures, save_data, verbose)
+    produce_figures, verbose)
 % This function uses the timeseries of the three MEG non-physiological
 % channels to denoise the physiological channels. 
 %  
@@ -17,7 +17,6 @@ function ts_denoised = meg_environmental_denoising(ts,...
 %  data_channels             vector of channel numbers to denoise
 %  produce_figures           boolean. If true, make some plots to compare
 %                               pre and post denoising
-%  save_data
 %  verbose
 %
 % OUTPUTS:
@@ -34,41 +33,40 @@ if ~exist('verbose', 'var') || isempty(verbose)
     verbose = 0;
 end
 
-%% Define timeseries of conditions
-
 
 %% Make empty arrays for regressed 'clean' data
 ts_denoised = ts;
 
 % Start regression, keep residuals
-warning off stats:regress:RankDefDesignMat
+% warning off stats:regress:RankDefDesignMat
 
-for channel = data_channels; 
-    if verbose
-        fprintf('[%s]: Channel %d\n', mfilename, channel);
-    end
-    for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
-        
-        %%% ON PERIODS %%%
-        
-        % Full
-        [~,~,R] = regress(ts(:,epoch,channel),[squeeze(ts(:,epoch,environmental_channels)) ones(size(ts,1),1) ]);
-        ts_denoised(:,epoch,channel) = R;
-        
-        clear R
-        
-    end
+for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
+    projectOut  = squeeze(ts(:,epoch,environmental_channels));
+    projectFrom = squeeze(ts(:,epoch,data_channels));
+    %projectionWeights  = pinv(projectOut) * projectFrom;
+    projectionWeights  = projectOut \ projectFrom;
+    ts_denoised(:,epoch,data_channels) = projectFrom - projectOut*projectionWeights;
 end
-warning on stats:regress:RankDefDesignMat
 
-%% Save denoised data
-if save_data
-    fprintf('[%s]: Save data matrix to folder..', mfilename);
-    
-    save denoised_with_nuissance_data.mat ts
-    
-    fprintf('[%s]: Done! Data matrix saved to folder..', mfilename);
-end
+% for channel = data_channels; 
+%     if verbose
+%         fprintf('[%s]: Channel %d\n', mfilename, channel);
+%     end
+%     for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
+%         
+%         %%% ON PERIODS %%%
+%         
+%         % Full
+%         [~,~,R] = regress(ts(:,epoch,channel),[squeeze(ts(:,epoch,environmental_channels)) ones(size(ts,1),1) ]);
+%         ts_denoised(:,epoch,channel) = R;
+%                 
+%         clear R
+%         
+%     end
+% end
+% warning on stats:regress:RankDefDesignMat
+
+
 
 %% For debugging: Make figures of all the raw epochs 
 if produce_figures

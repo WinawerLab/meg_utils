@@ -14,7 +14,7 @@ project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 5; % Fifth folder in project path, not necessarily session 5.
+subject                       = 6; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -32,13 +32,19 @@ denoise_with_nonphys_channels = true;
 
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
+%   restrict to directories
 subj_pths = struct2cell(d);
-subj_pths = subj_pths(1,:);
+isdir     = cell2mat(subj_pths(4,:));
+subj_pths = subj_pths(1,isdir);
 
 % ------------------------------------------------------------------------
 % --------------------- Load & preprocess data ---------------------------
 % ------------------------------------------------------------------------
 
+%% check paths
+if isempty(which('sqdread')), 
+    meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+end
 
 %% Load data (SLOW)
 raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*Gamma*');
@@ -82,21 +88,24 @@ opt.resampling      = {'xval','xval'}; % could be {'boot' 'boot'};
 opt.pcselmethod     = 'r2';            % could be 'snr';
 if verbose; opt.verbose = true; end
 
+% time and frequencies for full-length epochs (prior to truncating)
 t                   = epoch_start_end(1):1/fs:epoch_start_end(2);
 f                   = (0:length(t)-1)*fs/length(t);
-keep_timepts        = t(t>.250);
+evoked_cutoff       = .250; % use only time points >= evoked_cutoff
 keep_frequencies    = @(x) x((x>=35 & x < 40) |(x > 40 & x <= 57) | ...
                    (x>=65 & x <= 115) | (x>=126 & x<= 175) | (x>=186 & x<= 200));
                
-opt.preprocessfun   = @(x)gammapreprocess(x, t, f, keep_timepts, keep_frequencies(f));  % preprocess data by clipping 1st
+% preprocess data by clipping 1st n time points (to eliminate evoked
+% response) and by removing all frequencies that will not be used to fit
+% gamma and broadband later on.
+opt.preprocessfun   = @(x)gammapreprocess(x, t, f, evoked_cutoff, keep_frequencies(f));
 
-% A new evoked function that extracts the evoked amplitude
+% Evoked function is used to identify the noise pool. It finds the peak
+% evoked signal in each epoch for each channel.
 evokedfun           = @(x)getevoked(x, fs, design_mtrx, [-30 30]); % function handle to determine noise pool
 
 % Eval function that extracts broadband
-f                   = (0:length(keep_timepts)-1)*fs/length(keep_timepts);
-freq                = megGetSLandABfrequencies(keep_frequencies(f), [], [], .5);
-evalfun             = @(x)getbroadband(x,freq);  % function handle to compute broadband
+evalfun             = @(x)getbroadband(x,keep_frequencies,fs);  % function handle to compute broadband
 
 % Permute sensorData for denoising
 %   [time points by epochs x channels] => [channels x time points x epochs]
@@ -114,6 +123,9 @@ figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
 
 figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
     'Original Broadband R2', [], [],  'CLim', [0 3]);
+
+figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
+    'Broadband R2 0 PCs', [], []);
 
 
 snr = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
@@ -133,8 +145,4 @@ for ii = 1:9
         'Original Broadband SNR',  [], [], 'CLim', [-3 3]);
 end
 
-
-
-figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
-    'Broadband R2 0 PCs', [], []);
 
