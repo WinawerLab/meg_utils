@@ -10,11 +10,9 @@ function newdata = gammapreprocess(data, t, f, evoked_cutoff, keep_frequencies)
 
 % clip the data and time vector
 data    = data(:, t>=evoked_cutoff, :);
-ln      = 60; % line noise
 
-% harmonics of of the stimulus locked
-tmp = (1:10) * ln; 
-drop_frequencies  = [f(sort(unique([tmp-1 tmp tmp+1]))), ~keep_frequencies];
+
+drop_frequencies  = setdiff(f, keep_frequencies);
 % high pass filter with cutoff of 62 Hz, sharp cutoff, and excluding
 % harmonics
 fs = 1000;

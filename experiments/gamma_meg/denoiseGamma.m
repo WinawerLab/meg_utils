@@ -71,10 +71,12 @@ end
 [ts(:,:,data_channels), bad_channels, bad_epochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
 
+% clip out the bad channels and bad epochs from the data, and remove the
+% bad epochs from the conditions vector
 ts = ts(:,~bad_epochs,~bad_channels);
-
 conditions = conditions(~bad_epochs);
 
+% convert the conditions vector to a binary design matrix
 design_mtrx = conditions2design(conditions);
 
 %% -----------------------------------------------------------------------
@@ -89,9 +91,10 @@ opt.pcselmethod     = 'r2';            % could be 'snr';
 if verbose; opt.verbose = true; end
 
 % time and frequencies for full-length epochs (prior to truncating)
-t                   = epoch_start_end(1):1/fs:epoch_start_end(2);
-f                   = (0:length(t)-1)*fs/length(t);
 evoked_cutoff       = .250; % use only time points >= evoked_cutoff
+t                   = epoch_start_end(1):1/fs:epoch_start_end(2);
+t_clipped           = t(t >= evoked_cutoff); 
+f                   = (0:length(t_clipped)-1)*fs/length(t_clipped);
 keep_frequencies    = @(x) x((x>=35 & x < 40) |(x > 40 & x <= 57) | ...
                    (x>=65 & x <= 115) | (x>=126 & x<= 175) | (x>=186 & x<= 200));
                
@@ -128,21 +131,27 @@ figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
     'Broadband R2 0 PCs', [], []);
 
 
-snr = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
+snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
 figure, 
 for ii = 1:9
     subplot(3,3,ii)
-    ft_plotOnMesh(to157chan(snr(ii,:), ~bad_channels, 0), ...
-        'Denoised Broadband SNR',  [], [], 'CLim', [-3 3]);
+    ft_plotOnMesh(to157chan(snr.final(ii,:), ~bad_channels, 0), ...
+        'Denoised Broadband SNR',  [], [], 'CLim', [-6 6]);
 end
 
 
-snr = results.origmodel.beta_md  ./ results.origmodel.beta_se;
+snr.orig = results.origmodel.beta_md  ./ results.origmodel.beta_se;
 figure, 
 for ii = 1:9
     subplot(3,3,ii)
-    ft_plotOnMesh(to157chan(snr(ii,:), ~bad_channels, 0), ...
+    ft_plotOnMesh(to157chan(snr.orig(ii,:), ~bad_channels, 0), ...
         'Original Broadband SNR',  [], [], 'CLim', [-3 3]);
 end
 
+figure, 
+for ii = 1:9
+    subplot(3,3,ii)
+    ft_plotOnMesh(to157chan(snr.final(ii,:) - snr.orig(ii,:), ~bad_channels, 0), ...
+        'Broadband SNR (final - orig)',  [], [], 'CLim', [-3 3]);
+end
 
