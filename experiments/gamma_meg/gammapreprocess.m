@@ -18,7 +18,7 @@ drop_frequencies  = [f(sort(unique([tmp-1 tmp tmp+1]))), ~keep_frequencies];
 % high pass filter with cutoff of 62 Hz, sharp cutoff, and excluding
 % harmonics
 fs = 1000;
-newdata = filterdata(data,fs,62,1,drop_frequencies);
+newdata = filterdata(data,fs,0,1,drop_frequencies);
 
 
 return
