@@ -14,7 +14,7 @@ project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 6; 
+subject                       = 3; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -29,6 +29,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 blank_condition               = 10;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                       = true;
 denoise_with_nonphys_channels = true;
+save_data                     = true;
 
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
@@ -116,6 +117,10 @@ ts = permute(ts, [3 1 2]);
 
 % Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
+
+if save_data
+    save(sprintf('/Volumes/server/Projects/MEG/Gamma/Data/s0%d_denoisedData.mat',subject+1),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
+end
 
 %% Look at results
 figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...

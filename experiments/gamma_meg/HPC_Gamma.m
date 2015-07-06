@@ -47,9 +47,9 @@ subj_pths = subj_pths(1,:);
 %% Loops over datasets
 parfor subject_num = which_data_sets_to_analyze
     
-    if subject_num == 5 || subject_num == 6 
+    if subject_num >= 4
         intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
-        epoch_start_end        = [0.05 .549]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
+        epoch_start_end        = [0.55 1.049]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
 
     else
         intertrial_trigger_num = 10;
@@ -84,6 +84,16 @@ parfor subject_num = which_data_sets_to_analyze
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
+    %% Denoise data by regressing out nuissance channel time series
+    
+    % Denoise data with 3 noise channels
+    if denoise_with_nonphys_channels
+        if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
+        ts = meg_environmental_denoising(ts, environmental_channels,...
+            data_channels, false);
+    end
+    
+    
     %% Find bad epochs
     if remove_bad_epochs
         
@@ -101,19 +111,6 @@ parfor subject_num = which_data_sets_to_analyze
         conditions = conditions(~badEpochs);
         
     end
-    
-    
-    %% Denoise data by regressing out nuissance channel time series
-    
-    % TODO: check whether this runs with NaNs in ts
-    
-    % Denoise data with 3 noise channels
-    if denoise_with_nonphys_channels
-        if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
-        ts = meg_environmental_denoising(ts, environmental_channels,...
-            data_channels, false);
-    end
-    
     
     % --------------------------------------------------------------------
     % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
@@ -209,7 +206,7 @@ parfor subject_num = which_data_sets_to_analyze
     
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_first500',subject_num));
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData',subject_num));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);

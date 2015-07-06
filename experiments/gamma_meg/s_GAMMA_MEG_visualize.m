@@ -46,7 +46,7 @@ for subject_num = which_data_to_visualize
     
     %% Calculating SNR contrasts
     if res.nboot > 1,
-        summary_stat = @(x) nanmean(x,3) ./ nanstd(x, [], 3);
+        summary_stat = @(x) nanmediam(x,3) ./ nanstd(x, [], 3);
     else
         summary_stat = @(x) nanmean(x,3);
     end
@@ -90,8 +90,8 @@ for subject_num = which_data_to_visualize
     
     % compute means
     
-    w_gauss_mn = nanmean(res.w_gauss,3);
-    w_pwr_mn   = nanmean(res.w_pwr,3);
+    w_gauss_mn = nanmedian(res.w_gauss,3);
+    w_pwr_mn   = nanmedian(res.w_pwr,3);
     
     % compute SNR
     
@@ -263,7 +263,7 @@ for subject_num = which_data_to_visualize
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
     for cond = 1:9
         subplot(3,3,cond)
-        ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+        ft_plotOnMesh(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', condition_names{cond});
         set(gca, 'CLim', [0 .2])
     end
     
@@ -277,9 +277,16 @@ for subject_num = which_data_to_visualize
         ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
         set(gca, 'CLim', [-1 1] *.03)
     end
-    
+        
     if save_images
         hgexport(fH, fullfile(save_pth, 'Mesh_Broadband.eps'));
+    end
+    
+    fH = figure(1000); clf
+    for cond = 1:9
+        subplot(3,3,cond)
+        ft_plotOnMesh(w_pwr_mn(:,cond)', condition_names{cond});
+        set(gca, 'CLim', [0 2])
     end
     
     

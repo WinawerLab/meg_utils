@@ -3,7 +3,7 @@
 % Define variables
 subject           = 5;
 fs                = 1000;
-nboot             = 1;
+nboot             = 5;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -45,13 +45,13 @@ isdir     = cell2mat(subj_pths(4,:));
 subj_pths = subj_pths(1,isdir);
 
 % Load denoised timeseries
-ts = load(fullfile(project_pth, subj_pths{subject}, 'processed','denoisedts_7PCs.mat'));
-ts = ts.denoisedts{1};
+data = load(fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData.mat',subject+1)));
+ts = data.denoisedts{1};
 ts = permute(ts,[2,3,1]);
 
 % Load bad channels and epoch matrices
-badEpochs = load(fullfile(project_pth, subj_pths{subject}, 'processed','badEpochs.mat')); badEpochs = badEpochs.bad_epochs;
-badChannels = load(fullfile(project_pth, subj_pths{subject}, 'processed','badChannels.mat')); badChannels = badChannels.bad_channels;
+badEpochs = data.bad_epochs;
+badChannels = data.bad_channels;
 
 % Get raw ts for triggers and then conditions again
 raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*Gamma*');
@@ -141,7 +141,7 @@ fprintf('Fitting gamma and broadband values for each channel and each condition'
 for cond = 1:num_conditions
     fprintf('Condition %d of %d\n', cond, length(conditions_unique)); drawnow;
     % Fit each channel separately
-    for chan = 1:length(num_channels)
+    for chan = 1:num_channels
         
         
         for bootnum = 1:nboot
@@ -191,10 +191,27 @@ fit_f2_md  = nanmedian(fit_f2,4);
 
 %% Do some plotting
 
+%% Power (mean condition)
+fH = figure(996); clf, set(fH, 'name', 'Gaussian weight Before denoising')
+for cond = 1:9
+    subplot(3,3,cond)
+    ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+    set(gca, 'CLim', [0 .2])
+end
+
+
+fH = figure(997); clf, set(fH, 'name', 'Broadband weight Before denoising')
+for cond = 1:9
+    subplot(3,3,cond)
+    ft_plotOnMesh(w_pwr_mn(:,cond)', condition_names{cond});
+    set(gca, 'CLim', [0 2.25])
+end
+
+%% Weights (mean condition - baseline)
 fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
 for cond = 1:9
     subplot(3,3,cond)
-    ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)',~badChannels,0), condition_names{cond});
+    ft_plotOnMesh(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', condition_names{cond});
     set(gca, 'CLim', [0 .2])
 end
 
@@ -205,3 +222,6 @@ for cond = 1:9
     ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
     set(gca, 'CLim', [-1 1] *.03)
 end
+
+
+
