@@ -48,7 +48,7 @@ condition_names               = {   ...
     'Plaid(1.45 cpd)'...
     'Blank'};
 
-which_data_sets_to_analyze = 5;
+which_data_sets_to_analyze = 4;
 blank_condition = strcmpi(condition_names, 'blank');
 
 %% Add paths
@@ -87,6 +87,21 @@ for subject_num = which_data_sets_to_analyze
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     num_time_points   = size(ts, 1);
+    
+        %% Denoise data by regressing out nuissance channel time series
+    
+    % TODO: check whether this runs with NaNs in ts
+    
+    % Denoise data with 3 noise channels
+    if denoise_with_nonphys_channels
+        if exist('./denoised_with_nuissance_data.mat', 'file')
+            load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
+        else fprintf('Denoising data... \n');
+            ts = meg_environmental_denoising(ts, environmental_channels,...
+                data_channels, produce_figures);
+        end
+    end
+    
     %% Remove bad epochs
     var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
     bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
@@ -102,19 +117,7 @@ for subject_num = which_data_sets_to_analyze
     conditions = conditions(~badEpochs);
     
     
-    %% Denoise data by regressing out nuissance channel time series
-    
-    % TODO: check whether this runs with NaNs in ts
-    
-    % Denoise data with 3 noise channels
-    if denoise_with_nonphys_channels
-        if exist('./denoised_with_nuissance_data.mat', 'file')
-            load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
-        else fprintf('Denoising data... \n');
-            ts = meg_environmental_denoising(ts, environmental_channels,...
-                data_channels, produce_figures);
-        end
-    end
+
     
     
     % --------------------------------------------------------------------
@@ -147,15 +150,16 @@ for subject_num = which_data_sets_to_analyze
     
     channel_peaks = abs(evoked_grand(linearInd)) ./ evoked_grand_sem(linearInd);
     
-    figure;
+    figure(1); clf;
     ft_plotOnMesh(channel_peaks); title('Evoked response (mean(peak)/sem(peak))');
     set(gca, 'CLim', [0 30]);
+    hgexport(1, fullfile(save_pth, 'evoked_response.eps'));
     
     
-    figure;
+    figure(2); clf;
     noise_pool = channel_peaks < 5;
-    ft_plotOnMesh(double(noise_pool), [], [], [], 'interpolation', 'nearest'); title('noise pool');
-                
+    ft_plotOnMesh(double(noise_pool), [], [], [], 'interpolation', 'nearest'); title('noise pool'); colormap gray;
+    hgexport(2, fullfile(save_pth, 'noise_pool.eps'));
 end
 
 

@@ -7,8 +7,6 @@
 % The HPC script is callled HPC_Gamma. After running this script, results
 % can be visualized with s_GAMMA_MEG_visualize.m
 
-return
-
 % Analyze data from MEG Gamma experiments. Subjects saw
 % several kinds of stimuli, including gratings of various spatial
 % frequencies, plaids, and noise patterns (phase-randomized with 1/f^n
@@ -47,7 +45,7 @@ denoise_with_nonphys_channels = false;        % Regress out time series from 3 n
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 1; % number of bootstrap samples
+nboot                         = 5; % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 

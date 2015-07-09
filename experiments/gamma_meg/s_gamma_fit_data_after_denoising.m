@@ -1,9 +1,9 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-subject           = 5;
+subjects           = 6;
 fs                = 1000;
-nboot             = 5;
+nboot             = 100;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -43,6 +43,8 @@ d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 isdir     = cell2mat(subj_pths(4,:));
 subj_pths = subj_pths(1,isdir);
+
+for subject = subjects
 
 % Load denoised timeseries
 data = load(fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData.mat',subject+1)));
@@ -189,6 +191,12 @@ gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
 
+fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100.mat',subject+1));
+    parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
+        'w_gauss', w_gauss, 'gauss_f', gauss_f,...
+        'fit_f2', fit_f2, 'nboot', nboot);
+
+end
 %% Do some plotting
 
 %% Power (mean condition)
@@ -203,7 +211,7 @@ end
 fH = figure(997); clf, set(fH, 'name', 'Broadband weight Before denoising')
 for cond = 1:9
     subplot(3,3,cond)
-    ft_plotOnMesh(w_pwr_mn(:,cond)', condition_names{cond});
+    ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [0 2.25])
 end
 
@@ -211,15 +219,15 @@ end
 fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
 for cond = 1:9
     subplot(3,3,cond)
-    ft_plotOnMesh(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', condition_names{cond});
+    ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', ~badChannels, 0), condition_names{cond});
     set(gca, 'CLim', [0 .2])
 end
 
 
-fH = figure(999); clf
+fH = figure(1001); clf
 for cond = 1:9
     subplot(3,3,cond)
-    ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
+    ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [-1 1] *.03)
 end
 
