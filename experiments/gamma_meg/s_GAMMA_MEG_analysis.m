@@ -121,9 +121,7 @@ for subject_num = which_data_sets_to_analyze
     
     
     %% Denoise data by regressing out nuissance channel time series
-    
-    % TODO: check whether this runs with NaNs in ts
-    
+        
     % Denoise data with 3 noise channels
     if denoise_with_nonphys_channels
         if exist('./denoised_with_nuissance_data.mat', 'file')
