@@ -14,7 +14,7 @@ project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 3; 
+subject                       = 6; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
