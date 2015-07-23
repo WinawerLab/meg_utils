@@ -4,6 +4,7 @@ fH = figure; set(fH, 'Color', 'w');
 % Visualizes summary statistics computed in s_GAMMA_MEG_analysis.m
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
+ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 
@@ -12,7 +13,7 @@ intertrial_trigger_num        = 10;
 which_data_to_visualize       = 4:6;
 save_images                   = true;
 
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+meg_add_fieldtrip_paths(ft_pth,{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
