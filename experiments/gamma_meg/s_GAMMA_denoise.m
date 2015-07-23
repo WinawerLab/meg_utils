@@ -9,6 +9,7 @@
 
 % Where to find data?
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
+ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 
 % Type of data
 data_pth                      = '*_Gamma_*subj*';
@@ -44,7 +45,7 @@ subj_pths = subj_pths(1,isdir);
 
 %% check paths
 if isempty(which('sqdread')), 
-    meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+    meg_add_fieldtrip_paths(ft_pth,{'yokogawa', 'sqdproject'})
 end
 
 %% Load data (SLOW)
@@ -119,7 +120,7 @@ ts = permute(ts, [3 1 2]);
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
 
 if save_data
-    save(sprintf('/Volumes/server/Projects/MEG/Gamma/Data/s0%d_denoisedData.mat',subject+1),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
+    save(fullfile(project_path, sprintf('s0%d_denoisedData.mat',subject+1)),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
 end
 
 %% Look at results
