@@ -1,7 +1,7 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-subjects           = 6;
+subjects           = 8;
 fs                = 1000;
 nboot             = 100;
 trigger_channels  = 161:164;
@@ -203,7 +203,7 @@ end
 fH = figure(996); clf, set(fH, 'name', 'Gaussian weight Before denoising')
 for cond = 1:9
     subplot(3,3,cond)
-    ft_plotOnMesh(w_gauss_mn(:,cond)', condition_names{cond});
+    ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [0 .2])
 end
 
@@ -212,7 +212,7 @@ fH = figure(997); clf, set(fH, 'name', 'Broadband weight Before denoising')
 for cond = 1:9
     subplot(3,3,cond)
     ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)',~badChannels,0), condition_names{cond});
-    set(gca, 'CLim', [0 2.25])
+    set(gca, 'CLim', [0 2])
 end
 
 %% Weights (mean condition - baseline)

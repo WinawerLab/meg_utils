@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 6; 
+subject                       = 8; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -120,7 +120,7 @@ ts = permute(ts, [3 1 2]);
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
 
 if save_data
-    save(fullfile(project_path, sprintf('s0%d_denoisedData.mat',subject+1)),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
+    save(fullfile(project_pth, sprintf('s0%d_denoisedData.mat',subject+1)),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
 end
 
 %% Look at results
