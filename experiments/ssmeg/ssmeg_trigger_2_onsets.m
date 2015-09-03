@@ -3,18 +3,26 @@ function onsets = ssmeg_trigger_2_onsets(triggers, which_subject,which_data)
 %
 % For the ssmeg experiment, there were twelve triggers sent per second, and
 % we epoch in one second bins
-if vargin<3
-    which_data = 'meg';
-end
+if notDefined('which_data'); which_data = 'meg'; end
 
 switch which_data
     case 'eye'
-        inds                = triggers;
+        inds                = triggers(:,2);
         keep_inds           = inds(1:12:end);
-        onsets              = zeros(size(triggers)*2);
-        which_subject       = 6; % then we need to insert blanks
-
-    
+        which_subject       = 7; % If eye data, we need to insert blanks slightly different, 
+                                 % and then do nothing like for subject 7
+                                 % in meg data.
+        
+        blanks = [];
+        last_onperiod_onset_frames = keep_inds(6:6:end);
+        for jj = 1:length(last_onperiod_onset_frames)
+            for ii = 1:6
+                blanks = [blanks; ii*1000 + last_onperiod_onset_frames(jj)];
+            end
+        end
+        onsets = sort([keep_inds;blanks]);
+        
+        
     case {'eeg','meg'}
         inds                = find(triggers);
         keep_inds           = inds(1:12:end);
@@ -31,7 +39,7 @@ switch which_subject
         for ii = 1:6
             onsets(ii*1000 + last_onperiod_onset_frames) = 3;
         end
-    
+        
 end
 
 return
