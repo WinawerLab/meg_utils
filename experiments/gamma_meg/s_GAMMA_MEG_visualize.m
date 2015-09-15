@@ -10,7 +10,7 @@ fs                            = 1000;
 intertrial_trigger_num        = 10;
 which_data_to_visualize       = 9;%4:6;
 save_images                   = true;
-using_denoised_data           = true;
+using_denoised_data           = false;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
@@ -135,7 +135,7 @@ for subject_num = which_data_to_visualize
     
     %% SNR Mesh for Gaussian bump
     scrsz = get(0,'ScreenSize');
-    threshold = 1;%3;
+    threshold = 2;%3;
     % gaussian weight for each stimuli
     fH = figure(1005); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  set(fH, 'name', 'Gaussian SNR' )
     %for c = 1:12
@@ -147,16 +147,20 @@ for subject_num = which_data_to_visualize
         set(gca, 'CLim', [-1 1]* 3)
     end
     
+<<<<<<< HEAD
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         hgexport(fH, fullfile(save_pth,'Per_Condition_Gamma_SNR_thresh1.eps')); 
     end
+=======
+    if save_images; hgexport(fH, fullfile(save_pth,'Per_Condition_Gamma_SNR_thresh2.eps')); end
+>>>>>>> 6e170dfff9b822ed0b546541d37233f1cf101a54
     
     
     %% SNR Mesh for Broadband
     scrsz = get(0,'ScreenSize');
-    threshold = 1;%3;
+    threshold = 2;%3;
     % gaussian weight for each stimuli
     fH = figure(455); clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
     %for c = 1:12
@@ -167,26 +171,25 @@ for subject_num = which_data_to_visualize
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), contrastnames{c});
         set(gca, 'CLim', [-1 1]* 3)
     end
-    if save_images;  hgexport(fH, fullfile(save_pth,'Per_Condition_BB_SNR_thresh1')); end
+    if save_images;  hgexport(fH, fullfile(save_pth,'Per_Condition_BB_SNR_thresh2')); end
    
     
-end
-    return
+
     %% Noise (Gamma SNR - baseline)
     
-    threshold = 1;
+    threshold = 2;
     fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
     % noise gamma
     data_to_plot = snr_w_gauss(:,12);
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     
-    [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),[-10,10],gcf,jmaColors('coolhotcortex'));
+    [fH,ch] = megPlotMap(to157chan(data_to_plot',~badChannels,0),[-10,10],gcf,jmaColors('coolhotcortex'));
     
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
     title(contrastnames{12})
     
-    if save_images; hgexport(fH, fullfile(save_pth,'figure_gammapower_noise_m_gratings_thresh1.eps')); end
+    if save_images; hgexport(fH, fullfile(save_pth,'figure_gammapower_noise_m_gratings_thresh2.eps')); end
     
     
     %% Gratings (gamma SNR - Baseline)
@@ -195,7 +198,7 @@ end
     data_to_plot = snr_w_gauss(:,2)';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     
-    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+    [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),[-10,10],gcf,jmaColors('coolhotcortex'));
     
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
@@ -208,7 +211,7 @@ end
     fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
     %     for c = [2 1]
     %         subplot(1,2,c)
-    threshold = 1;
+    threshold = 2;
     data_to_plot = to157chan(snr_w_pwr(:,12)',~badChannels,0);
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     %         ft_plotOnMesh(data_to_plot, contrastnames{c});
@@ -224,7 +227,7 @@ end
     
     
     
-    if save_images; hgexport(fH, fullfile(save_pth,'figure_bbpower_noise_m_gratings_thresh1.eps')); end
+    if save_images; hgexport(fH, fullfile(save_pth,'figure_bbpower_noise_m_gratings_thresh2.eps')); end
     
     
     
@@ -243,7 +246,7 @@ end
     %         set(gca, 'CLim', [-1 1]* 10)
     %     end
     
-    [fH,ch] = megPlotMap(data_to_plot,[-10,10],gcf,jmaColors('coolhotcortex'));
+    [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),[-10,10],gcf,jmaColors('coolhotcortex'));
     
     makeprettyaxes(gca,9,9);
     set(ch,'ytick',-10:10:10);
@@ -261,7 +264,7 @@ end
     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight (mediann-baseline) before denoising')
     for cond = 1:9
         subplot(3,3,cond)
-        ft_plotOnMesh(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', condition_names{cond});
+        ft_plotOnMesh(to157chan((w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)'),~badChannels,0), condition_names{cond});
         set(gca, 'CLim', [0 .2])
     end
     
@@ -272,7 +275,7 @@ end
     fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
     for cond = 1:9
         subplot(3,3,cond)
-        ft_plotOnMesh(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)', condition_names{cond});
+        ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
         set(gca, 'CLim', [0 .1])
     end
     
@@ -364,4 +367,4 @@ end
         hgexport(1001, fullfile(save_pth, 'Mesh_G_BB_Gratings_M_noise_All_M_Baseline.eps'));
     end
     
-% end
+ end

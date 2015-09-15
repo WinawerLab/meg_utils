@@ -1,4 +1,4 @@
-function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs)
+function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, which_data)
 % Slice time series matrix (samples x channels) into 3D epoched array
 % (samples x epoch x channel) based on trigger times.
 %
@@ -13,7 +13,8 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs)
 %   epoch_times:  a 2 vector of start and end time of the epochs 
 %                   (in seconds) relative to the trial onset
 %   fs:           sampling rate (Hz)
-%   
+%   which_data:   string to define which data is used, if 'eye',
+%                   then triggers are already defined as timepoints   
 %
 % Outputs
 %   ts:           3D array containing epoched time series (samples by
@@ -23,7 +24,13 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs)
 %                   epoch
 
 %% Parameters
-onset_times = find(trigger);
+
+if ~exist('which_data','var') 
+    onset_times = find(trigger);
+elseif which_data == 'eye';
+    onset_times = trigger;
+    if onset_times(1) == 0; onset_times(1) = 1; end % First trigger can't be 0.
+end
 
 epoch_samples = round(epoch_time * fs); %epoch length in samples
 epoch_len     = diff(epoch_samples)+1;    %epoch length in samples
@@ -38,6 +45,8 @@ for ii = 1:num_epochs
 end
 
 ts         = permute(ts, [2 1 3]);
-conditions = trigger(onset_times);
+
+if ~exist('which_data','var'); conditions = trigger(onset_times); 
+else conditions = []; end
 
 return
