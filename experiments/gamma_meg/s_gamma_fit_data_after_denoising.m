@@ -1,9 +1,9 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-subjects           = 8;
+subjects           = 9;
 fs                = 1000;
-nboot             = 100;
+nboot             = 10;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
