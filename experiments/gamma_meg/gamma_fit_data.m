@@ -37,13 +37,16 @@ x_base=data_base(f_sel);
 x_in=data_fit(f_sel);
 f_in=f(f_sel);
 
-% fit exponent to base
+% fit exponent to baseline condition. 
+%   exponent is n in equation P = K*1/f^n
 p=polyfit(log10(f_in),log10(x_base)',1);
 out_exp=-p(1);
 
 my_options=optimset('Display','off','Algorithm','trust-region-reflective');
-[x]=lsqnonlin(@(x) gamma_fit_func3_loglog(x,log10(x_in),log10(f_in'),out_exp),...
-    [0 0 log10(50)],[-Inf 0 log10(35)],[Inf Inf log10(80)],...
+
+% F = gamma_broadband_fit_loglog(x,P,f,p_exp)
+[x]=lsqnonlin(@(x) gamma_broadband_fit_loglog(x,log10(x_in),log10(f_in'),out_exp),...
+    [0 0 log10(50)],[-Inf -Inf log10(35)],[Inf Inf log10(80)],...
     my_options);
 w_pwr=x(1);
 w_gauss=x(2);
