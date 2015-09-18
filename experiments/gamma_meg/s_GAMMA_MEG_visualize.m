@@ -8,9 +8,9 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 7:8;
+which_data_to_visualize       = 6;
 save_images                   = true;
-using_denoised_data           = false;
+using_denoised_data           = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
@@ -333,20 +333,20 @@ for subject_num = which_data_to_visualize
     fH = figure(1001); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
     subplot(2,2,1)
     ft_plotOnMesh(to157chan((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')',~badChannels,0), 'Gamma power, All gratings minus all noise');
-    set(gca, 'CLim', 1*[-1 1])
+    set(gca, 'CLim', .5*[-1 1])
     
     subplot(2,2,2)
     ft_plotOnMesh(to157chan((w_pwr_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')',~badChannels,0), 'Broadband power, All gratings minus all noise');
-    set(gca, 'CLim', 1*[-1 1])
+    set(gca, 'CLim', .5*[-1 1])
     
     
     subplot(2,2,3)
     ft_plotOnMesh(to157chan((w_gauss_mn * [1 1 1 1 1 1 1 1 1 -9]')',~badChannels,0), 'Gamma power, All stimuli minus baseline');
-    set(gca, 'CLim', 1 *[-1 1])
+    set(gca, 'CLim', .5 *[-1 1])
     
     subplot(2,2,4)
     ft_plotOnMesh(to157chan((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')',~badChannels,0), 'Broadband, All stimuli minus baseline');
-    set(gca, 'CLim', 1 * [-1 1])
+    set(gca, 'CLim', .5 * [-1 1])
     
     if save_images
         hgexport(1001, fullfile(save_pth, 'Mesh_G_BB_Gratings_M_noise_All_M_Baseline.eps'));
