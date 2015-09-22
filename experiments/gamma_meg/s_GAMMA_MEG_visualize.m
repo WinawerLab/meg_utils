@@ -8,13 +8,9 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-<<<<<<< HEAD
-which_data_to_visualize       = 6;
-=======
 which_data_to_visualize       = 9;%4:6;
->>>>>>> 00065d3efb95d2d6fe31a5ee9eaf801c5980be8f
 save_images                   = true;
-using_denoised_data           = true;
+using_denoised_data           = false;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
