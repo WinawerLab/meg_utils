@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 9; 
+subject                       = 10; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -31,6 +31,8 @@ blank_condition               = 10;          % the MEG trigger value that corres
 verbose                       = true;
 denoise_with_nonphys_channels = true;
 save_data                     = true;
+
+condition_names = gamma_get_condition_names(subject);
 
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
@@ -138,26 +140,26 @@ figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
 
 
 snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
-figure, 
+figure, set(gcf, 'Name', 'Denoised Broadband SNR');
 for ii = 1:9
     subplot(3,3,ii)
     ft_plotOnMesh(to157chan(snr.final(ii,:), ~bad_channels, 0), ...
-        'Denoised Broadband SNR',  [], [], 'CLim', [-6 6]);
+        condition_names{ii},  [], [], 'CLim', [-6 6]);
 end
 
 
 snr.orig = results.origmodel.beta_md  ./ results.origmodel.beta_se;
-figure, 
+figure, set(gcf, 'Name', 'Original Broadband SNR');
 for ii = 1:9
     subplot(3,3,ii)
     ft_plotOnMesh(to157chan(snr.orig(ii,:), ~bad_channels, 0), ...
-        'Original Broadband SNR',  [], [], 'CLim', [-3 3]);
+        condition_names{ii},  [], [], 'CLim', [-3 3]);
 end
 
-figure, 
+figure, set(gcf, 'Name', 'Broadband SNR (final - orig)');
 for ii = 1:9
     subplot(3,3,ii)
     ft_plotOnMesh(to157chan(snr.final(ii,:) - snr.orig(ii,:), ~bad_channels, 0), ...
-        'Broadband SNR (final - orig)',  [], [], 'CLim', [-3 3]);
+       condition_names{ii},  [], [], 'CLim', [-3 3]);
 end
 
