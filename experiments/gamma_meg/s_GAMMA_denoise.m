@@ -110,7 +110,7 @@ opt.preprocessfun   = @(x)gammapreprocess(x, t, f, evoked_cutoff, keep_frequenci
 evokedfun           = @(x)getevoked(x, fs, design_mtrx, [-30 30]); % function handle to determine noise pool
 
 % Eval function that extracts broadband
-evalfun             = @(x)getbroadband(x,keep_frequencies);  % function handle to compute broadband
+evalfun             = @(x)getbroadband(x,keep_frequencies, fs);  % function handle to compute broadband
 
 % Permute sensorData for denoising
 %   [time points by epochs x channels] => [channels x time points x epochs]
