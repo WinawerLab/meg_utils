@@ -8,13 +8,9 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-<<<<<<< HEAD
-which_data_to_visualize       = 6;
-=======
 which_data_to_visualize       = 9;%4:6;
->>>>>>> 00065d3efb95d2d6fe31a5ee9eaf801c5980be8f
 save_images                   = true;
-using_denoised_data           = true;
+using_denoised_data           = false;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
@@ -27,22 +23,8 @@ subj_pths = subj_pths(1,:);
 %% Loop over data sets
 for subject_num = which_data_to_visualize
     
-    condition_names               = {   ...
-        'White Noise' ...
-        'Binary White Noise' ...
-        'Pink Noise' ...
-        'Brown Noise' ...
-        'Gratings(0.36 cpd)' ...
-        'Gratings(0.73 cpd)' ...
-        'Gratings(1.45 cpd)' ...
-        'Gratings(2.90 cpd)' ...
-        'Plaid'...
-        'Blank'};
-    
-    if subject_num >= 9
-        condition_names{3} = 'Binary Pink Noise';
-        condition_names{4} = 'Binary Brown Noise';
-    end
+   condition_names = gamma_get_condition_names(subject_num);
+
     
     %% Define paths and load data
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
