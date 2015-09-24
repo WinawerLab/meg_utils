@@ -41,15 +41,15 @@ data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
-denoise_with_nonphys_channels = false;        % Regress out time series from 3 nuissance channels
+denoise_with_nonphys_channels = false;       % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 5; % number of bootstrap samples
+nboot                         = 5;           % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
-denoise_via_pca               = false;       % Do you want to use megde noise?
+denoise_via_pca               = false;       % Do you want to use meg denoise?
 
 fs                            = 1000;        % sample rate
 epoch_start_end               = [0.050 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -58,24 +58,9 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-% condition names correspond to trigger numbers
-condition_names               = {   ...
-    'White Noise' ...
-    'Binarized White Noise' ...
-    'Pink Noise' ...
-    'Brown Noise' ...
-    'Gratings(0.36 cpd)' ...
-    'Gratings(0.73 cpd)' ...
-    'Gratings(1.45 cpd)' ...
-    'Gratings(2.90 cpd)' ...
-    'Plaid'...
-    'Blank'};
-
 which_data_sets_to_analyze = 8;
-blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
-%change server-1 back to server
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
@@ -84,6 +69,10 @@ subj_pths = subj_pths(1,:);
 %% Loops over datasets
 for subject_num = which_data_sets_to_analyze
     
+    condition_names  = gamma_get_condition_names(subject_num);
+    
+    blank_condition = strcmpi(condition_names, 'blank');
+
     save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
     if ~exist(save_pth, 'dir'), mkdir(save_pth); end
     
