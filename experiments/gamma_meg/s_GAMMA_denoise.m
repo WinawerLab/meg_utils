@@ -8,14 +8,14 @@
 % ------------------------------------------------------------------------
 
 % Where to find data?
-project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
-ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
+project_pth                   = '/Volumes/server-1/Projects/MEG/Gamma/Data';
+ft_pth                        = '/Volumes/server-1/Projects/MEG/code/fieldtrip';
 
 % Type of data
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subject                       = 8; 
+subjects                      = 6; 
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -42,7 +42,7 @@ subj_pths = subj_pths(1,isdir);
 % ------------------------------------------------------------------------
 % --------------------- Load & preprocess data ---------------------------
 % ------------------------------------------------------------------------
-
+for subject = subjects
 %% check paths
 if isempty(which('sqdread')), 
     meg_add_fieldtrip_paths(ft_pth,{'yokogawa', 'sqdproject'})
@@ -134,7 +134,7 @@ figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
     'Original Broadband R2', [], [],  'CLim', [0 3]);
 
 figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
-    'Broadband R2 0 PCs', [], []);
+    'Broadband R2 0 PCs', [], [], 'CLim', [0 3]);
 
 
 snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
@@ -142,7 +142,7 @@ figure,
 for ii = 1:9
     subplot(3,3,ii)
     ft_plotOnMesh(to157chan(snr.final(ii,:), ~bad_channels, 0), ...
-        'Denoised Broadband SNR',  [], [], 'CLim', [-6 6]);
+        'Denoised Broadband SNR',  [], [], 'CLim', [-3 3]);
 end
 
 
@@ -161,3 +161,4 @@ for ii = 1:9
         'Broadband SNR (final - orig)',  [], [], 'CLim', [-3 3]);
 end
 
+end

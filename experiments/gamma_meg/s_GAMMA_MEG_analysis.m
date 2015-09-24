@@ -32,7 +32,7 @@
 
 % Analysis options
 %% Set analysis variables
-project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
+project_pth                     = '/Volumes/server-1/Projects/MEG/Gamma/Data';
 
 % data to be analysed
 data_pth                      = '*_Gamma_*subj*';
@@ -45,7 +45,7 @@ denoise_with_nonphys_channels = false;        % Regress out time series from 3 n
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 5; % number of bootstrap samples
+nboot                         = 100; % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -71,12 +71,12 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-which_data_sets_to_analyze = 8;
+which_data_sets_to_analyze = 10;
 blank_condition = strcmpi(condition_names, 'blank');
 %% Add paths
 
 %change server-1 back to server
-% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+%  meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
@@ -256,9 +256,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    
-    
-    filename = fullfile(project_pth, sprintf('summarystats%02d.mat',subject_num));
+    filename = fullfile(project_pth, sprintf('s0%d_denoisedData.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
