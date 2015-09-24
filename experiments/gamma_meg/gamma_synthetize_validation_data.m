@@ -1,29 +1,38 @@
+function [sensorData, conditions] = gamma_synthetize_validation_data()
 % Create synthetic data set for validation of MEG denoisedata pipeline
 
 %% specify simulation parameters
 
-fs = 1000;           % sampling frequency, Hz
-epoch_length    = 1; % seconds
-isi             = 0.5; % seconds
+fs              = 1000;  % sampling frequency, Hz
+epoch_length    = 1;     % seconds
 
 num_channels    = 157;
-num_conditions  = 10; % 
-condition_codes = 1:num_conditions; % arbitrary codes assigned to conditions
+num_repeats     = 10;    % num epochs per condition
 
-num_repeats                     = 90;
+
+
 num_noise_basis                 = 10; % number of independent bases for correlated noise
-response_amp.uncorrelated_noise = 1;
-response_amp.gamma              = 2;
+response_amp.uncorrelated_noise = 20;
+response_amp.correlated_noise   = 20;
+response_amp.erf                = 50; % if this is too small, then we might not be able to find the right noise pool
+response_amp.gamma              = 1;
 response_amp.broadband          = 2;
-response_amp.erf                = 5;
-response_amp.correlated_noise   = 5;
+
+
 
 
 % --------- derived -------------------------
-condition_names   = gamma_get_condition_names(9);
-samples_per_epoch = epoch_length * fs;
-conditions        = reshape(ones(num_repeats,1)*condition_codes, [], 1);
-num_epochs        = size(conditions,1);
+condition_names     = gamma_get_condition_names(99);
+num_conditions      = numel(condition_names); % 
+condition_codes     = 1:num_conditions; % arbitrary codes assigned to conditions
+
+blank_condition     = find(~cellfun(@isempty, strfind(condition_names, 'Blank')));
+noise_conditions    = find(~cellfun(@isempty, strfind(condition_names, 'Noise')));
+grating_conditions  = setdiff(condition_codes, [blank_condition noise_conditions]);
+
+samples_per_epoch   = epoch_length * fs;
+conditions          = reshape(ones(num_repeats,1)*condition_codes, [], 1);
+num_epochs          = size(conditions,1);
 %% Group channels for noisepool (front), visual (back)
 load('meg160xyz');
 
@@ -42,35 +51,43 @@ channels.visual = sort_y(91:end);
 % ft_plotOnMesh(map, [],[],[],'interpolation', 'nearest')
 
 %% generate noiseless time series
-sensorData = zeros(samples_per_epoch, num_epochs, num_channels);
+sensorData      = zeros(samples_per_epoch, num_epochs, num_channels);
+noise_epochs    = ismember(conditions, noise_conditions);
+grating_epochs  = ismember(conditions, grating_conditions);
+stim_epochs     = noise_epochs | grating_epochs;
 
 t = (1:1000)/fs;
-
 % ------------------------ERF --------------------------------
 %
 % for stimulus epochs, fill the visual sensors with erf time series
-stim_epochs = conditions<num_conditions;
+
 for ii = channels.visual'
     % make an example evoked signal
     tau = rand*0.06+0.17; % peak of evoked response is, say, between 170 and 230 ms
-    erf = response_amp.erf * t .* exp(-t /tau) / max(t .* exp(-t /tau));    
-    sensorData(:,stim_epochs, ii) = repmat(erf, sum(stim_epochs),1)';
+    erf = t .* exp(-t /tau) / max(t .* exp(-t /tau));        
+    sensorData(:,noise_epochs, ii) = ...
+        response_amp.erf * repmat(erf, sum(noise_epochs),1)';
+    
+    sensorData(:,grating_epochs, ii) = ...
+        2*response_amp.erf * repmat(erf, sum(grating_epochs),1)';    
 end
 
 % ------------------------GAMMA --------------------------------
 %
-% for stimulus epochs, fill the visual sensors with gamma time series
+% for grating epochs, fill the visual sensors with gamma time series
+
+
 gamma_filter = designfilt('bandpassiir','FilterOrder',10, ...
     'HalfPowerFrequency1', 40,'HalfPowerFrequency2', 60,...
     'SampleRate',fs,'DesignMethod','butter');
 
 % make gamma response
-gamma = randn(size(sensorData(:,stim_epochs,channels.visual)));
+gamma = randn(size(sensorData(:,grating_epochs,channels.visual)));
 gamma = filter(gamma_filter, gamma);
 gamma = gamma / var(gamma(:));
 
-sensorData(:,stim_epochs, channels.visual) = ...
-    sensorData(:,stim_epochs, channels.visual) + ...
+sensorData(:,grating_epochs, channels.visual) = ...
+    sensorData(:,grating_epochs, channels.visual) + ...
      response_amp.gamma * gamma;
 
 % ------------------------BROADBAND  --------------------------------
@@ -78,7 +95,7 @@ sensorData(:,stim_epochs, channels.visual) = ...
 % for stimulus epochs, fill the visual sensors with broadband time series
 sensorData(:,stim_epochs, channels.visual) = ...
     sensorData(:,stim_epochs, channels.visual) + ...
-    response_amp.broadband * zscore(randn(sz));
+    response_amp.broadband * zscore(randn(size(sensorData(:,stim_epochs, channels.visual))));
 
 % ------------------------Uncorrelated Noise  ----------------------------
 % add white noise to all channels, all conditions

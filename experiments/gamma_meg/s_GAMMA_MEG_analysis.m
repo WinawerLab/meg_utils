@@ -32,7 +32,7 @@
 
 % Analysis options
 %% Set analysis variables
-project_pth                     = '/Volumes/server-1/Projects/MEG/Gamma/Data';
+project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
 % data to be analysed
 data_pth                      = '*_Gamma_*subj*';
@@ -45,11 +45,7 @@ denoise_with_nonphys_channels = false;       % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-<<<<<<< HEAD
-nboot                         = 5;           % number of bootstrap samples
-=======
-nboot                         = 100; % number of bootstrap samples
->>>>>>> 1946ba28f39dbd9c16fcba5b9cdbbcb73461a93a
+nboot                         = 3;         % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -62,7 +58,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-which_data_sets_to_analyze    = 10;
+which_data_sets_to_analyze    = 99;          % subject 99 for synthetic data
 
 %% Add paths
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -70,31 +66,39 @@ meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
+
 %% Loops over datasets
 for subject_num = which_data_sets_to_analyze
     
     condition_names  = gamma_get_condition_names(subject_num);
     
     blank_condition = strcmpi(condition_names, 'blank');
-
-    save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
-    if ~exist(save_pth, 'dir'), mkdir(save_pth); end
     
-    % --------------------------------------------------------------------
-    % ------------------ PREPROCESS THE DATA -----------------------------
-    % --------------------------------------------------------------------
-    %% Load data (SLOW)
-    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject_num}, 'raw'), '*Gamma*');
+    if subject_num == 99
+        [ts, conditions] = gamma_synthetize_validation_data();
+         
+    else
+        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
+        if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+        
+        % --------------------------------------------------------------------
+        % ------------------ PREPROCESS THE DATA -----------------------------
+        % --------------------------------------------------------------------
+        %% Load data (SLOW)
+        raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject_num}, 'raw'), '*Gamma*');
+        
+        %% Extract triggers
+        trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
+        
+        %% Make epochs
+        [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
+        % remove intertrial intervals
+        iti               = conditions == intertrial_trigger_num;
+        ts                = ts(:,~iti, :);
+        conditions        = conditions(~iti);
+        
+    end
     
-    %% Extract triggers
-    trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
-    
-    %% Make epochs
-    [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
-    % remove intertrial intervals
-    iti               = conditions == intertrial_trigger_num;
-    ts                = ts(:,~iti, :);
-    conditions        = conditions(~iti);
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
