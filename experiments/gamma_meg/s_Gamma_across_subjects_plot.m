@@ -5,10 +5,10 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-session_num                   = 4:8;
+session_num                   = [9:11,13];
 save_images                   = false;
 save_pth                      = fullfile(project_pth, 'Images');
-use_denoised_data             = false;
+use_denoised_data             = true;
 if use_denoised_data;
      delete_me = 3; 
 else delete_me = 0; 
@@ -46,7 +46,7 @@ for subject_num = session_num
     if use_denoised_data; d =  dir(fullfile(load_pth, '*denoisedData_bootstrapped100*'));
     else                  d =  dir(fullfile(load_pth, '*_bootstrappedData.mat')); end
         
-    AllResults{subject_num-delete_me} = load(fullfile(load_pth, d(1).name));
+    AllResults{subject_num-delete_me} = load(fullfile(load_pth, d(2).name)); % Check whether d(1) or d(2) is used, for positive or both sides modelfit
     w_gauss                 = AllResults{subject_num -delete_me}.w_gauss;
     w_pwr                   = AllResults{subject_num -delete_me}.w_pwr;
     

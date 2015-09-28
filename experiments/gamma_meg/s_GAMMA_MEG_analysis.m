@@ -41,11 +41,11 @@ data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
-denoise_with_nonphys_channels = false;       % Regress out time series from 3 nuissance channels
+denoise_with_nonphys_channels = true;       % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 3;         % number of bootstrap samples
+nboot                         = 100;         % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -58,7 +58,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-which_data_sets_to_analyze    = 99;          % subject 99 for synthetic data
+which_data_sets_to_analyze    = 13;          % subject 99 for synthetic data
 
 %% Add paths
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -253,7 +253,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, sprintf('s0%d_denoisedData.mat',subject_num+1));
+    filename = fullfile(project_pth, sprintf('s0%d_bootstrappedData.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
