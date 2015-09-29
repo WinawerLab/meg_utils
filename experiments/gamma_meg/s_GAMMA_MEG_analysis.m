@@ -1,12 +1,12 @@
 % s_GAMMA_MEG_analysis
 
-% OBSOLETE: A slightly modified version of this script now runs on the HPC.
-% Because we compute many bootstrapped solutions, the calculations are
-% slow. 
+% NOTE: A version of this script called HPC_Gamma runs on the HPC.
+% If changes are made to this script, parallel changes should be made to
+% HPC_Gamma
 %
-% The HPC script is callled HPC_Gamma. After running this script, results
-% can be visualized with s_GAMMA_MEG_visualize.m
-
+% After running this script or HPC_Gamma, results can be visualized with
+% s_GAMMA_MEG_visualize.m
+%
 % Analyze data from MEG Gamma experiments. Subjects saw
 % several kinds of stimuli, including gratings of various spatial
 % frequencies, plaids, and noise patterns (phase-randomized with 1/f^n
@@ -19,16 +19,10 @@
 % mixture of a line and gaussian in log power / log frequency (meaning, a
 % power law and a narrowband response)
 %
-% See also s_GAMMA_MEG_visualize
+% See also s_GAMMA_MEG_visualize, HPC_Gamma
 %
 % TODO:
-%
-%   3. MAYBE: summarize the EVOKED response from each stimulus
-%
-%   5. MAYBE: a grand average where you average the mesh images across
-%   subjects
-%
-%   6. MAYBE: source localize the signals
+%  MAYBE: source localize the signals
 
 % Analysis options
 %% Set analysis variables
