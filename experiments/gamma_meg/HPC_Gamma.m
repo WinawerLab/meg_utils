@@ -1,4 +1,8 @@
 function HPC_Gamma(which_data_sets_to_analyze, nboot)
+%
+% NOTE:  A version of this function called s_GAMMA_MEG_analysis runs
+% without the HPC. If changes are made to this script, parallel changes
+% should be made to s_GAMMA_MEG_analysis
 
 % Function to analyze Gamma analysis on the HPC
 
