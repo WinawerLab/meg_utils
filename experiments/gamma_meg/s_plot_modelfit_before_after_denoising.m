@@ -35,11 +35,11 @@ rgb_grey    = [75, 75, 75]/255;
 color_scheme = [rgb_pink;rgb_pink;rgb_pink;rgb_pink; ...
                 rgb_green;rgb_green;rgb_green;rgb_green;rgb_purple];
 
-satValues = 1-linspace(0.1,1,4);
-colorRGB_pink = varysat(rgb_pink,satValues);
-colorRGB_noise = varysat(rgb_green,satValues);
+satValues       = 1-linspace(0.1,1,4);
+colorRGB_pink   = varysat(rgb_pink,satValues);
+colorRGB_noise  = varysat(rgb_green,satValues);
 
-colorscond_sat = [colorRGB_pink,colorRGB_noise,rgb_purple];
+% colorscond_sat = [colorRGB_pink,colorRGB_noise,rgb_purple];
             
             
 %% Loop over data sets
@@ -47,18 +47,18 @@ cmap = copper(9);
 for subject_num = which_data_to_visualize
     
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
-    datasets        =  dir(fullfile(load_pth, '*boot*'));
-    before         = load(fullfile(load_pth, datasets(1).name));
+    datasets    =  dir(fullfile(load_pth, '*boot*'));
+    before      = load(fullfile(load_pth, datasets(1).name));
     if subject_num < 6
-        after         = load(fullfile(load_pth, datasets(3).name));
+        after = load(fullfile(load_pth, datasets(3).name));
     else 
-         after         = load(fullfile(load_pth, datasets(3).name));
+        after = load(fullfile(load_pth, datasets(3).name));
     end
          
     denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',subject_num+1)));
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
-    spectral_data_files = dir(fullfile(load_pth, 'spectral_data*.mat'));
+    spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
     spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
     

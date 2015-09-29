@@ -1,5 +1,5 @@
 % s_GAMMA_MEG_analysis
-
+%
 % NOTE: A version of this script called HPC_Gamma runs on the HPC.
 % If changes are made to this script, parallel changes should be made to
 % HPC_Gamma

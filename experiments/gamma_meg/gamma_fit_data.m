@@ -6,10 +6,10 @@ function [out_exp,w_pwr,w_gauss,gauss_f,fit_f2] = ...
 %     gamma_fit_data(f,f_use4fit,data_base,data_fit);
 %
 % input:
-%   f: frequencies in spectral data
-%   f_use4fit= frequencies to use for fitting (subset of f)
-%   data_base: data used to fit exp: (1/f^exp) - enter power (not log)
-%   data_fit: used to fit weights and gaussian - enter power (not log)
+%   f:          frequencies in spectral data (Hz)
+%   f_use4fit:  frequencies to use for fitting (subset of f, Hz)
+%   data_base:  data used to fit exp: (1/f^exp) - enter power (not log)
+%   data_fit:   used to fit weights and gaussian - enter power (not log)
 %
 % output (exp weight_pwr weight_gauss gamma_freq fit_f2)
 
@@ -48,9 +48,10 @@ my_options=optimset('Display','off','Algorithm','trust-region-reflective');
 [x]=lsqnonlin(@(x) gamma_broadband_fit_loglog(x,log10(x_in),log10(f_in'),out_exp),...
     [0 0 log10(50)],[-Inf -Inf log10(35)],[Inf Inf log10(80)],...
     my_options);
-w_pwr=x(1);
-w_gauss=x(2);
-gauss_f=x(3);
+
+w_pwr   = x(1); % power law exponent after subtracting baseline
+w_gauss = x(2); % gaussian height (log10 power)
+gauss_f = x(3); % gaussian center frequency (log10 Hz)
 
 % fit to data in log-space
 fit_f2=w_pwr-out_exp*log10(f) + ...
