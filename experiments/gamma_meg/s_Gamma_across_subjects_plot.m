@@ -43,10 +43,10 @@ for subject_num = session_num
     
     %% Load Data
     load_pth                = fullfile(project_pth, subj_pths{subject_num}, 'processed');
-    if use_denoised_data; d =  dir(fullfile(load_pth, '*denoisedData_bootstrapped100*'));
+    if use_denoised_data; d =  dir(fullfile(load_pth, '*denoisedData_bootstrapped100_2*'));  % Check whether d(1) or d(2) is used, for positive or both sides modelfit
     else                  d =  dir(fullfile(load_pth, '*_bootstrappedData.mat')); end
         
-    AllResults{subject_num-delete_me} = load(fullfile(load_pth, d(2).name)); % Check whether d(1) or d(2) is used, for positive or both sides modelfit
+    AllResults{subject_num-delete_me} = load(fullfile(load_pth, d(1).name));
     w_gauss                 = AllResults{subject_num -delete_me}.w_gauss;
     w_pwr                   = AllResults{subject_num -delete_me}.w_pwr;
     
@@ -125,14 +125,14 @@ end
 snr_w_gauss_157 = [];
 snr_w_pwr_157   = [];
 for ii = 1:num_contrasts
-    for jj = session_num
+    for jj = session_num-delete_me
         snr_w_gauss_157{ii,jj} = to157chan(snr_w_gauss{jj}(:,ii)',~bad_channels{jj}, 'nans');
         snr_w_pwr_157{ii,jj} = to157chan(snr_w_pwr{jj}(:,ii)',~bad_channels{jj}, 'nans');      
     end
 end
 
-snr_w_gauss_157 = reshape(catcell(1,snr_w_gauss_157),[13,5,157]);
-snr_w_pwr_157   = reshape(catcell(1,snr_w_pwr_157),[13,5,157]);
+snr_w_gauss_157 = reshape(catcell(1,snr_w_gauss_157),[num_contrasts,numel(session_num),157]);
+snr_w_pwr_157   = reshape(catcell(1,snr_w_pwr_157),[num_contrasts,numel(session_num),157]);
 
 
 %% SNR Mesh per stimulus type Gamma
@@ -145,7 +145,7 @@ for c = 1:9
     data_to_plot = squeeze(nanmean(snr_w_gauss_157(c,:,:),2))';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     ft_plotOnMesh(data_to_plot, contrastnames{c});
-    set(gca, 'CLim', [-1 1]* 3)
+    set(gca, 'CLim', [-1 1]*2)
 end
 
 data = {};
@@ -153,9 +153,9 @@ data.snr_w_gauss   = snr_w_gauss;
 data.data_to_plot  = data_to_plot;
 data.contrastnames = {contrastnames{c}};
 
-hgexport(fH, fullfile(save_pth,'Mesh_stimulus_type_gamma_SNR_across_subjects_notDenoised_5'));
+hgexport(fH, fullfile(save_pth,'Mesh_stimulus_type_gamma_SNR_across_subjects_BinarizedDenoised_4'));
 set(gcf, 'UserData', data);
-saveas(fH, fullfile(save_pth,'Mesh_stimulus_type_gamma_SNR_across_subjects_notDenoised_5'), 'fig');
+saveas(fH, fullfile(save_pth,'Mesh_stimulus_type_gamma_SNR_across_subjects_BinarizedDenoised_4'), 'fig');
 
 %% SNR Mesh difference Noise and Gratings
 threshold = 0;%3;
@@ -167,7 +167,7 @@ for c = 10:13
     data_to_plot = squeeze(nanmean(snr_w_gauss_157(c,:,:),2))';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     ft_plotOnMesh(data_to_plot, contrastnames{c});
-    set(gca, 'CLim', [-1 1]* 3)
+    set(gca, 'CLim', [-1 1]* 2)
 end
 
 data = {};
@@ -175,9 +175,9 @@ data.snr_w_gauss   = snr_w_gauss;
 data.data_to_plot  = data_to_plot;
 data.contrastnames = {contrastnames{c}};
 
-hgexport(fH, fullfile(save_pth,'Mesh_difGratNoise_gamma_SNR_across_subjects_notDenoised_5'));
+hgexport(fH, fullfile(save_pth,'Mesh_difGratNoise_gamma_SNR_across_subjects_BinarizedDenoised_4'));
 set(gcf, 'UserData', data)
-saveas(fH, fullfile(save_pth,'Mesh_difGratNoise_gamma_SNR_across_subjects_notDenoised_5'), 'fig');
+saveas(fH, fullfile(save_pth,'Mesh_difGratNoise_gamma_SNR_across_subjects_BinarizedDenoised_4'), 'fig');
 
 %% SNR Mesh per stimulus type Broadband
 threshold = 0;%3;
@@ -189,7 +189,7 @@ for c = 1:9
     data_to_plot = squeeze(nanmean(snr_w_pwr_157(c,:,:),2))';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     ft_plotOnMesh(data_to_plot, contrastnames{c});
-    set(gca, 'CLim', [-1 1]* 3)
+    set(gca, 'CLim', [-1 1]* 2)
 end
 
 data = {};
@@ -198,8 +198,8 @@ data.data_to_plot  = data_to_plot;
 data.contrastnames = {contrastnames{c}};
 
 
-hgexport(fH, fullfile(save_pth,'Mesh_stimulus_type_broadband_SNR_across_subjects_notDenoised_5'));
-saveas(fH, fullfile(save_pth,'Mesh_stimulus_type_broadband_SNR_across_subjects_notDenoised_5'), 'fig');
+hgexport(fH, fullfile(save_pth,'Mesh_stimulus_type_broadband_SNR_across_subjects_BinarizedDenoised_4'));
+saveas(fH, fullfile(save_pth,'Mesh_stimulus_type_broadband_SNR_across_subjects_BinarizedDenoised_4'), 'fig');
 
 %% SNR Mesh
 threshold = 0;%3;
@@ -211,7 +211,7 @@ for c = 10:13
     data_to_plot = squeeze(nanmean(snr_w_pwr_157(c,:,:),2))';
     data_to_plot(abs(data_to_plot) < threshold) = 0;
     ft_plotOnMesh(data_to_plot, contrastnames{c});
-    set(gca, 'CLim', [-1 1]* 3)
+    set(gca, 'CLim', [-1 1]* 2)
 end
 
 data = {};
@@ -219,6 +219,6 @@ data.snr_w_gauss   = snr_w_pwr;
 data.data_to_plot  = data_to_plot;
 data.contrastnames = {contrastnames{c}};
 
-hgexport(fH, fullfile(save_pth,'Mesh_difGratNoise_broadband_SNR_across_subjects_notDenoised_5'));
-saveas(fH, fullfile(save_pth,'Mesh_difGratNoise_broadband_SNR_across_subjects_notDenoised_5'), 'fig');
+hgexport(fH, fullfile(save_pth,'Mesh_difGratNoise_broadband_SNR_across_subjects_BinarizedDenoised_4'));
+saveas(fH, fullfile(save_pth,'Mesh_difGratNoise_broadband_SNR_across_subjects_BinarizedDenoised_4'), 'fig');
 
