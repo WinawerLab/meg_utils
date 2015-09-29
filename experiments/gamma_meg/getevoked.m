@@ -59,8 +59,13 @@ if peak_window(2) > size(data,1)
     peak_window(2) = size(data,1);
 end
 
+if peak_window(1) < 0
+    peak_window(1) = 0;
+end
+
 % which_time_point is a vector of length num_channels that tells us which
 % time point is the peak for each channel
+% [~, which_time_point] = max(abs(evoked_grand(peak_window, :)));
 [~, which_time_point] = max(abs(evoked_grand(min(peak_window):max(peak_window), :)));
 which_time_point = which_time_point + min(peak_window) -1;
 

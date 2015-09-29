@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subjects                      = 99; % 99 means synthetic data
+subjects                      = 13; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -29,7 +29,7 @@ fs                            = 1000;        % sample rate
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 blank_condition               = 10;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                       = true;
-denoise_with_nonphys_channels = false;
+denoise_with_nonphys_channels = true;
 save_data                     = true;
 
 
@@ -132,18 +132,24 @@ for subject = subjects
         save(fullfile(project_pth, sprintf('s0%d_denoisedData.mat',subject+1)),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
     end
     
-    %% Look at results
+    %% Look at results 
+    %
+    % Note that the broadband plotted in these meshes are probably a
+    % combination of Gamma oscillatory responses and Broadband responses.
+    % For a good understanding of the data, run
+    % s_Gamma_fit_data_afte_denoising.m. These figures plotted below are
+    % just a sanity check.
     figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
         'Noise Pool', [],'2d', 'interpolation', 'nearest');
     
     figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
-        'Denoised Broadband R2',  [], [],  'CLim', [0 50]);
+        'Denoised Broadband R2',  [], [],  'CLim', [0 5]);
     
     figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
-        'Original Broadband R2', [], [],  'CLim', [0 50]);
+        'Original Broadband R2', [], [],  'CLim', [0 5]);
     
     figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
-        'Broadband R2 0 PCs', [], [], 'CLim', [0 50]);
+        'Broadband R2 0 PCs', [], [], 'CLim', [0 5]);
     
     
     snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;

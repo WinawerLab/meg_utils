@@ -3,7 +3,7 @@
 % Define variables
 subjects           = 9;
 fs                = 1000;
-nboot             = 10;
+nboot             = 100;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -191,7 +191,7 @@ gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
 
-fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100.mat',subject+1));
+fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100_2.mat',subject+1));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);
@@ -220,15 +220,15 @@ fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
 for cond = 1:9
     subplot(3,3,cond)
     ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', ~badChannels, 0), condition_names{cond});
-    set(gca, 'CLim', [0 .2])
+    set(gca, 'CLim', [-1 1] *.1)
 end
 
 
-fH = figure(1001); clf
+fH = figure(1001); clf; set(fH, 'name', 'Broadband weight')
 for cond = 1:9
     subplot(3,3,cond)
     ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
-    set(gca, 'CLim', [-1 1] *.03)
+    set(gca, 'CLim', [-1 1] *.02)
 end
 
 
