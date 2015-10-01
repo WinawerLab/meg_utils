@@ -6,7 +6,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 6;
+which_data_to_visualize       = 13;
 save_images                   = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -18,8 +18,8 @@ subj_pths = subj_pths(1,:);
 condition_names               = {   ...
     'White Noise' ...
     'Binarized White Noise' ...
-    'Pink Noise' ...
-    'Brown Noise' ...
+    'Binarized Pink Noise' ...
+    'Binarized Brown Noise' ...
     'Gratings (0.36 cpd)' ...
     'Gratings (0.73 cpd)' ...
     'Gratings (1.45 cpd)' ...
@@ -48,18 +48,18 @@ for subject_num = which_data_to_visualize
     
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
     datasets    =  dir(fullfile(load_pth, '*boot*'));
-    before      = load(fullfile(load_pth, datasets(1).name));
+    before      = load(fullfile(load_pth, datasets(2).name));
     if subject_num < 6
         after = load(fullfile(load_pth, datasets(3).name));
     else 
-        after = load(fullfile(load_pth, datasets(3).name));
+        after = load(fullfile(load_pth, datasets(2).name));
     end
          
     denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',subject_num+1)));
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
     spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
-    spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
+    spectral_data_before = load(fullfile(load_pth,spectral_data_files(2).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
     
     
@@ -70,7 +70,7 @@ for subject_num = which_data_to_visualize
     t = (1:1000)/1000;
     f = (0:length(t)-1)/max(t);
 %     figure('position', [1,600,1400,800]); clf;
-    for chan =  1:50
+    for chan =  1:40
         for ii = 1:9
             figure(ii), clf;
 %             subplot(10,1,ii)
@@ -83,14 +83,15 @@ for subject_num = which_data_to_visualize
 
             
             set(gca, 'YScale','log','XScale','log','LineWidth',2)
-            xlim([30 200])
-            ylim([10.^.65, 10.^1.2])
+            xlim([20 200])
+            ylim([3 25])
+            set(gca,'XTick',[30:10:80],'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
             title(condition_names{ii}, 'FontSize',18)
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');
-            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d',chan,ii)));
+            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_3',chan,ii)));
         end
     
     end
