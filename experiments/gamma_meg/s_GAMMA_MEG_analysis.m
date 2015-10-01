@@ -39,7 +39,7 @@ denoise_with_nonphys_channels = true;       % Regress out time series from 3 nui
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 100;         % number of bootstrap samples
+nboot                         = 50;         % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -177,7 +177,11 @@ for subject_num = which_data_sets_to_analyze
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
     
-    f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+%     f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    
+    % Note: smaller drop out of line noise frequency, in order to improve
+    % modelfit
+    f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
     num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
     
@@ -219,7 +223,7 @@ for subject_num = which_data_sets_to_analyze
             end
         end
     end
-    fprintf('done!\n')
+    fprintf('done!\n')  
     
     warning on 'MATLAB:subsassigndimmismatch'
     
@@ -247,7 +251,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, sprintf('s0%d_bootstrappedData_2.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_3.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
