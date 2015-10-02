@@ -1,7 +1,7 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-subjects           = 9;
+subjects           = 14;
 fs                = 1000;
 nboot             = 100;
 trigger_channels  = 161:164;
@@ -29,6 +29,8 @@ condition_names  = {   ...
     'Plaid'...
     'Blank'};
 
+% fieldtrip path
+meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 % Where to find data?
 project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
@@ -44,6 +46,7 @@ subj_pths = struct2cell(d);
 isdir     = cell2mat(subj_pths(4,:));
 subj_pths = subj_pths(1,isdir);
 
+%% loop over subjects
 for subject = subjects
 
 % Load denoised timeseries
@@ -58,6 +61,12 @@ badChannels = data.bad_channels;
 % Get raw ts for triggers and then conditions again
 raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*Gamma*');
 trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
+
+% get rid of artifact triggers that appear before the experiment in subj
+% 15
+if subject == 14
+    trigger(1:200000,:) = 0;
+end
 
 % Get conditions
 [~, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
