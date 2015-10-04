@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subjects                      = 13; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
+subjects                      = 15; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
