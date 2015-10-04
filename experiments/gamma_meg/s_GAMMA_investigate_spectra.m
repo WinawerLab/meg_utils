@@ -11,7 +11,7 @@
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
-subject_num                   = 10;
+subject_num                   = 9;
 save_images                   = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -65,7 +65,7 @@ data_before     = nanmedian(spectral_data_before.spectral_data_boots,4);
 
 t = (1:1000)/1000;
 f = (0:length(t)-1)/max(t);
-for chan =  16
+for chan =  1:20
         %% Plot mean across conditions
         figure(3), clf;
      
@@ -118,7 +118,7 @@ for chan =  16
         ylabel('Power','FontSize',18)
 %         legend('Noise', 'Gratings ','Plaid','Baseline');
 
-%     waitforbuttonpress;
+     waitforbuttonpress;
     end
     
 model_fit_after = nanmedian(after.fit_f2,4);

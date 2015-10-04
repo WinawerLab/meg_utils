@@ -6,7 +6,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 13;
+which_data_to_visualize       = 11;
 save_images                   = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -48,7 +48,7 @@ for subject_num = which_data_to_visualize
     
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
     datasets    =  dir(fullfile(load_pth, '*boot*'));
-    before      = load(fullfile(load_pth, datasets(2).name));
+    before      = load(fullfile(load_pth, datasets(1).name));
     if subject_num < 6
         after = load(fullfile(load_pth, datasets(3).name));
     else 
@@ -59,7 +59,7 @@ for subject_num = which_data_to_visualize
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
     spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
-    spectral_data_before = load(fullfile(load_pth,spectral_data_files(2).name));
+    spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
     
     
@@ -70,7 +70,7 @@ for subject_num = which_data_to_visualize
     t = (1:1000)/1000;
     f = (0:length(t)-1)/max(t);
 %     figure('position', [1,600,1400,800]); clf;
-    for chan =  1:40
+    for chan =  1:20
         for ii = 1:9
             figure(ii), clf;
 %             subplot(10,1,ii)
@@ -124,8 +124,9 @@ for subject_num = which_data_to_visualize
 %                         hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_after_chan%d_allcond',chan,ii)));
             
            set(gca, 'YScale','log','XScale','log','LineWidth',2)
-            xlim([30 200])
-            ylim([10.^.65, 10.^1.2])
+            xlim([20 200])
+            ylim([3 25])
+            set(gca,'XTick',[30:10:80],'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
 %             title(condition_names{ii}, 'FontSize',18)
             xlabel('Frequency (Hz)','FontSize',18)

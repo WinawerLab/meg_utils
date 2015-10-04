@@ -39,7 +39,7 @@ denoise_with_nonphys_channels = true;       % Regress out time series from 3 nui
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 50;         % number of bootstrap samples
+nboot                         = 100;         % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -52,10 +52,10 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-which_data_sets_to_analyze    = 13;          % subject 99 for synthetic data
+which_data_sets_to_analyze    = 14;          % subject 99 for synthetic data
 
 %% Add paths
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
@@ -91,6 +91,19 @@ for subject_num = which_data_sets_to_analyze
         ts                = ts(:,~iti, :);
         conditions        = conditions(~iti);
         
+        % There are some weird unrelated triggers in the data, here we just
+        % eliminate these.
+        if sum(conditions == 15) > 0;
+            idx           = find(conditions==15);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
+        
+        if sum(conditions == 12) > 0;
+            idx           = find(conditions==12);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
     end
     
     conditions_unique = unique(conditions);
@@ -251,7 +264,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_3.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_4.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     

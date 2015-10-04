@@ -80,10 +80,26 @@ parfor subject_num = which_data_sets_to_analyze
         iti               = conditions == intertrial_trigger_num;
         ts                = ts(:,~iti, :);
         conditions        = conditions(~iti);
+        
+        % There are some weird unrelated triggers in the data, here we just
+        % eliminate these.
+        if sum(conditions == 15) > 0;
+            idx           = find(conditions==15);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
+        
+        if sum(conditions == 12) > 0;
+            idx           = find(conditions==12);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
+        
     else % in this case, the blanks in between images have trigger number 10
         ts                = ts(:,1:2:end, :);
         conditions        = conditions(1:2:end);
     end
+    
 
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
@@ -162,15 +178,17 @@ parfor subject_num = which_data_sets_to_analyze
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
     
-    f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+%     f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+     f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    f_sel=ismember(f,f_use4fit);
+    num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
-    
     num_channels = length(data_channels);
     out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
     gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
-    fit_f2  = NaN(num_conditions,500,num_channels, nboot); % fitted spectrum
+    fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
     
     warning off 'MATLAB:subsassigndimmismatch'
     
@@ -210,10 +228,10 @@ parfor subject_num = which_data_sets_to_analyze
     
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData',subject_num));
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_4',subject_num));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
-        'fit_f2', fit_f2, 'nboot', nboot);
+        'fit_f2', fit_f2, 'nboot', nboot, 'f_use4fit', f_use4fit, 'f_sel',f_sel);
 
     
     
