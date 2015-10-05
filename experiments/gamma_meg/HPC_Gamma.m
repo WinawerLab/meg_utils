@@ -24,6 +24,7 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 
 fs                            = 1000;        % sample rate
+verbose                       = false;
 
 
 % condition names correspond to trigger numbers
