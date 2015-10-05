@@ -124,6 +124,7 @@ for chan =  1:20
 model_fit_after = nanmedian(after.fit_f2,4);
 data_after     = nanmedian(spectral_data_after.spectral_data_boots,4);
 
+% In case we want to dismiss some frequencies for plotting
 %     data_after(29,:,:) = NaN;
 %     data_after(32,:,:) = NaN;
 %     data_after(34,:,:) = NaN;

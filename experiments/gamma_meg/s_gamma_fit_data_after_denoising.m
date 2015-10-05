@@ -215,7 +215,7 @@ gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
 
-fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100_4.mat',subject+1));
+fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100_4',subject+1));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);

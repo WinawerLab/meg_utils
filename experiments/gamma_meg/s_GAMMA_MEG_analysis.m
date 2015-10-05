@@ -52,7 +52,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-which_data_sets_to_analyze    = 14;          % subject 99 for synthetic data
+which_data_sets_to_analyze    = 10;          % subject 99 for synthetic data
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})

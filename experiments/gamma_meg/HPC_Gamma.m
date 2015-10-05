@@ -24,7 +24,7 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 
 fs                            = 1000;        % sample rate
-verbose                       = false;
+
 
 
 % condition names correspond to trigger numbers
@@ -51,7 +51,7 @@ subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 %% Loops over datasets
 parfor subject_num = which_data_sets_to_analyze
-    
+    verbose                       = true;
     if subject_num >= 4
         intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
         epoch_start_end        = [0.55 1.049]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
