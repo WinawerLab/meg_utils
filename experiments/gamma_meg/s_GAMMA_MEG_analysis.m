@@ -51,8 +51,9 @@ epoch_start_end               = [0.050 1.049];% start and end of epoch, relative
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
+save_spectral_data            = true;
 
-which_data_sets_to_analyze    = 10;          % subject 99 for synthetic data
+which_data_sets_to_analyze    = 13;          % subject 99 for synthetic data
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -183,6 +184,10 @@ for subject_num = which_data_sets_to_analyze
     fprintf('Done!\n');
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
+    if save_spectral_data
+        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_4.mat'),'spectral_data_boots')
+    end
+        
     spectral_data_mean = mean(spectral_data_boots, 4);
 
     %% Broadband and Gaussian Fit

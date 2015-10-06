@@ -6,7 +6,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 11;
+which_data_to_visualize       = 15;
 save_images                   = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -48,7 +48,7 @@ for subject_num = which_data_to_visualize
     
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
     datasets    =  dir(fullfile(load_pth, '*boot*'));
-    before      = load(fullfile(load_pth, datasets(1).name));
+    before      = load(fullfile(load_pth, datasets(2).name));
     if subject_num < 6
         after = load(fullfile(load_pth, datasets(3).name));
     else 
@@ -59,7 +59,7 @@ for subject_num = which_data_to_visualize
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
     spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
-    spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
+    spectral_data_before = load(fullfile(load_pth,spectral_data_files(2).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
     
     
@@ -91,7 +91,7 @@ for subject_num = which_data_to_visualize
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');
-            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_3',chan,ii)));
+            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_4',chan,ii)));
         end
     
     end

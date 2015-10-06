@@ -11,7 +11,7 @@
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
-subject_num                   = 9;
+subject_num                   = 10;
 save_images                   = true;
 
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -55,7 +55,7 @@ denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',subject_num+1
 denoisedData = load(fullfile(load_pth,denoisedData(1).name));
 
 spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
-spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
+spectral_data_before = load(fullfile(load_pth,spectral_data_files(3).name));
 % spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
 
 model_fit_before = nanmedian(before.fit_f2,4);
@@ -146,9 +146,7 @@ for chan = 40:80
         
         plot(f,10.^model_fit_after(10,:,chan),'color',rgb_grey,'LineWidth',4);
         plot(f,data_after(:,10,chan), 'color', rgb_grey, 'LineWidth',2);
-        
-        %                         hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_after_chan%d_allcond',chan,ii)));
-        
+                
         set(gca, 'YScale','log','XScale','log','LineWidth',2)
         xlim([30 200])
         ylim([10.^.65, 10.^1.2])
