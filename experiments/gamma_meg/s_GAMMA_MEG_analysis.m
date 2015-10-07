@@ -185,7 +185,7 @@ for subject_num = which_data_sets_to_analyze
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
     if save_spectral_data
-        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_4.mat'),'spectral_data_boots')
+        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
     end
         
     spectral_data_mean = mean(spectral_data_boots, 4);
@@ -269,7 +269,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_4.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_5.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
