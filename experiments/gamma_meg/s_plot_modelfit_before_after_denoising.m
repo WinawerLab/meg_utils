@@ -1,5 +1,15 @@
 % Visualize spectra and gamma + bb model fits
 
+
+% Note about the different datasets one can choose from:
+%                   Peak restr. Freq used
+% Modelfit 1:       35-80 Hz    f>=35 & f < 40 |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+% Modelfit 2:       40-80 Hz    f>=35 & f <= 58) | (f>=62 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+% Modelfit 3:       40-80 Hz    f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+% Modelfit 4:       42-80 Hz    f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+% Modelfit 5:       46-80 Hz    f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+
+
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 
