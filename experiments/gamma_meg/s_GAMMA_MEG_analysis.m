@@ -39,7 +39,7 @@ denoise_with_nonphys_channels = true;       % Regress out time series from 3 nui
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 50;         % number of bootstrap samples
+nboot                         = 1;         % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -52,7 +52,9 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 
 save_images                   = false;
 
-which_data_sets_to_analyze    = 13;          % subject 99 for synthetic data
+which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
+
+save_test_ts                  = false; % test ts of one subject one channel to design model fit
 
 %% Add paths
 meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -123,7 +125,15 @@ for subject_num = which_data_sets_to_analyze
         end
     end
     
+    %% Save the ts of one channel
     
+    if save_test_data
+
+        a = fullfile(project_pth, 'ts_subj6_ch13.mat');
+        b = ts(:,:,13);
+        save(a,'b');
+
+    end
     % --------------------------------------------------------------------
     % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
     % --------------------------------------------------------------------
