@@ -1,7 +1,7 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-subjects           = 14;
+subjects           = 10;
 fs                = 1000;
 nboot             = 100;
 trigger_channels  = 161:164;
@@ -30,7 +30,7 @@ condition_names  = {   ...
     'Blank'};
 
 % fieldtrip path
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 % Where to find data?
 project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
@@ -73,6 +73,21 @@ end
 % remove intertrial intervals
 iti               = conditions == intertrial_trigger_num;
 conditions        = conditions(~iti);
+
+
+% There are some weird unrelated triggers in the data, here we just
+% eliminate these.
+if sum(conditions == 15) > 0;
+    idx           = find(conditions==15);
+    ts(:,idx, :)  = [];
+    conditions(idx) = [];
+end
+
+if sum(conditions == 12) > 0;
+    idx           = find(conditions==12);
+    ts(:,idx, :)  = [];
+    conditions(idx) = [];
+end
 conditions_unique = unique(conditions);
 num_conditions    = length(condition_names);
 
@@ -200,7 +215,7 @@ gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
 
-fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100_2.mat',subject+1));
+fname = fullfile(project_pth, subj_pths{subject}, 'processed',sprintf('s0%d_denoisedData_bootstrapped100_4',subject+1));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);

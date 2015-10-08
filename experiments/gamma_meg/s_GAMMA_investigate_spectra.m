@@ -55,7 +55,7 @@ denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',subject_num+1
 denoisedData = load(fullfile(load_pth,denoisedData(1).name));
 
 spectral_data_files  = dir(fullfile(load_pth, 'spectral_data*.mat'));
-spectral_data_before = load(fullfile(load_pth,spectral_data_files(1).name));
+spectral_data_before = load(fullfile(load_pth,spectral_data_files(3).name));
 % spectral_data_after  = load(fullfile(load_pth,spectral_data_files(2).name));
 
 model_fit_before = nanmedian(before.fit_f2,4);
@@ -65,7 +65,7 @@ data_before     = nanmedian(spectral_data_before.spectral_data_boots,4);
 
 t = (1:1000)/1000;
 f = (0:length(t)-1)/max(t);
-for chan =  16
+for chan =  1:20
         %% Plot mean across conditions
         figure(3), clf;
      
@@ -118,12 +118,13 @@ for chan =  16
         ylabel('Power','FontSize',18)
 %         legend('Noise', 'Gratings ','Plaid','Baseline');
 
-%     waitforbuttonpress;
+     waitforbuttonpress;
     end
     
 model_fit_after = nanmedian(after.fit_f2,4);
 data_after     = nanmedian(spectral_data_after.spectral_data_boots,4);
 
+% In case we want to dismiss some frequencies for plotting
 %     data_after(29,:,:) = NaN;
 %     data_after(32,:,:) = NaN;
 %     data_after(34,:,:) = NaN;
@@ -145,9 +146,7 @@ for chan = 40:80
         
         plot(f,10.^model_fit_after(10,:,chan),'color',rgb_grey,'LineWidth',4);
         plot(f,data_after(:,10,chan), 'color', rgb_grey, 'LineWidth',2);
-        
-        %                         hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_after_chan%d_allcond',chan,ii)));
-        
+                
         set(gca, 'YScale','log','XScale','log','LineWidth',2)
         xlim([30 200])
         ylim([10.^.65, 10.^1.2])

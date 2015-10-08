@@ -41,6 +41,9 @@ remove_bad_channels           = true;        % Remove channels whose median sd i
 
 nboot                         = 1;         % number of bootstrap samples
 
+nboot                         = 100;         % number of bootstrap samples
+
+
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
 denoise_via_pca               = false;       % Do you want to use meg denoise?
@@ -51,13 +54,14 @@ epoch_start_end               = [0.050 1.049];% start and end of epoch, relative
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
+save_spectral_data            = true;
 
 which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
 
 save_test_ts                  = false; % test ts of one subject one channel to design model fit
 
 %% Add paths
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
@@ -93,6 +97,19 @@ for subject_num = which_data_sets_to_analyze
         ts                = ts(:,~iti, :);
         conditions        = conditions(~iti);
         
+        % There are some weird unrelated triggers in the data, here we just
+        % eliminate these.
+        if sum(conditions == 15) > 0;
+            idx           = find(conditions==15);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
+        
+        if sum(conditions == 12) > 0;
+            idx           = find(conditions==12);
+            ts(:,idx, :)  = [];
+        	conditions(idx) = [];
+        end
     end
     
     conditions_unique = unique(conditions);
@@ -180,6 +197,10 @@ for subject_num = which_data_sets_to_analyze
     fprintf('Done!\n');
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
+    if save_spectral_data
+        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
+    end
+        
     spectral_data_mean = mean(spectral_data_boots, 4);
 
     %% Broadband and Gaussian Fit
@@ -261,7 +282,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_3.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_5.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
