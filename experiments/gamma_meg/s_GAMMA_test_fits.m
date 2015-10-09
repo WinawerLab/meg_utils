@@ -19,13 +19,8 @@ meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa
 condition_names  = gamma_get_condition_names(subject);
 num_conditions   = length(condition_names);
 
-%% options
-
-moving_window_fft = false;
-
 
 %% load ts 
-% case 1: transform ts without smoothing
 
 load(fullfile(project_pth,sprintf('ts_subj%d_ch%d', subject, channel)));
 
@@ -33,13 +28,17 @@ ts = test_ts;
 
 conditions_unique = unique(conditions);
 
+num_epochs = size(ts,2);
+
+t = (1:size(ts,1)); %timepoints
+
 
 %% -------Spectral Analysis--------
 % case 1: fourier transform without smoothing 
 % case 2: fourier transform using sliding window
 % case 3: fourier transform using sliding hanning window
 
-% % case 1
+%% case 1
 % t = (1:size(ts,1))/fs;
 % f = (0:length(t)-1)/max(t);
 % 
@@ -47,43 +46,87 @@ conditions_unique = unique(conditions);
 % % fourier transform data
 % spectral_data = abs(fft(ts))/length(t)*2;
 
-% case 2
+% take mean across conditions
+% spectral_data_mean = zeros(size(ts,1), length(conditions_unique));
+% 
+% for ii = 1:size(conditions_unique,1);
+%     
+%     these_epochs = conditions == conditions_unique(ii);
+%     
+%     these_data = spectral_data(:,these_epochs);
+%     
+%     spectral_data_mean(:,ii) = exp(nanmean(log(these_data),2));
+% %     spectral_data_mean(:,ii) = nanmean(log10(these_data),2);
+% 
+% end
 
-t = (1:size(ts,1));
-N = max(t);
-f = 0:N-1;
-window_size = N/4;
+%% case 2 and 3
 
-for ii = 1:num_conditions
+use_hanning_window = false;
+
+num_windows = 7; %number of moving windows
+
+
+N = max(t); % 1000ms per epoch
+f = 0:N-1; % frequencies
+window_size = (2*N)/(num_windows+1); % size of moving window (ms)
+h = hann(window_size)*2; 
+
+F_all = abs(fft(ts))/N*2; % fft of 1 window/epoch for comparison
+y_windowed = [];
+F_windowed = zeros(num_windows,window_size,num_epochs); 
+
+% loop over number of windows
+for ii = 1:num_windows
+    % isolate ith window of each epoch
+    y_windowed = ts((1:window_size)+window_size/2*(ii-1),:);
     
-    this_data = ts(:,ii);
-    
-    F_all = abs(fft(this_data))/N*2;
-    y_windowed = [];
-    F_windowed = [];
-    
-    for iii = 1:7
-        y_windowed = 
-        
+    % multiply each window by hanning function
+    if use_hanning_window
+        y_windowed = y_windowed .* h';
     end
     
-    
+    % fft ith window
+    F_windowed(ii,:,:) = abs(fft(y_windowed))./(window_size*2);
 end
 
+% take the mean across windows/squeeze
+F_windowed = squeeze(mean(F_windowed,1));
+% adjusted frequency scale
+f_windowed = 0:N/window_size:N-1;
 
 % take mean across conditions
-spectral_data_mean = zeros(size(ts,1), length(conditions_unique));
+F_windowed_mean = zeros(window_size, length(conditions_unique));
 
 for ii = 1:size(conditions_unique,1);
     
     these_epochs = conditions == conditions_unique(ii);
     
-    these_data = spectral_data(:,these_epochs);
+    these_data = F_windowed(:,these_epochs);
     
-    spectral_data_mean(:,ii) = exp(nanmean(log(these_data),2));
+    F_windowed_mean(:,ii) = exp(nanmean(log(these_data),2));
 %     spectral_data_mean(:,ii) = nanmean(log10(these_data),2);
+    
+    F_all(:,ii) = exp(nanmean(log(F_all(:,these_epochs)),2));
 
 end
+
+
+
+for iii = 1:num_conditions
+    
+    title(condition_names(iii));
+    figure(iii); plot(f, F_all(:,iii), 'r', f_windowed, F_windowed_mean(:,iii), 'b')
+    set(gca, 'Yscale', 'log', 'Xscale', 'log')
+    
+    set(gca, 'YScale','log','XScale','log','LineWidth',2)
+    xlim([20 200])
+    ylim([3 25])
+    
+    waitforbuttonpress
+end
+
+
     
 %% Model Fit Parameters 
 
