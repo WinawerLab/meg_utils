@@ -48,9 +48,27 @@ conditions_unique = unique(conditions);
 % spectral_data = abs(fft(ts))/length(t)*2;
 
 % case 2
-t = (1:size(ts,1))/fs;
 
+t = (1:size(ts,1));
+N = max(t);
+f = 0:N-1;
+window_size = N/4;
 
+for ii = 1:num_conditions
+    
+    this_data = ts(:,ii);
+    
+    F_all = abs(fft(this_data))/N*2;
+    y_windowed = [];
+    F_windowed = [];
+    
+    for iii = 1:7
+        y_windowed = 
+        
+    end
+    
+    
+end
 
 
 % take mean across conditions

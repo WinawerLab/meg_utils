@@ -41,9 +41,6 @@ remove_bad_channels           = true;        % Remove channels whose median sd i
 
 nboot                         = 1;         % number of bootstrap samples
 
-nboot                         = 100;         % number of bootstrap samples
-
-
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
 denoise_via_pca               = false;       % Do you want to use meg denoise?
@@ -58,7 +55,7 @@ save_spectral_data            = true;
 
 which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
 
-save_test_ts                  = false; % test ts of one subject one channel to design model fit
+save_test_ts                  = true; % test ts of one subject one channel to design model fit
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -76,10 +73,12 @@ for subject_num = which_data_sets_to_analyze
     
     if subject_num == 99
         [ts, conditions] = gamma_synthetize_validation_data();
-         
+        
     else
-        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
-        if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});end
+   
+    
+    if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         
         % --------------------------------------------------------------------
         % ------------------ PREPROCESS THE DATA -----------------------------
@@ -110,7 +109,7 @@ for subject_num = which_data_sets_to_analyze
             ts(:,idx, :)  = [];
         	conditions(idx) = [];
         end
-    end
+    
     
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
@@ -144,11 +143,14 @@ for subject_num = which_data_sets_to_analyze
     
     %% Save the ts of one channel
     
-    if save_test_data
+    if save_test_ts
 
-        a = fullfile(project_pth, 'ts_subj6_ch13.mat');
-        b = ts(:,:,13);
-        save(a,'b');
+        a       = fullfile(project_pth, 'ts_subj6_ch13.mat');
+        test_ts = ts(:,:,13);
+       
+        
+        save(a,'test_ts','trigger','conditions');
+     
 
     end
     % --------------------------------------------------------------------
