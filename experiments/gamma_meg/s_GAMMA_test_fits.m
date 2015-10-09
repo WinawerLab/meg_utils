@@ -62,7 +62,7 @@ t = (1:size(ts,1)); %timepoints
 
 %% case 2 and 3
 
-use_hanning_window = false;
+use_hanning_window = true;
 
 num_windows = 7; %number of moving windows
 
@@ -70,7 +70,8 @@ num_windows = 7; %number of moving windows
 N = max(t); % 1000ms per epoch
 f = 0:N-1; % frequencies
 window_size = (2*N)/(num_windows+1); % size of moving window (ms)
-h = hann(window_size)*2; 
+h = (hann(window_size)*2);
+h = repmat(h,1,num_epochs);
 
 F_all = abs(fft(ts))/N*2; % fft of 1 window/epoch for comparison
 y_windowed = [];
@@ -83,7 +84,7 @@ for ii = 1:num_windows
     
     % multiply each window by hanning function
     if use_hanning_window
-        y_windowed = y_windowed .* h';
+        y_windowed = y_windowed .* h;
     end
     
     % fft ith window
@@ -119,9 +120,6 @@ for iii = 1:num_conditions
     figure(iii); plot(f, F_all(:,iii), 'r', f_windowed, F_windowed_mean(:,iii), 'b')
     set(gca, 'Yscale', 'log', 'Xscale', 'log')
     
-    set(gca, 'YScale','log','XScale','log','LineWidth',2)
-    xlim([20 200])
-    ylim([3 25])
     
     waitforbuttonpress
 end
