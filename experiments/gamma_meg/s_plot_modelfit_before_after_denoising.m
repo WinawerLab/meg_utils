@@ -35,8 +35,9 @@ color_scheme = [rgb_pink;rgb_pink;rgb_pink;rgb_pink; ...
 
 % Define saturated colors in case you want to plot all fits in one figure
 satValues       = 1-linspace(0.1,1,4);
-colorRGB_pink   = varysat(rgb_pink,satValues);
-colorRGB_noise  = varysat(rgb_green,satValues);
+
+% colorRGB_pink   = varysat(rgb_pink,satValues);
+% colorRGB_noise  = varysat(rgb_green,satValues);
        
 %% Loop over data sets
 for subject_num = which_data_to_visualize
@@ -53,9 +54,11 @@ for subject_num = which_data_to_visualize
         fprintf('%d: %s\n', ii, datasets(ii).name)
     end
     
-    % Before is without denoising, after is with denoising
+    % Load the parameters of the model fit (Gaussian weight, broadband
+    % weight, etc)
+    %   Before is without denoising, after is with denoising
     before_dataset = input('Before data set number?');
-    after_dataset = input('After data set number?');
+    after_dataset  = input('After data set number?');
     
     before  = load(fullfile(load_pth, datasets(before_dataset).name));   
     after   = load(fullfile(load_pth, datasets(after_dataset).name));
@@ -71,40 +74,39 @@ for subject_num = which_data_to_visualize
         fprintf('%d: %s\n', ii, spectral_data_files(ii).name)
     end
     before_dataset = input('Before data set number?');
-    after_dataset = input('After data set number?');
+    after_dataset  = input('After data set number?');
  
     spectral_data_before = load(fullfile(load_pth,spectral_data_files(before_dataset).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(after_dataset).name));
     
     % Take the median across bootstraps for modelfit and spectra
     model_fit_before = nanmedian(before.fit_f2,4);
-    data_before     = nanmedian(spectral_data_before.spectral_data_boots,4);
+    data_before      = nanmedian(spectral_data_before.spectral_data_boots,4);
     
     % Define time and frequencies to use
     t = (1:1000)/1000;
     f = (0:length(t)-1)/max(t);
-    f_sel     = intersect(f, before.f_use4fit);
+    f_sel = intersect(f, before.f_use4fit);
     
     % Plot
     fH = figure('position', [1,600,1400,800]); clf;
     for chan =  13;%1:20
         set(fH, 'name', sprintf('Channel %d', chan));
         for ii = 1:9
-            %figure(ii), 
             clf;
 %             subplot(10,1,ii)
         
-            plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan),'color', color_scheme(ii,:,:), 'LineWidth',4); hold on;
+            plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
             %plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
-            plot(f,mean(data_before(:,5:8,chan),2), '-o', 'color', color_scheme(ii,:,:), 'LineWidth',2);
+            plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
             plot(f,data_before(:,10,chan), 'color', rgb_grey, 'LineWidth',2);
 
             
             set(gca, 'YScale','log','XScale','log','LineWidth',2)
-            xlim([20 200])
-            ylim([3 25])
-            set(gca,'XTick',[30:10:80],'XGrid','on')
+            xlim([2 200])
+            ylim([3 80])
+            set(gca,'XTick',10:10:80,'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
             title(condition_names{ii}, 'FontSize',18)
             xlabel('Frequency (Hz)','FontSize',18)

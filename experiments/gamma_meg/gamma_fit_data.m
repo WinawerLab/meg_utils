@@ -8,8 +8,8 @@ function [out_exp,w_pwr,w_gauss,gauss_f,fit_f2] = ...
 % input:
 %   f:          frequencies in spectral data (Hz)
 %   f_use4fit:  frequencies to use for fitting (subset of f, Hz)
-%   data_base:  data used to fit exp: (1/f^exp) - enter power (not log)
-%   data_fit:   used to fit weights and gaussian - enter power (not log)
+%   data_base:  data used to fit exp: (1/f^exp) - enter power (not log power)
+%   data_fit:   used to fit weights and gaussian - enter power (not log power)
 %
 % output (exp weight_pwr weight_gauss gamma_freq fit_f2)
 

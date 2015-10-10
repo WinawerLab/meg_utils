@@ -76,29 +76,34 @@ h = repmat(h,1,num_epochs);
 F_all = abs(fft(ts))/N*2; % fft of 1 window/epoch for comparison
 y_windowed = [];
 F_windowed = zeros(num_windows,window_size,num_epochs); 
-
+F_windowed_hanning = zeros(num_windows,window_size,num_epochs); 
 % loop over number of windows
 for ii = 1:num_windows
     % isolate ith window of each epoch
     y_windowed = ts((1:window_size)+window_size/2*(ii-1),:);
-    
-    % multiply each window by hanning function
-    if use_hanning_window
-        y_windowed = y_windowed .* h;
-    end
-    
+        
     % fft ith window
     F_windowed(ii,:,:) = abs(fft(y_windowed))./(window_size*2);
+    
+    % multiply each window by hanning function    
+    y_windowed = y_windowed .* h;
+    % fft ith window
+    F_windowed_hanning(ii,:,:) = abs(fft(y_windowed))./(window_size*2);
+    
+    
 end
 
 % take the mean across windows/squeeze
 F_windowed = squeeze(mean(F_windowed,1));
+F_windowed_hanning = squeeze(mean(F_windowed_hanning,1));
+
+
 % adjusted frequency scale
-f_windowed = 0:N/window_size:N-1;
+fw = 0:N/window_size:N-1;
 
 % take mean across conditions
 F_windowed_mean = zeros(window_size, length(conditions_unique));
-
+F_windowed_hanning_mean = zeros(window_size, length(conditions_unique));
 for ii = 1:size(conditions_unique,1);
     
     these_epochs = conditions == conditions_unique(ii);
@@ -106,22 +111,42 @@ for ii = 1:size(conditions_unique,1);
     these_data = F_windowed(:,these_epochs);
     
     F_windowed_mean(:,ii) = exp(nanmean(log(these_data),2));
-%     spectral_data_mean(:,ii) = nanmean(log10(these_data),2);
+
+    these_data = F_windowed_hanning(:,these_epochs);
     
-    F_all(:,ii) = exp(nanmean(log(F_all(:,these_epochs)),2));
+    F_windowed_hanning_mean(:,ii) = exp(nanmean(log(these_data),2));
+
+    %     spectral_data_mean(:,ii) = nanmean(log10(these_data),2);
+    
+    F_all_mean(:,ii) = exp(nanmean(log(F_all(:,these_epochs)),2));
 
 end
+%%
 
 
+f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+f_sel=ismember(f,f_use4fit);
 
+f_use4fit = fw((fw>=35 & fw <= 57) | (fw>=63 & fw <= 115) | (fw>=126 & fw <= 175) | (fw>=186 & fw <= 200));
+f_w_sel=ismember(fw,f_use4fit);
+
+fh = figure;
 for iii = 1:num_conditions
     
+   % plot(f, F_all(:,iii), 'r', fw, F_windowed_mean(:,iii), 'b'), hold on
+    
+   plot( ...
+       ...f(f_sel), F_all_mean(f_sel,:), 'o',...
+       f, F_all_mean(:,:), '-'...
+       ...  fw(f_w_sel), F_windowed_mean((f_w_sel),:), 'bo-', ...
+       ... fw(f_w_sel), F_windowed_hanning_mean((f_w_sel),:), 'go-' ...
+   )
+    set(gca, 'Yscale', 'log', 'Xscale', 'log', 'XLim', [25 200])
     title(condition_names(iii));
-    figure(iii); plot(f, F_all(:,iii), 'r', f_windowed, F_windowed_mean(:,iii), 'b')
-    set(gca, 'Yscale', 'log', 'Xscale', 'log')
-    
-    
+
+    %ylim([4 16])
     waitforbuttonpress
+    hold off
 end
 
 

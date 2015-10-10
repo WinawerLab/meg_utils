@@ -35,11 +35,11 @@ data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
-denoise_with_nonphys_channels = true;       % Regress out time series from 3 nuissance channels
+denoise_with_nonphys_channels = true;        % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 1;         % number of bootstrap samples
+nboot                         = 1;           % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -51,11 +51,11 @@ epoch_start_end               = [0.050 1.049];% start and end of epoch, relative
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
-save_spectral_data            = true;
+save_spectral_data            = false;
 
 which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
 
-save_test_ts                  = true; % test ts of one subject one channel to design model fit
+save_test_ts                  = false; % test ts of one subject one channel to design model fit
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -75,10 +75,11 @@ for subject_num = which_data_sets_to_analyze
         [ts, conditions] = gamma_synthetize_validation_data();
         
     else
-        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});end
-   
-    
-    if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
+        
+        
+        
+        if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         
         % --------------------------------------------------------------------
         % ------------------ PREPROCESS THE DATA -----------------------------
@@ -95,26 +96,26 @@ for subject_num = which_data_sets_to_analyze
         iti               = conditions == intertrial_trigger_num;
         ts                = ts(:,~iti, :);
         conditions        = conditions(~iti);
-        
-        % There are some weird unrelated triggers in the data, here we just
-        % eliminate these.
-        if sum(conditions == 15) > 0;
-            idx           = find(conditions==15);
-            ts(:,idx, :)  = [];
-        	conditions(idx) = [];
-        end
-        
-        if sum(conditions == 12) > 0;
-            idx           = find(conditions==12);
-            ts(:,idx, :)  = [];
-        	conditions(idx) = [];
-        end
+    end
+    % There are some weird unrelated triggers in the data, here we just
+    % eliminate these.
+    if sum(conditions == 15) > 0;
+        idx           = find(conditions==15);
+        ts(:,idx, :)  = [];
+        conditions(idx) = [];
+    end
+    
+    if sum(conditions == 12) > 0;
+        idx           = find(conditions==12);
+        ts(:,idx, :)  = [];
+        conditions(idx) = [];
+    end
     
     
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
-    %% Remove bad epochs    
+    %% Remove bad epochs
     var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
     bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
     bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
@@ -130,9 +131,9 @@ for subject_num = which_data_sets_to_analyze
     
     
     %% Denoise data by regressing out nuissance channel time series
-        
+    
     % Denoise data with 3 noise channels
-    if denoise_with_nonphys_channels
+    if denoise_with_nonphys_channels && subject_num ~= 99
         if exist('./denoised_with_nuissance_data.mat', 'file')
             load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
         else fprintf('Denoising data... \n');
@@ -144,14 +145,14 @@ for subject_num = which_data_sets_to_analyze
     %% Save the ts of one channel
     
     if save_test_ts
-
+        
         a       = fullfile(project_pth, 'ts_subj6_ch13.mat');
         test_ts = ts(:,:,13);
-       
+        
         
         save(a,'test_ts','trigger','conditions');
-     
-
+        
+        
     end
     % --------------------------------------------------------------------
     % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
@@ -191,7 +192,7 @@ for subject_num = which_data_sets_to_analyze
             
             % spectral_data_boots is freq x condition x channel x boot
             spectral_data_boots(:,ii,:,:) = permute(bootstat,[2 3 1]);
-        
+            
         else
             spectral_data_boots(:,ii,:,:) = exp(nanmean(log(these_data),2));
         end
@@ -199,18 +200,18 @@ for subject_num = which_data_sets_to_analyze
     fprintf('Done!\n');
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
-    if save_spectral_data
-        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
-    end
-        
+    %     if save_spectral_data
+    %         save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
+    %     end
+    
     spectral_data_mean = mean(spectral_data_boots, 4);
-
+    
     %% Broadband and Gaussian Fit
     
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
     
-%     f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    %     f_use4fit = f((f>=35 & f < 40) |(f > 40 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     
     % Note: smaller drop out of line noise frequency, in order to improve
     % modelfit
@@ -238,25 +239,29 @@ for subject_num = which_data_sets_to_analyze
             for bootnum = 1:nboot
                 
                 data_fit  = spectral_data_boots(:,cond,chan, bootnum);
-                data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
+                % data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
+                data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
                 
+                data_fit = data_fit';
+                data_base = data_base';
                 % try/catch because bad channels / bad epochs were replaced by
                 % NaNs, and NaNs will cause an error
                 try
                     [...
-                        out_exp(chan, cond, bootnum), ...
+                        ~, ...
                         w_pwr(chan, cond, bootnum), ...
                         w_gauss(chan, cond, bootnum),...
                         gauss_f(chan, cond, bootnum),...
                         fit_f2(cond,:, chan, bootnum)] = ...
-                        gamma_fit_data(f,f_use4fit,data_base,data_fit);
+                        ...      gamma_fit_data(f,f_use4fit,data_base,data_fit);
+                        gamma_fit_data_localregression(f,f_use4fit,data_base,data_fit);
                 catch ME
                     warning(ME.identifier, ME.message)
                 end
             end
         end
     end
-    fprintf('done!\n')  
+    fprintf('done!\n')
     
     warning on 'MATLAB:subsassigndimmismatch'
     
@@ -284,11 +289,11 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_bootstrappedData_5.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_localregression.mat',subject_num+1));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
-
+    
     
 end
 

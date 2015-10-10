@@ -18,7 +18,7 @@ function F = gamma_broadband_fit_loglog(x,P,f,p_exp)
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 
-% P:        log10(power)
+% P:        data (log10(power))
 % f:        log10(frequencies)
 % p_exp:    power law exponent of baseline condition
 % x(1):     power law exponent after subtracting baseline
