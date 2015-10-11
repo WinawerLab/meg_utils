@@ -1,5 +1,6 @@
-function condition_names = gamma_get_condition_names(subject)
-%condition_names = gamma_get_condition_names(subject)
+function [condition_names, baseline_condition] = gamma_get_condition_names(session_number)
+% [condition_names, baseline_condition] = ...
+%       gamma_get_condition_names(session_number)
 %
 % Condition names for MEG Gamma experiment
 %
@@ -9,6 +10,9 @@ function condition_names = gamma_get_condition_names(subject)
 %  condition_names: cell array of condition names
 %
 % Example: condition_names = gamma_get_condition_names(1)
+%
+
+% TODO fix for session_number <= 3
 
 condition_names               = {   ...
     'White Noise' ...
@@ -22,9 +26,11 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-if subject >= 9
+if session_number >= 9
     condition_names{3} = 'Binary Pink Noise';
     condition_names{4} = 'Binary Brown Noise';
 end
+
+baseline_condition = find(~cellfun(@isempty,strfind(condition_names, 'Blank')));
 
 return

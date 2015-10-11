@@ -43,8 +43,8 @@ satValues       = 1-linspace(0.1,1,4);
 for subject_num = which_data_to_visualize
     
     % Get condition names (different for the first and last 6 subjects)
-    condition_names  = gamma_get_condition_names(subject_num);
-
+    [condition_names, baseline_condition]  = gamma_get_condition_names(subject_num);
+     
     % Go to specific subject folder and find datasets
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
     datasets    = dir(fullfile(load_pth, '*local*'));
@@ -73,8 +73,8 @@ for subject_num = which_data_to_visualize
     for ii = 1:numel(spectral_data_files)
         fprintf('%d: %s\n', ii, spectral_data_files(ii).name)
     end
-    before_dataset = input('Before data set number?');
-    after_dataset  = input('After data set number?');
+    before_dataset = input('Get model parameters without denoising from which results file number?');
+    after_dataset  = input('Get model parameters with denoising from which results file number?');
  
     spectral_data_before = load(fullfile(load_pth,spectral_data_files(before_dataset).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(after_dataset).name));
@@ -90,6 +90,17 @@ for subject_num = which_data_to_visualize
     f = (0:length(t)-1)/max(t);
     f_sel = intersect(f, before.f_use4fit);
     
+    
+    
+    figure(1);clf 
+    for chan = 1:157;
+        plot(...
+            f, exp(mean(log(spectral_data_before.spectral_data_boots(:,:,chan,1)),4)), 'k', ...
+            f, exp(model_fit_before(:,:,chan))', 'r')
+        set(gca, 'YScale', 'log','XScale', 'log', 'XLim', [10 200])
+        title(chan)
+        pause(.1);
+    end
     % Plot
     for chan =  1:20
         fH = figure('position', [1,600,1400,800]); clf;
@@ -107,18 +118,30 @@ for subject_num = which_data_to_visualize
             plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
 %             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
             
-            plot(f(f_sel),exp(model_fit_before(10,f_sel,chan)),'color',rgb_grey,'LineWidth',4);
+
+%             fit_withoutgamma = model_fit_before(ii,f_sel,chan) - ...
+%                 before.w_gauss_mn(chan, ii) * ...
+%                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
+            
+            plot(f(f_sel),exp(model_fit_before(baseline_condition,f_sel,chan)),'color',rgb_grey,'LineWidth',4);
 
 %             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
-            plot(f,data_before(:,10,chan), 'color', rgb_grey, 'LineWidth',2);
+            plot(f,data_before(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',2);
 
             
             set(gca, 'YScale','log','XScale','log','LineWidth',2)
-            xlim([2 200])
+            xlim([10 200])
 %             ylim([3 80])
             set(gca,'XTick',10:10:80,'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
-            title(condition_names{ii}, 'FontSize',18)
+            
+            title(...
+                sprintf('%s, Broadband: %5.3f, Gamma: %5.3f at %3.1f Hz', ...
+                condition_names{ii}, before.w_pwr_mn(chan, ii)-before.w_pwr_mn(chan, baseline_condition), ...
+                before.w_gauss_mn(chan, ii)-before.w_pwr_mn(chan, baseline_condition),...
+                exp(before.gauss_f(chan, ii))),...
+                'FontSize',18)
+            
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');

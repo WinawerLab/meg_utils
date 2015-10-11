@@ -37,5 +37,5 @@ function F = gamma_broadband_fit_loglog(x,P,f,p_exp)
 %   gaussian: normpdf(f,x(3),sigma))
 
 sigma = 0.04;
-F= P - (x(1)-p_exp*f + x(2)*.04*sqrt(2*pi)*normpdf(f,x(3),sigma));
-% note: .04*sqrt(2*pi) gives an amplitude of 1 to the Gaussian for x(2)=1;
+F= P - (x(1)-p_exp*f + x(2)*sigma*sqrt(2*pi)*normpdf(f,x(3),sigma));
+% note: sigma*sqrt(2*pi) gives an amplitude of 1 to the Gaussian for x(2)=1;

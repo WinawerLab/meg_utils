@@ -29,13 +29,18 @@ x_in   = data_fit(f_sel); % 1 x num frequencies
 
 % fit baseline with local linear regression, 1 x num_frequencies
 baseline_fit = localregression(f_use4fit,log(x_base),f_use4fit,[],[], []);
+% % no smoothing for baseline
+% baseline_fit = log(x_base);
 
 x_to_fit = log(x_in) - baseline_fit; % 1 x num_frequencies
 
 my_options=optimset('Display','off','Algorithm','trust-region-reflective');
 
 % F = gamma_broadband_fit_loglog(x,P,f,p_exp)
-sigma = 0.04; % explain this!
+% Previously (e.g., Hermes 2014), we assumed a Gaussian with sd 0.04 log10
+% units. We are  now using natural log. To keep the same bandwidth, we
+% multiply sigma by log(10)
+sigma = 0.04*log(10); 
 
 [x]=lsqnonlin(@(x) gamma_broadband_fit(x, x_to_fit,log(f_use4fit),sigma),...
     [0 0 log(50)],[-Inf -Inf log(50)],[Inf Inf log(60)],...
@@ -68,4 +73,6 @@ function F = gamma_broadband_fit(x,D,f,sigma)
 %   offset: x(1)
 %   gaussian: normpdf(f,x(2),sigma))
 
-F = D - (x(1) + x(2)*.04*sqrt(2*pi)*normpdf(f,x(3),sigma));
+F = D - (x(1) + x(2)*sigma*sqrt(2*pi)*normpdf(f,x(3),sigma));
+% note: sigma*sqrt(2*pi) gives an amplitude of 1 to the Gaussian for x(2)=1;
+

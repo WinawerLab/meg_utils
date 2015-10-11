@@ -51,11 +51,9 @@ epoch_start_end               = [0.050 1.049];% start and end of epoch, relative
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
-save_spectral_data            = false;
+save_spectral_data            = true;
 
-which_data_sets_to_analyze    = 4:14;   % subject 99 for synthetic data
-
-save_test_ts                  = false; % test ts of one subject one channel to design model fit
+which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -142,18 +140,6 @@ for subject_num = which_data_sets_to_analyze
         end
     end
     
-    %% Save the ts of one channel
-    
-    if save_test_ts
-        
-        a       = fullfile(project_pth, 'ts_subj6_ch13.mat');
-        test_ts = ts(:,:,13);
-        
-        
-        save(a,'test_ts','trigger','conditions');
-        
-        
-    end
     % --------------------------------------------------------------------
     % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
     % --------------------------------------------------------------------
@@ -200,9 +186,9 @@ for subject_num = which_data_sets_to_analyze
     fprintf('Done!\n');
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
-    %     if save_spectral_data
-    %         save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
-    %     end
+    if save_spectral_data
+        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
+    end
     
     spectral_data_mean = mean(spectral_data_boots, 4);
     
@@ -230,23 +216,30 @@ for subject_num = which_data_sets_to_analyze
     
     % For each channel, fit each condition separatley
     fprintf('Fitting gamma and broadband values for each channel and each condition')
-    for cond = 1:num_conditions
-        fprintf('Condition %d of %d\n', cond, length(conditions_unique)); drawnow;
-        % Fit each channel separately
-        for chan = data_channels
+    % Fit each channel separately
+    
+    fH = figure(1); clf; 
+    for chan = data_channels
+        
+        fprintf('Channel %d of %d\n', chan, length(data_channels)); drawnow;
+        
+        
+        for bootnum = 1:nboot
             
+            % the baseline is the same for all conditions, so just compute it once
+            data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
+            data_base = data_base';
             
-            for bootnum = 1:nboot
+            if all(isfinite(data_base))
                 
-                data_fit  = spectral_data_boots(:,cond,chan, bootnum);
-                % data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
-                data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
-                
-                data_fit = data_fit';
-                data_base = data_base';
-                % try/catch because bad channels / bad epochs were replaced by
-                % NaNs, and NaNs will cause an error
-                try
+                for cond = 1:num_conditions
+                    
+                    data_fit = spectral_data_boots(:,cond,chan, bootnum);
+                    data_fit = data_fit';
+                    
+                    % try/catch because bad channels / bad epochs were replaced by
+                    % NaNs, and NaNs will cause an error
+                    
                     [...
                         ~, ...
                         w_pwr(chan, cond, bootnum), ...
@@ -255,9 +248,12 @@ for subject_num = which_data_sets_to_analyze
                         fit_f2(cond,:, chan, bootnum)] = ...
                         ...      gamma_fit_data(f,f_use4fit,data_base,data_fit);
                         gamma_fit_data_localregression(f,f_use4fit,data_base,data_fit);
-                catch ME
-                    warning(ME.identifier, ME.message)
                 end
+                
+                plot(f, exp(fit_f2(:,:, chan, bootnum))','r', f, spectral_data_boots(:,:,chan, bootnum), 'k')
+                set(gca, 'YScale', 'log', 'XScale', 'log', 'XLim', [10 200])
+                title(sprintf('Channel %d', chan))
+                drawnow
             end
         end
     end
