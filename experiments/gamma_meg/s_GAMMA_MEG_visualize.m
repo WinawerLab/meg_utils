@@ -8,7 +8,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_data_to_visualize       = 13;
+which_data_to_visualize       = 6;
 save_images                   = true;
 using_denoised_data           = false;
 
@@ -35,7 +35,7 @@ for subject_num = which_data_to_visualize
         badChannels = [];
     else
         save_pth = fullfile(project_pth,'/Images',subj_pths{subject_num});
-        d        =  dir(fullfile(load_pth, '*boot*'));
+        d        =  dir(fullfile(load_pth, '*local*'));
         badChannels = zeros(1,157);
     end
     
@@ -121,7 +121,7 @@ for subject_num = which_data_to_visualize
     
     %% SNR Mesh for Gaussian bump
     scrsz = get(0,'ScreenSize');
-    threshold = 2;%3;
+    threshold = 0;%3;
     % gaussian weight for each stimuli
     fH = figure(1005); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  set(fH, 'name', 'Gaussian SNR' )
     %for c = 1:12
@@ -130,18 +130,18 @@ for subject_num = which_data_to_visualize
         data_to_plot = snr_w_gauss(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), contrastnames{c});
-        set(gca, 'CLim', [-1 1]* 3)
+        set(gca, 'CLim', [-1 1]* 0.5)
     end
 
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
-        hgexport(fH, fullfile(save_pth,'Per_Condition_Gamma_SNR_thresh1.eps')); 
+        hgexport(fH, fullfile(save_pth,'Per_Condition_Gamma_SNR_local_regression.eps')); 
     end
     
     %% SNR Mesh for Broadband
     scrsz = get(0,'ScreenSize');
-    threshold = 2;%3;
+    threshold = 0;%3;
     % gaussian weight for each stimuli
     fH = figure(455); clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
     %for c = 1:12
@@ -150,15 +150,15 @@ for subject_num = which_data_to_visualize
         data_to_plot = snr_w_pwr(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), contrastnames{c});
-        set(gca, 'CLim', [-1 1]* 3)
+        set(gca, 'CLim', [-1 1]* .3)
     end
-    if save_images;  hgexport(fH, fullfile(save_pth,'Per_Condition_BB_SNR_thresh2')); end
+    if save_images;  hgexport(fH, fullfile(save_pth,'Per_Condition_BB_SNR_local_regression')); end
    
     
 
     %% Noise (Gamma SNR - baseline)
     
-    threshold = 2;
+    threshold = 0;
     fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
     % noise gamma
     data_to_plot = snr_w_gauss(:,12);
@@ -308,22 +308,22 @@ for subject_num = which_data_to_visualize
     fH = figure(1000); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
     subplot(2,2,1)
     ft_plotOnMesh(to157chan((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')',~badChannels,0), 'Gamma power, All gratings minus baseline');
-    set(gca, 'CLim', .5*[-1 1])
+    set(gca, 'CLim', 1*[-1 1])
     
     subplot(2,2,2)
     ft_plotOnMesh(to157chan((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')',~badChannels,0), 'Gamma power, All noise minus baseline');
-    set(gca, 'CLim', .5*[-1 1])
+    set(gca, 'CLim', 1*[-1 1])
     
     subplot(2,2,3)
     ft_plotOnMesh(to157chan((w_pwr_mn * [0 0 0 0 1 1 1 1 0 -4]')',~badChannels,0), 'Broadband power, All gratings minus baseline');
-    set(gca, 'CLim', .25*[-1 1])
+    set(gca, 'CLim', 1*[-1 1])
     
     subplot(2,2,4)
     ft_plotOnMesh(to157chan((w_pwr_mn * [1 1 1 1 0 0 0 0 0 -4]')',~badChannels,0), 'Broadband power, All noise minus baseline');
-    set(gca, 'CLim', .25*[-1 1])
+    set(gca, 'CLim', 1*[-1 1])
     
     if save_images
-        hgexport(1000, fullfile(save_pth, 'Mesh_G_BB_Noise_or_Gratings_M_Baseline.eps'));
+        hgexport(1000, fullfile(save_pth, 'Mesh_G_BB_Noise_or_Gratings_M_Baseline_local_regression.eps'));
     end
     
     fH = figure(1001); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);

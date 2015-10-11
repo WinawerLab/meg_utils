@@ -53,7 +53,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 save_images                   = false;
 save_spectral_data            = false;
 
-which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
+which_data_sets_to_analyze    = 4:14;   % subject 99 for synthetic data
 
 save_test_ts                  = false; % test ts of one subject one channel to design model fit
 

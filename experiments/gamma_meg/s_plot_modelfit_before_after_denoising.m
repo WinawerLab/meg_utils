@@ -47,7 +47,7 @@ for subject_num = which_data_to_visualize
 
     % Go to specific subject folder and find datasets
     load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
-    datasets    = dir(fullfile(load_pth, '*boot*'));
+    datasets    = dir(fullfile(load_pth, '*local*'));
     
     % Define which datasets you want to load
     for ii = 1:numel(datasets)
@@ -80,40 +80,50 @@ for subject_num = which_data_to_visualize
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(after_dataset).name));
     
     % Take the median across bootstraps for modelfit and spectra
-    model_fit_before = nanmedian(before.fit_f2,4);
+    % model_fit_before = nanmedian(before.fit_f2,4);
+    model_fit_before = before.fit_f2;
+
     data_before      = nanmedian(spectral_data_before.spectral_data_boots,4);
-    
+
     % Define time and frequencies to use
     t = (1:1000)/1000;
     f = (0:length(t)-1)/max(t);
     f_sel = intersect(f, before.f_use4fit);
     
     % Plot
-    fH = figure('position', [1,600,1400,800]); clf;
-    for chan =  13;%1:20
+    for chan =  1:20
+        fH = figure('position', [1,600,1400,800]); clf;
+
         set(fH, 'name', sprintf('Channel %d', chan));
         for ii = 1:9
+            
             clf;
 %             subplot(10,1,ii)
         
-            plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
-            %plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
-            plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
-            plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
+%             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
+            
+            plot(f(f_sel),exp(model_fit_before(ii,f_sel,chan)), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
+
+            plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+%             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+            
+            plot(f(f_sel),exp(model_fit_before(10,f_sel,chan)),'color',rgb_grey,'LineWidth',4);
+
+%             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
             plot(f,data_before(:,10,chan), 'color', rgb_grey, 'LineWidth',2);
 
             
             set(gca, 'YScale','log','XScale','log','LineWidth',2)
             xlim([2 200])
-            ylim([3 80])
+%             ylim([3 80])
             set(gca,'XTick',10:10:80,'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
             title(condition_names{ii}, 'FontSize',18)
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');
-            %hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_4',chan,ii)));
-            waitforbuttonpress
+            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression',chan,ii)));
+%             waitforbuttonpress
         end
     
     end
