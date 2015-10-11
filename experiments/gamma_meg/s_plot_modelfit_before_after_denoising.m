@@ -99,12 +99,13 @@ for subject_num = which_data_to_visualize
             f, exp(model_fit_before(:,:,chan))', 'r')
         set(gca, 'YScale', 'log','XScale', 'log', 'XLim', [10 200])
         title(chan)
-        pause(.1);
+        pause(.001);
     end
     % Plot
-    for chan =  1:20
-        fH = figure('position', [1,600,1400,800]); clf;
+    fH = figure('position', [1,600,1400,800]);
 
+    for chan =  1:20
+        clf;
         set(fH, 'name', sprintf('Channel %d', chan));
         for ii = 1:9
             
@@ -138,7 +139,7 @@ for subject_num = which_data_to_visualize
             title(...
                 sprintf('%s, Broadband: %5.3f, Gamma: %5.3f at %3.1f Hz', ...
                 condition_names{ii}, before.w_pwr_mn(chan, ii)-before.w_pwr_mn(chan, baseline_condition), ...
-                before.w_gauss_mn(chan, ii)-before.w_pwr_mn(chan, baseline_condition),...
+                before.w_gauss_mn(chan, ii)-before.w_gauss_mn(chan, baseline_condition),...
                 exp(before.gauss_f(chan, ii))),...
                 'FontSize',18)
             
