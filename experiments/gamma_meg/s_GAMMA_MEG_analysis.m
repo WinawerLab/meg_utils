@@ -53,7 +53,9 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 save_images                   = false;
 save_spectral_data            = true;
 
-which_data_sets_to_analyze    = 6;   % subject 99 for synthetic data
+which_sessions_to_analyze    = 7;   % subject 99 for synthetic data
+
+suffix                        = 'local_regression';
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -63,17 +65,17 @@ subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 
 %% Loops over datasets
-for subject_num = which_data_sets_to_analyze
+for session_num = which_sessions_to_analyze
     
-    condition_names  = gamma_get_condition_names(subject_num);
+    condition_names  = gamma_get_condition_names(session_num-1);
     
     blank_condition = strcmpi(condition_names, 'blank');
     
-    if subject_num == 99
+    if session_num == 99
         [ts, conditions] = gamma_synthetize_validation_data();
         
     else
-        save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
+        save_pth = fullfile(project_pth, 'Images', subj_pths{session_num-1});
         
         
         
@@ -83,7 +85,7 @@ for subject_num = which_data_sets_to_analyze
         % ------------------ PREPROCESS THE DATA -----------------------------
         % --------------------------------------------------------------------
         %% Load data (SLOW)
-        raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject_num}, 'raw'), '*Gamma*');
+        raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session_num-1}, 'raw'), '*Gamma*');
         
         %% Extract triggers
         trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
@@ -131,9 +133,9 @@ for subject_num = which_data_sets_to_analyze
     %% Denoise data by regressing out nuissance channel time series
     
     % Denoise data with 3 noise channels
-    if denoise_with_nonphys_channels && subject_num ~= 99
+    if denoise_with_nonphys_channels && session_num ~= 99
         if exist('./denoised_with_nuissance_data.mat', 'file')
-            load(fullfile(data_pth{subject_num},'denoised_with_nuissance_data.mat'));
+            load(fullfile(data_pth{session_num-1},'denoised_with_nuissance_data.mat'));
         else fprintf('Denoising data... \n');
             ts = meg_environmental_denoising(ts, environmental_channels,...
                 data_channels, produce_figures);
@@ -187,7 +189,7 @@ for subject_num = which_data_sets_to_analyze
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
     if save_spectral_data
-        save(fullfile(project_pth, subj_pths{subject_num},'processed','spectral_data_5.mat'),'spectral_data_boots')
+        save(fullfile(project_pth, subj_pths{session_num-1},'processed',sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots')
     end
     
     spectral_data_mean = mean(spectral_data_boots, 4);
@@ -285,7 +287,7 @@ for subject_num = which_data_sets_to_analyze
     fit_f2_md  = nanmedian(fit_f2,4);
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{subject_num}, 'processed', sprintf('s0%d_localregression.mat',subject_num+1));
+    filename = fullfile(project_pth, subj_pths{session_num-1}, 'processed', sprintf('s0%d_%s.mat',session_num,suffix));
     save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'out_exp', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn');
     
