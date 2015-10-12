@@ -178,8 +178,8 @@ for session_num = which_sessions_to_analyze
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
     if save_spectral_data
-        if ~exist(fullfile(project_pth, subj_pths{session_num},'processed'),'dir'); mdkir(fullfile(project_pth, subj_pths{session_num},'processed'));end;
-        parsave(fullfile(project_pth, subj_pths{session_num},'processed',sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots', spectral_data_boots)
+%         if ~exist(fullfile(project_pth, subj_pths{session_num},'processed'),'dir'); mdkir(fullfile(project_pth, subj_pths{session_num},'processed'));end;
+        parsave(fullfile(project_pth, subj_pths{session_num},sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots', spectral_data_boots)
     end
     
     spectral_data_mean = mean(spectral_data_boots, 4);
