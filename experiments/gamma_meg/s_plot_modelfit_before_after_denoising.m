@@ -11,11 +11,12 @@
 
 % Choose project path
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
+% project_pth                   = '~/matlab/git/meg_utils/experiments/gamma_meg/HPC/Data/';
 data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_data_to_visualize       = 6;
+which_data_to_visualize       = 1;
 save_images                   = true;
 
 % Get the folders of the subjects in the Gamma experiment
@@ -57,8 +58,8 @@ for subject_num = which_data_to_visualize
     % Load the parameters of the model fit (Gaussian weight, broadband
     % weight, etc)
     %   Before is without denoising, after is with denoising
-    before_dataset = input('Before data set number?');
-    after_dataset  = input('After data set number?');
+    before_dataset = input('Modelfit number before denoising?');
+    after_dataset  = input('Modelfit number after denoising?');
     
     before  = load(fullfile(load_pth, datasets(before_dataset).name));   
     after   = load(fullfile(load_pth, datasets(after_dataset).name));
@@ -73,14 +74,14 @@ for subject_num = which_data_to_visualize
     for ii = 1:numel(spectral_data_files)
         fprintf('%d: %s\n', ii, spectral_data_files(ii).name)
     end
-    before_dataset = input('Get model parameters without denoising from which results file number?');
-    after_dataset  = input('Get model parameters with denoising from which results file number?');
+    before_dataset = input('Get spectra without denoising from which results file number?');
+    after_dataset  = input('Get spectra parameters with denoising from which results file number?');
  
     spectral_data_before = load(fullfile(load_pth,spectral_data_files(before_dataset).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(after_dataset).name));
     
     % Take the median across bootstraps for modelfit and spectra
-    % model_fit_before = nanmedian(before.fit_f2,4);
+%     model_fit_before = nanmedian(before.fit_f2,4);
     model_fit_before = before.fit_f2;
 
     data_before      = nanmedian(spectral_data_before.spectral_data_boots,4);
@@ -146,7 +147,7 @@ for subject_num = which_data_to_visualize
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');
-            hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression',chan,ii)));
+%             hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression',chan,ii)));
 %             waitforbuttonpress
         end
     

@@ -1,4 +1,4 @@
-function HPC_Gamma(which_data_sets_to_analyze, nboot)
+function HPC_Gamma(which_sessions_to_analyze, nboot)
 %
 % NOTE:  A version of this function called s_GAMMA_MEG_analysis runs
 % without the HPC. If changes are made to this script, parallel changes
@@ -25,7 +25,9 @@ remove_bad_epochs             = true;        % Remove epochs whose variance exce
 
 fs                            = 1000;        % sample rate
 
+save_spectral_data            = true;
 
+suffix                        = 'localregression_multi';
 
 % condition names correspond to trigger numbers
 condition_names               = {   ...
@@ -50,26 +52,24 @@ d = dir(fullfile(project_pth, data_pth));
 subj_pths = struct2cell(d);
 subj_pths = subj_pths(1,:);
 %% Loops over datasets
-parfor subject_num = which_data_sets_to_analyze
+for session_num = which_sessions_to_analyze
     verbose                       = true;
-    if subject_num >= 4
+%     if session_num > 4
         intertrial_trigger_num = 11; % the MEG trigger value that corresponds to the intertrial interval
-        epoch_start_end        = [0.55 1.049]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
-
-    else
-        intertrial_trigger_num = 10;
-        epoch_start_end        = [0.05 .549];% start and end of epoch, relative to trigger, in seconds
-
-    end
-    
-    save_pth = fullfile(project_pth, 'Images', subj_pths{subject_num});
-    if ~exist(save_pth, 'dir'), mkdir(save_pth); end
+        epoch_start_end        = [0.05 1.049]; %[0.55 1.049];% start and end of epoch, relative to trigger, in seconds
+        
+%     else
+%         intertrial_trigger_num = 10;
+%         epoch_start_end        = [0.05 .549];% start and end of epoch, relative to trigger, in seconds
+%         
+%     end
+   
     
     % --------------------------------------------------------------------
     % ------------------ PREPROCESS THE DATA -----------------------------
     % --------------------------------------------------------------------
     %% Load data (SLOW)
-    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject_num}, 'raw'), '*Gamma*');
+    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session_num}, 'raw'), '*Gamma*');
     
     %% Extract triggers
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
@@ -87,13 +87,13 @@ parfor subject_num = which_data_sets_to_analyze
         if sum(conditions == 15) > 0;
             idx           = find(conditions==15);
             ts(:,idx, :)  = [];
-        	conditions(idx) = [];
+            conditions(idx) = [];
         end
         
         if sum(conditions == 12) > 0;
             idx           = find(conditions==12);
             ts(:,idx, :)  = [];
-        	conditions(idx) = [];
+            conditions(idx) = [];
         end
         
     else % in this case, the blanks in between images have trigger number 10
@@ -101,18 +101,11 @@ parfor subject_num = which_data_sets_to_analyze
         conditions        = conditions(1:2:end);
     end
     
-
+    
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
-    %% Denoise data by regressing out nuissance channel time series
-    
-    % Denoise data with 3 noise channels
-    if denoise_with_nonphys_channels
-        if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
-        ts = meg_environmental_denoising(ts, environmental_channels,...
-            data_channels, false);
-    end
+
     
     
     %% Find bad epochs
@@ -131,6 +124,15 @@ parfor subject_num = which_data_sets_to_analyze
         
         conditions = conditions(~badEpochs);
         
+    end
+    
+        %% Denoise data by regressing out nuissance channel time series
+    
+    % Denoise data with 3 noise channels
+    if denoise_with_nonphys_channels
+        if verbose; fprintf('Environmentally denoise data.. This may take a couple of seconds\n'); end
+        ts = meg_environmental_denoising(ts, environmental_channels,...
+            data_channels, false);
     end
     
     % --------------------------------------------------------------------
@@ -174,66 +176,77 @@ parfor subject_num = which_data_sets_to_analyze
     if verbose; fprintf('Done!\n'); end;
     
     
+    % Summarize bootstrapped spectral by mean and std over bootstraps
+    if save_spectral_data
+        if ~exist(fullfile(project_pth, subj_pths{session_num},'processed'),'dir'); mdkir(fullfile(project_pth, subj_pths{session_num},'processed'));end;
+        parsave(fullfile(project_pth, subj_pths{session_num},'processed',sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots', spectral_data_boots)
+    end
+    
+    spectral_data_mean = mean(spectral_data_boots, 4);
     %% Broadband and Gaussian Fit
     
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
     
-%     f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
-     f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    %     f_use4fit = f((f>=35 & f <= 57) | (f>=65 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+    f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
     f_sel=ismember(f,f_use4fit);
     num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
-
+    
     num_channels = length(data_channels);
-    out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+%     fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
-    gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
+    gauss_f = NaN(num_channels, 1, nboot);                 % gaussian peak frequency
     fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
     
     warning off 'MATLAB:subsassigndimmismatch'
     
-    % For each channel, fit each condition separatley
-    if verbose; fprintf('Fitting gamma and broadband values for each channel and each condition'); end;
-    for cond = 1:num_conditions
-        if verbose; fprintf('.'); drawnow; end;
-        % Fit each channel separately
-        for chan = data_channels
+    for chan = data_channels
+        
+        fprintf('Channel %d of %d\n', chan, length(data_channels)); drawnow;
+        
+        
+        for bootnum = 1:nboot
             
+            % the baseline is the same for all conditions, so just compute it once
+            data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
+            data_base = data_base';
             
-            for bootnum = 1:nboot
+            if all(isfinite(data_base))
                 
-                data_fit  = spectral_data_boots(:,cond,chan, bootnum);
-                data_base = spectral_data_boots(:,blank_condition,chan, bootnum);
+                data_fit = spectral_data_boots(:,:,chan, bootnum);
                 
-                % try/catch because bad channels / bad epochs were replaced by
-                % NaNs, and NaNs will cause an error
-                try
-                    [...
-                        out_exp(chan, cond, bootnum), ...
-                        w_pwr(chan, cond, bootnum), ...
-                        w_gauss(chan, cond, bootnum),...
-                        gauss_f(chan, cond, bootnum),...
-                        fit_f2(cond,:, chan, bootnum)] = ...
-                        gamma_fit_data(f,f_use4fit,data_base,data_fit);
-                catch ME
-                    warning(ME.identifier, ME.message)
-                end
+                [...
+                    fit_bl(chan, :, bootnum), ...
+                    w_pwr(chan, :, bootnum), ...
+                    w_gauss(chan, :, bootnum),...
+                    gauss_f(chan, :, bootnum),...
+                    fit_f2(:,:, chan, bootnum)] = ...
+                    gamma_fit_data_localregression_multi(f,f_use4fit,data_base,data_fit);
+                
             end
         end
     end
-    if verbose; fprintf('done!\n'); end;
+    fprintf('done!\n')
     
-%     warning on 'MATLAB:subsassigndimmismatch'
     warning on 'MATLAB:subsassigndimmismatch'
     
+    gauss_f = repmat(gauss_f, [1 num_conditions 1]);
+    
+    
+    % summarize bootstrapped fits
+    fit_bl_mn  = nanmean(fit_bl,3);
+    w_pwr_mn   = nanmean(w_pwr,3);
+    w_gauss_mn = nanmean(w_gauss,3);
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_bootstrappedData_4',subject_num));
-    parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_%s',session_num,suffix));
+    parsave([fname '.mat'], 'fit_bl', fit_bl, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
+        'w_gauss_mn', w_gauss_mn, 'w_pwr_mn', w_pwr_mn,  'fit_bl_mn', fit_bl_mn, ...
         'fit_f2', fit_f2, 'nboot', nboot, 'f_use4fit', f_use4fit, 'f_sel',f_sel);
-
+   
     
     
 end

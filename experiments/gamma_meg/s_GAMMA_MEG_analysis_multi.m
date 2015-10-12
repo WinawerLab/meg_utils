@@ -53,9 +53,9 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 save_images                   = false;
 save_spectral_data            = true;
 
-which_sessions_to_analyze    = [5:12 14:16];   % subject 99 for synthetic data
+which_sessions_to_analyze    = [16];   % subject 99 for synthetic data
 
-suffix                        = 'multi';
+suffix                        = 'localregression_multi';
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -115,6 +115,7 @@ for session_num = which_sessions_to_analyze
     conditions_unique = unique(conditions);
     num_conditions    = length(condition_names);
     
+
     %% Remove bad epochs
     var_threshold         = [.05 20]; % acceptable limits for variance in an epoch, relative to median of all epochs
     bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a channel, eliminate that channel
@@ -141,6 +142,7 @@ for session_num = which_sessions_to_analyze
                 data_channels, produce_figures);
         end
     end
+    
     
     % --------------------------------------------------------------------
     % ------------------ ANALYZE THE PREPROCESSED DATA -------------------
@@ -208,7 +210,7 @@ for session_num = which_sessions_to_analyze
     num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
     
     num_channels = length(data_channels);
-    out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+%     fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
     w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
     w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
     gauss_f = NaN(num_channels, 1, nboot);                 % gaussian peak frequency
@@ -239,15 +241,15 @@ for session_num = which_sessions_to_analyze
                     fit_bl(chan, :, bootnum), ...
                     w_pwr(chan, :, bootnum), ...
                     w_gauss(chan, :, bootnum),...
-                    gauss_f(chan, :, bootnum),...
+                    gauss_f(chan, 1, bootnum),...
                     fit_f2(:,:, chan, bootnum)] = ...
                     gamma_fit_data_localregression_multi(f,f_use4fit,data_base,data_fit);
                 
-                %                 fH = figure(1); clf;
-                %                 plot(f, exp(fit_f2(:,:, chan, bootnum))','r', f, spectral_data_boots(:,:,chan, bootnum), 'k')
-                %                 set(gca, 'YScale', 'log', 'XScale', 'log', 'XLim', [10 200])
-                %                 title(sprintf('Channel %d', chan))
-                %                 drawnow
+%                                 fH = figure(1); clf;
+%                                 plot(f, exp(fit_f2(:,:, chan, bootnum))','r', f, spectral_data_boots(:,:,chan, bootnum), 'k')
+%                                 set(gca, 'YScale', 'log', 'XScale', 'log', 'XLim', [10 200])
+%                                 title(sprintf('Channel %d', chan))
+%                                 pause(0.1)
             end
         end
     end
@@ -268,7 +270,7 @@ for session_num = which_sessions_to_analyze
     
     %% Save Processed Data
     filename = fullfile(project_pth, subj_pths{session_num-1}, 'processed', sprintf('s0%d_%s.mat',session_num,suffix));
-    save (filename, 'project_pth', 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
+    save (filename, 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'fit_bl', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn', 'fit_bl_mn');
     
     

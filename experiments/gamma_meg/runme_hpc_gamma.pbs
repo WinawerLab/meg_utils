@@ -13,6 +13,6 @@ cd /scratch/ek99/meg_utils/experiments/gamma_meg
 # If the files you are running are not in the same folder as this script,
 # you can insert "addpath(genpath('/PATH/TO/FILES/'));" before the command
 # you want to run.
-matlab -nodisplay -r "addpath(genpath('/scratch/ek99/meg_utils')); HPC_Gamma(5:6,100); exit()"
+matlab -nodisplay -r "addpath(genpath('/scratch/ek99/meg_utils')); HPC_Gamma([4:12,14:16],100); exit()"
 
 exit
