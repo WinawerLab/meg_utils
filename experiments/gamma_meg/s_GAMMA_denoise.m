@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subjects                      = 15; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
+subjects                      = 4:11; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -106,8 +106,10 @@ for subject = subjects
     t                   = epoch_start_end(1):1/fs:epoch_start_end(2);
     t_clipped           = t(t >= evoked_cutoff);
     f                   = (0:length(t_clipped)-1)*fs/length(t_clipped);
-    keep_frequencies    = @(x) x((x>=35 & x < 40) |(x > 40 & x <= 57) | ...
-        (x>=65 & x <= 115) | (x>=126 & x<= 175) | (x>=186 & x<= 200));
+%     keep_frequencies    = @(x) x((x>=35 & x < 40) |(x > 40 & x <= 57) | ...
+%         (x>=65 & x <= 115) | (x>=126 & x<= 175) | (x>=186 & x<= 200));
+
+     keep_frequencies = @(x) x((x>=35 & x <= 57) | (x>=63 & x <= 115) | (x>=126 & x <= 175) | (x>=186 & x <= 200));
     
     % preprocess data by clipping 1st n time points (to eliminate evoked
     % response) and by removing all frequencies that will not be used to fit
@@ -139,41 +141,41 @@ for subject = subjects
     % For a good understanding of the data, run
     % s_Gamma_fit_data_afte_denoising.m. These figures plotted below are
     % just a sanity check.
-    figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
-        'Noise Pool', [],'2d', 'interpolation', 'nearest');
-    
-    figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
-        'Denoised Broadband R2',  [], [],  'CLim', [0 5]);
-    
-    figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
-        'Original Broadband R2', [], [],  'CLim', [0 5]);
-    
-    figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
-        'Broadband R2 0 PCs', [], [], 'CLim', [0 5]);
-    
-    
-    snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
-    figure, set(gcf, 'Name', 'Denoised Broadband SNR');
-    for ii = 1:9
-        subplot(3,3,ii)
-        ft_plotOnMesh(to157chan(snr.final(ii,:), ~bad_channels, 0), ...
-            condition_names{ii},  [], [], 'CLim', [-3 3]);
-    end
-    
-    
-    snr.orig = results.origmodel.beta_md  ./ results.origmodel.beta_se;
-    figure, set(gcf, 'Name', 'Original Broadband SNR');
-    for ii = 1:9
-        subplot(3,3,ii)
-        ft_plotOnMesh(to157chan(snr.orig(ii,:), ~bad_channels, 0), ...
-            condition_names{ii},  [], [], 'CLim', [-3 3]);
-    end
-    
-    figure, set(gcf, 'Name', 'Broadband SNR (final - orig)');
-    for ii = 1:9
-        subplot(3,3,ii)
-        ft_plotOnMesh(to157chan(snr.final(ii,:) - snr.orig(ii,:), ~bad_channels, 0), ...
-            condition_names{ii},  [], [], 'CLim', [-3 3]);
-    end
+%     figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
+%         'Noise Pool', [],'2d', 'interpolation', 'nearest');
+%     
+%     figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
+%         'Denoised Broadband R2',  [], [],  'CLim', [0 5]);
+%     
+%     figure, ft_plotOnMesh(to157chan(results.origmodel.r2, ~bad_channels, 0), ...
+%         'Original Broadband R2', [], [],  'CLim', [0 5]);
+%     
+%     figure, ft_plotOnMesh(to157chan(evalout(1).r2, ~bad_channels, 0), ...
+%         'Broadband R2 0 PCs', [], [], 'CLim', [0 5]);
+%     
+%     
+%     snr.final = results.finalmodel.beta_md  ./ results.finalmodel.beta_se;
+%     figure, set(gcf, 'Name', 'Denoised Broadband SNR');
+%     for ii = 1:9
+%         subplot(3,3,ii)
+%         ft_plotOnMesh(to157chan(snr.final(ii,:), ~bad_channels, 0), ...
+%             condition_names{ii},  [], [], 'CLim', [-3 3]);
+%     end
+%     
+%     
+%     snr.orig = results.origmodel.beta_md  ./ results.origmodel.beta_se;
+%     figure, set(gcf, 'Name', 'Original Broadband SNR');
+%     for ii = 1:9
+%         subplot(3,3,ii)
+%         ft_plotOnMesh(to157chan(snr.orig(ii,:), ~bad_channels, 0), ...
+%             condition_names{ii},  [], [], 'CLim', [-3 3]);
+%     end
+%     
+%     figure, set(gcf, 'Name', 'Broadband SNR (final - orig)');
+%     for ii = 1:9
+%         subplot(3,3,ii)
+%         ft_plotOnMesh(to157chan(snr.final(ii,:) - snr.orig(ii,:), ~bad_channels, 0), ...
+%             condition_names{ii},  [], [], 'CLim', [-3 3]);
+%     end
     
 end

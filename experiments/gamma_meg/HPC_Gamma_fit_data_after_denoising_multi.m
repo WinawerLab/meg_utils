@@ -15,7 +15,6 @@ project_pth                   = fullfile(rootPath,'HPC','Data');
 % data to be analysed
 data_pth                      = '*_Gamma_*subj*';
 
-data_channels                 = 1:157;
 environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 
@@ -53,16 +52,6 @@ condition_names  = {   ...
     'Plaid'...
     'Blank'};
 
-% fieldtrip path
-% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
-
-% Where to find data?
-project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
-
-% Type of data
-data_pth       = '*_Gamma_*subj*';
-
-
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
 %   restrict to directories
@@ -88,12 +77,6 @@ for session = which_sessions_to_analyze
     % Get raw ts for triggers and then conditions again
     raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session}, 'raw'), '*Gamma*');
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
-    
-    % get rid of artifact triggers that appear before the experiment in subj
-    % 15
-    if subject == 14
-        trigger(1:200000,:) = 0;
-    end
     
     % Get conditions
     [~, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
@@ -180,8 +163,10 @@ for session = which_sessions_to_analyze
     
     % Convert the amplitude spectrum in each channel and each epoch into 2
     % numbers, one for broadband and one for gamma
-    
+
     f_use4fit = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+   
+
     f_sel=ismember(f,f_use4fit);
     num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
     
@@ -196,7 +181,7 @@ for session = which_sessions_to_analyze
     
     % For each channel, fit each condition separatley
     fprintf('Fitting gamma and broadband values for each channel and each condition')
-    for chan = data_channels
+    for chan = num_channels
         
         fprintf('Channel %d of %d\n', chan, num_channels); drawnow;
         
@@ -237,7 +222,7 @@ for session = which_sessions_to_analyze
     w_gauss_mn = nanmean(w_gauss,3);
     
     % Save data
-    fname = fullfile(rootPath,'HPC','Data',sprintf('s0%d_denoisedData_bootstrapped_%s_100',session_num,suffix));
+    fname = fullfile(rootPath,'HPC','Data',sprintf('s%02d_denoisedData_bootstrapped_%s_100',session_num,suffix));
     parsave([fname '.mat'], 'fit_bl', fit_bl, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'w_gauss_mn', w_gauss_mn, 'w_pwr_mn', w_pwr_mn,  'fit_bl_mn', fit_bl_mn, ...
