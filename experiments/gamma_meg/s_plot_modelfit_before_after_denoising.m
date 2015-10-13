@@ -16,7 +16,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_session_to_visualize    = 10;
+which_session_to_visualize    = [6,7,8,9,10,11,12,14,15,16];
 save_images                   = false;
 
 % Get the folders of the subjects in the Gamma experiment
@@ -75,7 +75,7 @@ for session_num = which_session_to_visualize
 %     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
     % Get spectra for before and after denoising
-    spectral_data_files  = dir(fullfile(load_pth, 'spectral_data_local*.mat'));
+    spectral_data_files  = dir(fullfile(load_pth, '*spectral_data_local*.mat'));
     
     for ii = 1:numel(spectral_data_files)
         fprintf('%d: %s\n', ii, spectral_data_files(ii).name)
@@ -97,49 +97,57 @@ for session_num = which_session_to_visualize
     f = (0:length(t)-1)/max(t);
     f_sel = intersect(f, before.f_use4fit);
     
+    num_channels = size(spectral_data_before.spectral_data_boots,3);
+
     
+    %% Plot Spectra
     
-    figure(1);clf 
+    % plots all conditions and model fit of every channel
+    figure(1);clf
     for chan = 1:157;
         plot(...
-            f, exp(mean(log(spectral_data_before.spectral_data_boots(:,:,chan,1)),4)), 'k', ...
+            f, exp(mean(log(spectral_data_before.spectral_data_boots(:,:,chan,:)),4)), 'k', ...
             f, exp(model_fit_before(:,:,chan))', 'r')
         set(gca, 'YScale', 'log','XScale', 'log', 'XLim', [10 200])
         title(chan)
-        pause(.001);
+        waitforbuttonpress;
     end
-    % Plot
+    
+    
+    %% Plot
     fH = figure('position', [1,600,1400,800]);
-
-    for chan =  1:20
+    
+    
+    
+    for chan = 1:num_channels
         clf;
         set(fH, 'name', sprintf('Channel %d', chan));
         for ii = 1:9
             
             clf;
-%             subplot(10,1,ii)
-        
-%             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
+            %             subplot(10,1,ii)
+            
+            %             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
             
             plot(f(f_sel),exp(model_fit_before(ii,f_sel,chan)), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
-
-            plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
-%             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
             
-
-%             fit_withoutgamma = model_fit_before(ii,f_sel,chan) - ...
-%                 before.w_gauss_mn(chan, ii) * ...
-%                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
+            plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+            %             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+            
+            
+            %             fit_withoutgamma = model_fit_before(ii,f_sel,chan) - ...
+            %                 before.w_gauss_mn(chan, ii) * ...
+            %                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
             
             plot(f(f_sel),exp(model_fit_before(baseline_condition,f_sel,chan)),'color',rgb_grey,'LineWidth',4);
-
-%             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
+            
+            %             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
             plot(f,data_before(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',2);
-
+            
             
             set(gca, 'YScale','log','XScale','log','LineWidth',2)
             xlim([10 200])
-%             ylim([3 80])
+            %             ylim([3 80])
             set(gca,'XTick',10:10:80,'XGrid','on')
             box(gca,'off');        set(gcf, 'color','w')
             
@@ -153,10 +161,13 @@ for session_num = which_session_to_visualize
             xlabel('Frequency (Hz)','FontSize',18)
             ylabel('Power','FontSize',18)
             legend(condition_names{ii}, 'Data', 'Baseline');
-%             hgexport(gcf, fullfile(project_pth, subj_pths{subject_num}, 'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression',chan,ii)));
-%             waitforbuttonpress
+            if save_images
+                hgexport(gcf, fullfile(meg_gamma_get_path(session_num),...
+                    'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression',chan,ii)));
+            end
+            %waitforbuttonpress
         end
-    
+        
     end
     
     % NOT YET IMPLEMENTED
