@@ -2,34 +2,29 @@
 
 % Visualizes summary statistics computed in s_GAMMA_MEG_analysis.m
 
-project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
-data_pth                      = '*_Gamma_*subj*';
-
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_session_to_visualize    = [7:12,14:16];
+which_session_to_visualize    = 5:6; %[7:12,14:16];
 save_images                   = true;
 using_denoised_data           = false;
+suffix                        = 'localregression_multi_100';
 
-suffix                        = 'localregression_multi';
+if isempty(which('ft_prepare_layout'))
+    meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+end
 
-% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
-
-d = dir(fullfile(project_pth, data_pth));
-subj_pths = struct2cell(d);
-subj_pths = subj_pths(1,:);
 
 
 
 %% Loop over data sets
 for session_num = which_session_to_visualize
     
-   condition_names = gamma_get_condition_names(session_num-1);
+   condition_names = gamma_get_condition_names(session_num);
 
-    
+    path_to_data = meg_gamma_get_path(session_num);
     %% Define paths and load data
-    load_pth    = fullfile(project_pth, subj_pths{session_num-1}, 'processed');
+    load_pth    = fullfile(path_to_data, 'processed');
     
     if using_denoised_data
         save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1}, 'denoised');
@@ -37,7 +32,7 @@ for session_num = which_session_to_visualize
         badChannels = [];
     else
         save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1});
-        d        =  dir(fullfile(load_pth, '*localregression_multi*'));
+        d        =  dir(fullfile(load_pth, sprintf('*%s*', suffix)));
         badChannels = zeros(1,157);
     end
     
@@ -101,10 +96,8 @@ for session_num = which_session_to_visualize
     w_gauss_mn = nanmean(results.w_gauss,3);
     w_pwr_mn   = nanmean(results.w_pwr,3);
     
-    % compute SNR
-    
-    snr_fit_bl = zeros(num_channels, num_contrasts);
-    snr_w_gauss = zeros(num_channels, num_contrasts);
+    % compute SNR    
+    snr_fit_bl  = zeros(num_channels, num_contrasts);
     snr_gauss_f = zeros(num_channels, num_contrasts);
     
     tmp_data = permute(results.w_pwr, [2 1 3]);
@@ -124,123 +117,94 @@ for session_num = which_session_to_visualize
     %% SNR Mesh for Gaussian bump
     scrsz = get(0,'ScreenSize');
     threshold = 0;%3;
+    
     % gaussian weight for each stimuli
-    fH = figure(1005); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  set(fH, 'name', 'Gaussian SNR' )
-    %for c = 1:12
+    fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  set(fH, 'name', 'Gaussian SNR' )
+    plot_range = [-1 1] * ceil(max(max(abs(snr_w_gauss(:,1:9)))));
     for c = 1:9
         subplot(3,3,c)
         data_to_plot = snr_w_gauss(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), contrastnames{c});
-        set(gca, 'CLim', [-1 1]* 0.3)
+        set(gca, 'CLim', plot_range)
         colormap parula
-
     end
-
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_Gamma_SNR_local_%s.eps',suffix))); 
+        close(fH)
     end
     
     %% SNR Mesh for Broadband
     scrsz = get(0,'ScreenSize');
     threshold = 0;%3;
-    % gaussian weight for each stimuli
-    fH = figure(455); clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
-    %for c = 1:12
+    fH = figure; clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
+    plot_range = [-1 1] * ceil(max(max(abs(snr_w_pwr(:,1:9)))));
+
     for c = 1:9
         subplot(3,3,c)
         data_to_plot = snr_w_pwr(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), contrastnames{c});
-        set(gca, 'CLim', [-1 1]* .2)
+        set(gca, 'CLim', plot_range)
         colormap parula
     end
-    if save_images;  hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s',suffix))); end
+    if save_images;  hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s',suffix))); close(fH);end
    
     
 
-    %% Noise (Gamma SNR - baseline)
-    
-    threshold = 0;
-    fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
-    % noise gamma
-    data_to_plot = snr_w_gauss(:,12);
-    data_to_plot(abs(data_to_plot) < threshold) = 0;
-    
-    [fH,ch] = megPlotMap(to157chan(data_to_plot',~badChannels,0),[-1,1],gcf,jmaColors('coolhotcortex'));
-    
-    makeprettyaxes(gca,9,9);
-    set(ch,'ytick',-10:10:10);
-    title(contrastnames{12})
-    
-    if save_images; hgexport(fH, fullfile(save_pth,sprintf('figure_gammapower_noise_m_gratings_%s.eps',suffix))); end
-    
-    
-    %% Gratings (gamma SNR - Baseline)
-    fH = figure(2); clf, set(fH, 'name', 'Gamma weight')
-    % Gratings gamma
-    data_to_plot = snr_w_gauss(:,2)';
-    data_to_plot(abs(data_to_plot) < threshold) = 0;
-    
-    [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),[-1,1],gcf,jmaColors('coolhotcortex'));
-    
-    makeprettyaxes(gca,9,9);
-    set(ch,'ytick',-10:10:10);
-    title(contrastnames{2})
-    
-    
-    if save_images;  hgexport(fH, fullfile(project_pth,sprintf('figure_gammapower_gratings_%s.eps',suffix))); end
-    %% Gratings (Broadband SNR - Baseline)
-    
-    fH = figure(3); clf, set(fH, 'name', 'Broadband weight')
-    %     for c = [2 1]
-    %         subplot(1,2,c)
-    threshold = 0;
-    data_to_plot = to157chan(snr_w_pwr(:,12)',~badChannels,0);
-    data_to_plot(abs(data_to_plot) < threshold) = 0;
-    %         ft_plotOnMesh(data_to_plot, contrastnames{c});
-    %         set(gca, 'CLim', [-1 1]* 10)
-    %     end
-    
-    [fH,ch] = megPlotMap(data_to_plot,[-.5,.5],gcf,jmaColors('coolhotcortex'));
-    
-    makeprettyaxes(gca,9,9);
-    set(ch,'ytick',-10:10:10);
-    %     makeprettyaxes(ch,9,9);
-    title(contrastnames{12})
-    
-    
-    
-    if save_images; hgexport(fH, fullfile(save_pth,sprintf('figure_bbpower_noise_m_gratings_thresh2_%s.eps',suffix))); end
-    
-    
-    
-    
-    
-    
-    
-    %% Noise (Broadband SNR - Baseline)
-    
-    %     fH = figure(4); clf, set(fH, 'name', 'Broadband weight')
-    %     for c = [2 1]
-    %         subplot(1,2,c)
-    data_to_plot = snr_w_pwr(:,1)';
-    data_to_plot(abs(data_to_plot) < threshold) = 0;
-    %         ft_plotOnMesh(data_to_plot, contrastnames{c});
-    %         set(gca, 'CLim', [-1 1]* 10)
-    %     end
-    
-    [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),[-10,10],gcf,jmaColors('coolhotcortex'));
-    
-    makeprettyaxes(gca,9,9);
-    set(ch,'ytick',-10:10:10);
-    %     makeprettyaxes(ch,9,9);
-    title(contrastnames{1})
-    
-    hgexport(fH, fullfile(save_pth,sprintf('figure_bbpower_noise_s1_%s.eps',suffix)));
-    
+    %     %% Noise (Gamma SNR - baseline)
+    %     this_contrast = 12;
+    %
+    %     threshold = 0;
+    %     fH = figure;  set(fH, 'name', 'Gamma weight')
+    %     % noise gamma
+    %     data_to_plot = snr_w_gauss(:,this_contrast);
+    %     data_to_plot(abs(data_to_plot) < threshold) = 0;
+    %     plot_range = [-1 1]*max(abs(data_to_plot));
+    %     [~,ch] = megPlotMap(to157chan(data_to_plot',~badChannels,0),plot_range,gcf,jmaColors('coolhotcortex'));
+    %
+    %     makeprettyaxes(gca,9,9);
+    %     set(ch,'ytick',-10:10:10);
+    %     title(contrastnames{this_contrast})
+    %
+    %     if save_images; hgexport(fH, fullfile(save_pth,sprintf('figure_gammapower_noise_m_gratings_%s.eps',suffix))); end
+    %
+    %
+    %     %% Gratings (gamma SNR - Baseline)
+    %     this_contrast = 13;
+    %     fH = figure; clf, set(fH, 'name', 'Gamma weight')
+    %     % Gratings gamma
+    %     data_to_plot = snr_w_gauss(:,this_contrast)';
+    %     data_to_plot(abs(data_to_plot) < threshold) = 0;
+    %     plot_range = [-1 1]*max(abs(data_to_plot));
+    %
+    %     [fH,ch] = megPlotMap(to157chan(data_to_plot,~badChannels,0),plot_range,gcf,jmaColors('coolhotcortex'));
+    %
+    %     makeprettyaxes(gca,9,9);
+    %     set(ch,'ytick',-10:10:10);
+    %     title(contrastnames{this_contrast})
+    %
+    %
+    %     if save_images;  hgexport(fH, fullfile(project_pth,sprintf('figure_gammapower_gratings_%s.eps',suffix))); end
+    %     %% Gratings - Baseline (Broadband SNR)
+    %     this_contrast = 11;
+    %
+    %     fH = figure; clf, set(fH, 'name', 'Broadband weight')
+    %     threshold = 0;
+    %     data_to_plot = to157chan(snr_w_pwr(:,this_contrast)',~badChannels,0);
+    %     data_to_plot(abs(data_to_plot) < threshold) = 0;
+    %     plot_range = [-1 1]*max(abs(data_to_plot));
+    %
+    %     [fH,ch] = megPlotMap(data_to_plot,plot_range,gcf,jmaColors('coolhotcortex'));
+    %
+    %     makeprettyaxes(gca,9,9);
+    %     title(contrastnames{this_contrast})
+    %
+    %     if save_images; hgexport(fH, fullfile(save_pth,sprintf('figure_bbpower_noise_m_gratings_thresh2_%s.eps',suffix))); end
+    %
+    %
     
     %% Meshes of Gaussian/Broadband Weight
     
@@ -283,7 +247,7 @@ for session_num = which_session_to_visualize
     % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
     
     
-    fH = figure(998); clf, set(fH, 'name', 'Gaussian weight'); set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
+    fH = figure; clf, set(fH, 'name', 'Gaussian weight'); set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
     for cond = 1:9
         subplot(3,3,cond)
         ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
@@ -294,9 +258,10 @@ for session_num = which_session_to_visualize
     
     if save_images
         hgexport(fH, fullfile(save_pth, sprintf('Per_Condition_Gamma_weight(median-baseline)_%s.eps',suffix)));
+        close(fH)
     end
     
-    fH = figure(999); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
+    fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
     for cond = 1:9
         subplot(3,3,cond)
         ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
@@ -307,67 +272,9 @@ for session_num = which_session_to_visualize
     
     if save_images
         hgexport(fH, fullfile(save_pth, sprintf('Per_Condition_BB_weight(median-baseline)_%s.eps',suffix)));
+        close(fH)
     end
     
-    %     fH = figure(1000); clf
-    %     for cond = 1:9
-    %         subplot(3,3,cond)
-    %         ft_plotOnMesh(w_pwr_mn(:,cond)', condition_names{cond});
-    %         set(gca, 'CLim', [0 2])
-    %     end
-    
-    
-    scrsz = get(0,'ScreenSize');
-    fH = figure(1000); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
-    subplot(2,2,1)
-    ft_plotOnMesh(to157chan((w_gauss_mn * [0 0 0 0 1 1 1 1 0 -4]')',~badChannels,0), 'Gamma power, All gratings minus baseline');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-
-    
-    subplot(2,2,2)
-    ft_plotOnMesh(to157chan((w_gauss_mn * [1 1 1 1 0 0 0 0 0 -4]')',~badChannels,0), 'Gamma power, All noise minus baseline');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-    
-    subplot(2,2,3)
-    ft_plotOnMesh(to157chan((w_pwr_mn * [0 0 0 0 1 1 1 1 0 -4]')',~badChannels,0), 'Broadband power, All gratings minus baseline');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-    
-    subplot(2,2,4)
-    ft_plotOnMesh(to157chan((w_pwr_mn * [1 1 1 1 0 0 0 0 0 -4]')',~badChannels,0), 'Broadband power, All noise minus baseline');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-    
-    if save_images
-        hgexport(1000, fullfile(save_pth, sprintf('Mesh_G_BB_Noise_or_Gratings_M_Baseline_%s.eps',suffix)));
-    end
-    
-    fH = figure(1001); clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);
-    subplot(2,2,1)
-    ft_plotOnMesh(to157chan((w_gauss_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')',~badChannels,0), 'Gamma power, All gratings minus all noise');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-    
-    subplot(2,2,2)
-    ft_plotOnMesh(to157chan((w_pwr_mn * [-1 -1 -1 -1 1 1 1 1 0 0]')',~badChannels,0), 'Broadband power, All gratings minus all noise');
-    set(gca, 'CLim', 1*[-1 1])
-    colormap parula
-    
-    
-    subplot(2,2,3)
-    ft_plotOnMesh(to157chan((w_gauss_mn * [1 1 1 1 1 1 1 1 1 -9]')',~badChannels,0), 'Gamma power, All stimuli minus baseline');
-    set(gca, 'CLim', 1 *[-1 1])
-    colormap parula
-    
-    subplot(2,2,4)
-    ft_plotOnMesh(to157chan((w_pwr_mn * [1 1 1 1 1 1 1 1 1 -9]')',~badChannels,0), 'Broadband, All stimuli minus baseline');
-    set(gca, 'CLim', 1 * [-1 1])
-    colormap parula
-    
-    if save_images
-        hgexport(1001, fullfile(save_pth, sprintf('Mesh_G_BB_Gratings_M_noise_All_M_Baseline_%s.eps',suffix)));
-    end
+   
     
  end

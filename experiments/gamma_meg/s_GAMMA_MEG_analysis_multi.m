@@ -26,10 +26,7 @@
 
 % Analysis options
 %% Set analysis variables
-project_pth                     = '/Volumes/server/Projects/MEG/Gamma/Data';
 
-% data to be analysed
-data_pth                      = '*_Gamma_*subj*';
 
 data_channels                 = 1:157;
 environmental_channels        = 158:160;
@@ -60,24 +57,21 @@ suffix                        = 'localregression_multi';
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
-d = dir(fullfile(project_pth, data_pth));
-subj_pths = struct2cell(d);
-subj_pths = subj_pths(1,:);
 
 %% Loops over datasets
 for session_num = which_sessions_to_analyze
     
-    condition_names  = gamma_get_condition_names(session_num-1);
+    condition_names  = gamma_get_condition_names(session_num);
     
     blank_condition = strcmpi(condition_names, 'blank');
-    
+        
     if session_num == 99
         [ts, conditions] = gamma_synthetize_validation_data();
         
     else
-        save_pth = fullfile(project_pth, 'Images', subj_pths{session_num-1});
-        
-        
+        path_to_data = meg_gamma_get_path(session_num);
+
+        save_pth = fullfile(path_to_data, 'processed');
         
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         
@@ -85,7 +79,7 @@ for session_num = which_sessions_to_analyze
         % ------------------ PREPROCESS THE DATA -----------------------------
         % --------------------------------------------------------------------
         %% Load data (SLOW)
-        raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session_num-1}, 'raw'), '*Gamma*');
+        raw_ts = meg_load_sqd_data(fullfile(path_to_data, 'raw'), '*Gamma*');
         
         %% Extract triggers
         trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
@@ -135,12 +129,9 @@ for session_num = which_sessions_to_analyze
     
     % Denoise data with 3 noise channels
     if denoise_with_nonphys_channels && session_num ~= 99
-        if exist('./denoised_with_nuissance_data.mat', 'file')
-            load(fullfile(data_pth{session_num-1},'denoised_with_nuissance_data.mat'));
-        else fprintf('Denoising data... \n');
+         fprintf('Denoising data... \n');
             ts = meg_environmental_denoising(ts, environmental_channels,...
-                data_channels, produce_figures);
-        end
+                data_channels, produce_figures);        
     end
     
     
@@ -191,7 +182,7 @@ for session_num = which_sessions_to_analyze
     
     % Summarize bootstrapped spectral by mean and std over bootstraps
     if save_spectral_data
-        save(fullfile(project_pth, subj_pths{session_num-1},'processed',sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots')
+        save(fullfile(save_pth,sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots')
     end
     
     spectral_data_mean = mean(spectral_data_boots, 4);
@@ -269,7 +260,7 @@ for session_num = which_sessions_to_analyze
     
     
     %% Save Processed Data
-    filename = fullfile(project_pth, subj_pths{session_num-1}, 'processed', sprintf('s0%d_%s.mat',session_num,suffix));
+    filename = fullfile(save_pth', sprintf('s0%d_%s.mat',session_num,suffix));
     save (filename, 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'fit_bl', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn', 'fit_bl_mn');
     

@@ -5,11 +5,12 @@ function [condition_names, baseline_condition] = gamma_get_condition_names(sessi
 % Condition names for MEG Gamma experiment
 %
 % Inputs: 
-%   subject: integer, 1-n
+%   session_number: integer, for example, the session number for this
+%                             folder is 4: 04_Gamma_7_23_2014_subj013
 % Outputs:
 %  condition_names: cell array of condition names
 %
-% Example: condition_names = gamma_get_condition_names(1)
+% Example: condition_names = gamma_get_condition_names(5)
 %
 
 % TODO fix for session_number <= 3
@@ -26,7 +27,7 @@ condition_names               = {   ...
     'Plaid'...
     'Blank'};
 
-if session_number >= 9
+if session_number >= 10
     condition_names{3} = 'Binary Pink Noise';
     condition_names{4} = 'Binary Brown Noise';
 end

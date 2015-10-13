@@ -16,8 +16,8 @@ data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_data_to_visualize       = 1;
-save_images                   = true;
+which_data_to_visualize       = 10;
+save_images                   = false;
 
 % Get the folders of the subjects in the Gamma experiment
 % Note: the session numbers are always subject_nr +1 
@@ -44,10 +44,10 @@ satValues       = 1-linspace(0.1,1,4);
 for subject_num = which_data_to_visualize
     
     % Get condition names (different for the first and last 6 subjects)
-    [condition_names, baseline_condition]  = gamma_get_condition_names(subject_num);
+    [condition_names, baseline_condition]  = gamma_get_condition_names(subject_num-1);
      
     % Go to specific subject folder and find datasets
-    load_pth    = fullfile(project_pth, subj_pths{subject_num}, 'processed');
+    load_pth    = fullfile(project_pth, subj_pths{subject_num-1}, 'processed');
     datasets    = dir(fullfile(load_pth, '*local*'));
     
     % Define which datasets you want to load
@@ -199,11 +199,5 @@ for subject_num = which_data_to_visualize
         
         end
 
-            
-
-    end
- 
-    
-   
-    
+    end            
 end
