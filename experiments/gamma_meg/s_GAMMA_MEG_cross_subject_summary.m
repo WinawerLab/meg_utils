@@ -2,12 +2,12 @@
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
-which_session_to_visualize    = [10:12,14:16];%5:9; %
+% which_session_to_visualize    = [10:12,14:16];%5:9; %
 which_session_to_visualize    = 5:9; %
 save_images                   = true;
-using_denoised_data           = false;
-suffix                        = 'localregression_multi_100';
-
+using_denoised_data           = true;
+% suffix                        = 'localregression_multi_100';
+suffix                        = 'denoisedData_bootstrapped_localregression_multi_100';
 %% Derived
 fs                            = 1000;
 
@@ -85,7 +85,7 @@ for session_num = which_session_to_visualize
     num_channels   = size(results.w_pwr,1);
     
     if isempty(badChannels)
-        denoisedData   = load(fullfile(load_pth,sprintf('s0%d_denoisedData.mat',session_num)));
+        denoisedData   = load(fullfile(load_pth,sprintf('s%02d_denoisedData.mat',session_num)));
         badChannels    = denoisedData.bad_channels;
     end
         
@@ -118,7 +118,6 @@ save_pth = fullfile(project_pth,'Images');
 
 for data_type = 1:2
     scrsz = get(0,'ScreenSize');
-    threshold = 0;%3;
     
     switch data_type 
         case 1
@@ -133,19 +132,20 @@ for data_type = 1:2
     fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  
     set(fH, 'name', sprintf('%s SNR', str))
     plot_range = [-1 1] * ceil(max(abs(data(:))));
-    threshold = 1/3 * plot_range(2);
+    threshold =  1/3 * plot_range(2);
     for c = 1:9
         subplot(3,3,c)
         data_to_plot = data(c,:);
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(data_to_plot, contrastnames{c});
-        set(gca, 'CLim', plot_range)
+        set(gca, 'CLim', plot_range);
         colormap(jmaColors('coolhotcortex'))
     end
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
-        hgexport(fH, fullfile(save_pth,sprintf('Group_avg_Per_Condition_%s_SNR_%s.eps',str, suffix)));
+        if using_denoised_data; postFix = 'denoised'; else postFix = []; end;
+        hgexport(fH, fullfile(save_pth,sprintf('Group_avg_Per_Condition_%s_SNR_%s_%s.eps',str, suffix, postFix)));
     end
     
 end

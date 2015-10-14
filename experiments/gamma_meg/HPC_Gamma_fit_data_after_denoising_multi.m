@@ -56,7 +56,7 @@ d = dir(fullfile(project_pth, data_pth));
 %   restrict to directories
 subj_pths = struct2cell(d);
 
-% Do we want this?
+% Do we still want this?
 isdir     = cell2mat(subj_pths(4,:));
 
 subj_pths = subj_pths(1,isdir);
@@ -199,6 +199,7 @@ for session = which_sessions_to_analyze
             data_base = data_base';
             
             if all(isfinite(data_base))
+             
                 
                 data_fit = spectral_data_boots(:,:,chan, bootnum);
                 
@@ -209,6 +210,9 @@ for session = which_sessions_to_analyze
                     gauss_f(chan, :, bootnum),...
                     fit_f2(:,:, chan, bootnum)] = ...
                     gamma_fit_data_localregression_multi(f,f_use4fit,data_base,data_fit);
+                
+            else
+                warning(sprintf('Boot nr %d and channel %d data were infinite',bootnum,chan))
                 
             end
         end
