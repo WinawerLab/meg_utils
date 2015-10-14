@@ -7,10 +7,12 @@ function  HPC_Gamma_fit_data_after_denoising_multi(which_sessions_to_analyze, nb
 
 
 %% Set analysis variables
-rootPath                      = which('HPC_Gamma');
-rootPath                      = fileparts(rootPath);
+% rootPath                      = which('HPC_Gamma');
+% rootPath                      = fileparts(rootPath);
+% project_pth                   = fullfile(rootPath,'HPC','Data');
 
-project_pth                   = fullfile(rootPath,'HPC','Data');
+
+
 
 % data to be analysed
 data_pth                      = '*_Gamma_*subj*';
@@ -53,20 +55,23 @@ condition_names  = {   ...
     'Blank'};
 
 % Find subject path
-d = dir(fullfile(project_pth, data_pth));
+% d = dir(fullfile(project_pth, data_pth));
 %   restrict to directories
-subj_pths = struct2cell(d);
+% subj_pths = struct2cell(d);
 
 % Do we want this?
-isdir     = cell2mat(subj_pths(4,:));
+% isdir     = cell2mat(subj_pths(4,:));
 
-subj_pths = subj_pths(1,isdir);
+% subj_pths = subj_pths(1,isdir);
 
 %% loop over subjects
 for session = which_sessions_to_analyze
     
+    path_to_data = meg_gamma_get_path(session);
+    
     % Load denoised timeseries
-    data = load(fullfile(project_pth, subj_pths{session}, 'processed',sprintf('s%02d_denoisedData.mat',session)));
+%     data = load(fullfile(project_pth, subj_pths{session}, 'processed',sprintf('s%02d_denoisedData.mat',session)));
+    data = load(fullfile(path_to_data,'processed',sprintf('s%02d_denoisedData.mat',session)));
     ts = data.denoisedts{1};
     ts = permute(ts,[2,3,1]);
     
@@ -75,7 +80,9 @@ for session = which_sessions_to_analyze
     badChannels = data.bad_channels;
     
     % Get raw ts for triggers and then conditions again
-    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session}, 'raw'), '*Gamma*');
+%     raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session}, 'raw'), '*Gamma*');
+    raw_ts = meg_load_sqd_data(fullfile(path_to_data, 'raw'), '*Gamma*');
+
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
     
     % Get conditions
@@ -91,12 +98,14 @@ for session = which_sessions_to_analyze
         idx           = find(conditions==15);
         ts(:,idx, :)  = [];
         conditions(idx) = [];
+        badEpochs(idx) = [];
     end
     
     if sum(conditions == 12) > 0;
         idx           = find(conditions==12);
         ts(:,idx, :)  = [];
         conditions(idx) = [];
+        badEpochs(idx) = [];
     end
     
     conditions_unique = unique(conditions);
@@ -181,7 +190,7 @@ for session = which_sessions_to_analyze
     
     % For each channel, fit each condition separatley
     fprintf('Fitting gamma and broadband values for each channel and each condition')
-    for chan = num_channels
+    for chan = 1:num_channels
         
         fprintf('Channel %d of %d\n', chan, num_channels); drawnow;
         

@@ -65,10 +65,10 @@ for session_num = which_session_to_visualize
     % weight, etc)
     %   Before is without denoising, after is with denoising
     before_dataset = input('Modelfit number before denoising?');
-%     after_dataset  = input('Modelfit number after denoising?');
+    after_dataset  = input('Modelfit number after denoising?');
     
     before  = load(fullfile(load_pth, datasets(before_dataset).name));   
-%     after   = load(fullfile(load_pth, datasets(after_dataset).name));
+    after   = load(fullfile(load _pth, datasets(after_dataset).name));
    
     % Get denoised dataset in case we need to define the badChannels 
 %     denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',session_num)));

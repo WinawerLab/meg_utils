@@ -4,13 +4,12 @@ project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
 which_session_to_visualize    = [10:12,14:16];%5:9; %
 which_session_to_visualize    = 5:9; %
-save_images                   = false;
+save_images                   = true;
 using_denoised_data           = false;
 suffix                        = 'localregression_multi_100';
 
 %% Derived
 fs                            = 1000;
-intertrial_trigger_num        = 10;
 
 if isempty(which('ft_prepare_layout'))
     meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -134,7 +133,7 @@ for data_type = 1:2
     fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  
     set(fH, 'name', sprintf('%s SNR', str))
     plot_range = [-1 1] * ceil(max(abs(data(:))));
-    threshold = 0;%1/3 * plot_range(2);
+    threshold = 1/3 * plot_range(2);
     for c = 1:9
         subplot(3,3,c)
         data_to_plot = data(c,:);
