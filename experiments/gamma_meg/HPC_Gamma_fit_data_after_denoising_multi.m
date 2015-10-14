@@ -52,19 +52,19 @@ condition_names  = {   ...
     'Blank'};
 
 % Find subject path
-% d = dir(fullfile(project_pth, data_pth));
+d = dir(fullfile(project_pth, data_pth));
 %   restrict to directories
-% subj_pths = struct2cell(d);
+subj_pths = struct2cell(d);
 
 % Do we want this?
-% isdir     = cell2mat(subj_pths(4,:));
+isdir     = cell2mat(subj_pths(4,:));
 
-% subj_pths = subj_pths(1,isdir);
+subj_pths = subj_pths(1,isdir);
 
 %% loop over subjects
 for session = which_sessions_to_analyze
     
-    path_to_data = meg_gamma_get_path(session);
+%     path_to_data = meg_gamma_get_path(session);
     
     % Load denoised timeseries
     data = load(fullfile(project_pth, subj_pths{session}, 'processed',sprintf('s%02d_denoisedData.mat',session)));
