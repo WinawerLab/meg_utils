@@ -7,12 +7,9 @@ function  HPC_Gamma_fit_data_after_denoising_multi(which_sessions_to_analyze, nb
 
 
 %% Set analysis variables
-% rootPath                      = which('HPC_Gamma');
-% rootPath                      = fileparts(rootPath);
-% project_pth                   = fullfile(rootPath,'HPC','Data');
-
-
-
+rootPath                      = which('HPC_Gamma');
+rootPath                      = fileparts(rootPath);
+project_pth                   = fullfile(rootPath,'HPC','Data');
 
 % data to be analysed
 data_pth                      = '*_Gamma_*subj*';
@@ -70,8 +67,8 @@ for session = which_sessions_to_analyze
     path_to_data = meg_gamma_get_path(session);
     
     % Load denoised timeseries
-%     data = load(fullfile(project_pth, subj_pths{session}, 'processed',sprintf('s%02d_denoisedData.mat',session)));
-    data = load(fullfile(path_to_data,'processed',sprintf('s%02d_denoisedData.mat',session)));
+    data = load(fullfile(project_pth, subj_pths{session}, 'processed',sprintf('s%02d_denoisedData.mat',session)));
+%     data = load(fullfile(path_to_data,'processed',sprintf('s%02d_denoisedData.mat',session)));
     ts = data.denoisedts{1};
     ts = permute(ts,[2,3,1]);
     
@@ -80,8 +77,8 @@ for session = which_sessions_to_analyze
     badChannels = data.bad_channels;
     
     % Get raw ts for triggers and then conditions again
-%     raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session}, 'raw'), '*Gamma*');
-    raw_ts = meg_load_sqd_data(fullfile(path_to_data, 'raw'), '*Gamma*');
+    raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{session}, 'raw'), '*Gamma*');
+%     raw_ts = meg_load_sqd_data(fullfile(path_to_data, 'raw'), '*Gamma*');
 
     trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
     
