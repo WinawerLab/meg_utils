@@ -2,8 +2,8 @@
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
-% which_session_to_visualize    = [10:12,14:16];%5:9; %
-which_session_to_visualize    = 5:9; %
+which_session_to_visualize    = 5:9; %[5:9,10:12,14:16];
+% which_session_to_visualize    = [10:12,14:16]; %
 save_images                   = true;
 using_denoised_data           = true;
 % suffix                        = 'localregression_multi_100';
@@ -111,6 +111,30 @@ for session_num = which_session_to_visualize
     
 end
 
+
+x1 = [.23 .3 .754]; % red
+x2 = [.75 .75 .75]; % gray
+x3 = [.706 .016 .150]; % blue
+
+pos = linspace(x1(1),x2(1),32);
+neg = linspace(x2(1),x3(1),32);
+
+first_column = [pos';neg'];
+
+pos = linspace(x1(2),x2(2),32);
+neg = linspace(x2(2),x3(2),32);
+
+second_column = [pos';neg'];
+
+pos = linspace(x1(3),x2(3),32);
+neg = linspace(x2(3),x3(3),32);
+
+third_column = [pos';neg'];
+
+blue_gray_red_cmap =  [first_column,second_column,third_column];
+
+
+
 %% Plot
 save_pth = fullfile(project_pth,'Images');
 
@@ -129,23 +153,28 @@ for data_type = 1:2
     end
     
     % gaussian weight for each stimuli
-    fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  
-    set(fH, 'name', sprintf('%s SNR', str))
+%     fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  
+   
     plot_range = [-1 1] * ceil(max(abs(data(:))));
-    threshold =  1/3 * plot_range(2);
-    for c = 1:9
-        subplot(3,3,c)
+    threshold =  0; % A threshold of 2 seems to be reasonable
+    for c = [3:4];%[1:2,5:9]; %
+        fH = figure; clf; 
+       set(fH, 'name', sprintf('%s SNR', str))
+%         subplot(3,3,c)
         data_to_plot = data(c,:);
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(data_to_plot, contrastnames{c});
         set(gca, 'CLim', plot_range);
-        colormap(jmaColors('coolhotcortex'))
-    end
-    
-    if save_images
+        colormap(blue_gray_red_cmap);
+%         colormap(jmaColors('coolhotcortex'))
+        
+     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
         if using_denoised_data; postFix = 'denoised'; else postFix = []; end;
-        hgexport(fH, fullfile(save_pth,sprintf('Group_avg_Per_Condition_%s_SNR_%s_%s.eps',str, suffix, postFix)));
+        hgexport(fH, fullfile(save_pth,sprintf('Group_avg_Per_Condition_%s_SNR_%s_%s_%d.eps',str, suffix, postFix,c)));
     end
+    end
+    
+
     
 end

@@ -16,7 +16,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_session_to_visualize    = 5;%[6,7,8,9,10,11,12,14,15,16]
+which_session_to_visualize    = 15;%[6,7,8,9,10,11,12,14,15,16]
 save_images                   = true;
 
 % Get the folders of the subjects in the Gamma experiment
@@ -71,7 +71,7 @@ for session_num = which_session_to_visualize
     after   = load(fullfile(load_pth, datasets(after_dataset).name));
     
     % Get denoised dataset in case we need to define the badChannels
-    denoisedData = dir(fullfile(load_pth, sprintf('s0%d_denoisedData*',session_num)));
+    denoisedData = dir(fullfile(load_pth, sprintf('s%02d_denoisedData*',session_num)));
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
     
     % Get spectra for before and after denoising
@@ -123,7 +123,7 @@ for session_num = which_session_to_visualize
     
     
     
-    for chan = 1:num_channels
+    for chan = 25%:num_channels
         clf;
         set(fH, 'name', sprintf('Channel %d', chan));
         for ii = 1:9
@@ -133,9 +133,9 @@ for session_num = which_session_to_visualize
             
             %             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
             
-            plot(f(f_sel),exp(model_fit_before(ii,f_sel,chan)), '-','color', color_scheme(ii,:,:), 'LineWidth',4); hold on;
+            plot(f,exp(model_fit_before(ii,:,chan)), '-','color', color_scheme(ii,:,:), 'LineWidth',5); hold on;
             
-            plot(f(f_sel),data_before(f_sel,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+            plot(f,data_before(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
             %             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
             
             
@@ -143,16 +143,17 @@ for session_num = which_session_to_visualize
             %                 before.w_gauss_mn(chan, ii) * ...
             %                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
             
-            plot(f(f_sel),exp(model_fit_before(baseline_condition,f_sel,chan)),'color',rgb_grey,'LineWidth',4);
+            plot(f,exp(model_fit_before(baseline_condition,:,chan)),'color',rgb_grey,'LineWidth',5);
             
             %             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
-            plot(f(f_sel),data_before(f_sel,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',2);
+            plot(f,data_before(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',2);
             
             
-            set(gca, 'YScale','log','XScale','log','LineWidth',2)
+            set(gca, 'YScale','log','XScale','log','LineWidth',4)
             xlim([30 200])
-            ylim([1 80])
+            ylim([3 25])
             set(gca,'XTick',10:10:80,'XGrid','on')
+            set(gca,'YTick',0:5:40)
             box(gca,'off');        set(gcf, 'color','w')
             
             title(...
@@ -160,14 +161,17 @@ for session_num = which_session_to_visualize
                 condition_names{ii}, before.w_pwr_mn(chan, ii)-before.w_pwr_mn(chan, baseline_condition), ...
                 before.w_gauss_mn(chan, ii)-before.w_gauss_mn(chan, baseline_condition),...
                 exp(before.gauss_f(chan, ii))),...
-                'FontSize',18)
+                'FontSize', 20)
             
-            xlabel('Frequency (Hz)','FontSize',18)
-            ylabel('Power','FontSize',18)
-            legend(condition_names{ii}, 'Data', 'Baseline');
+            xlabel('Frequency (Hz)','FontSize',20,'FontWeight','bold')
+            ylabel('Power (pico Tesla)','FontSize',20,'FontWeight','bold')
+            legend({sprintf('Modelfit %s', condition_names{ii}), sprintf('Data %s', condition_names{ii}), 'Modelfit Baseline', 'Data Baseline'},'FontSize',20,'FontWeight','bold');
+            legend('boxoff')
             if save_images
-                hgexport(gcf, fullfile(meg_gamma_get_path(session_num),...
-                    'figs',sprintf('data_modelfit_before_chan%d_cond%d_local_regression_boot100',chan,ii)));
+                poster_path = '/Volumes/server/Projects/MEG/Gamma/SFN 2015/poster_material/spectra_panel/session7/';
+                
+                hgexport(gcf, fullfile(poster_path,...
+                    sprintf('data_modelfit_before_chan%d_cond%d_local_regression_boot100',chan,ii)));
             end
 %             waitforbuttonpress
         end
