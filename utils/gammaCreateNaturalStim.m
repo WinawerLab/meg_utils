@@ -29,9 +29,6 @@ load('/Volumes/server/Projects/MEG/Gamma/stimuli/example_V1_electrode_faceshouse
 natImages = out.image;
 clear out;
 
-scale = sz/size(natImages,1); %rescale to MEG display res
-natImages = imresize(natImages,scale);
-
 % projpth = '~/matlab/MEG_gamma';
 projpth = '/Volumes/server/Projects/MEG/Gamma';
 
@@ -45,6 +42,18 @@ runs = 15; % Number of .mat files generated
 
 theseIndices = randsample(72,nNatural);
 
+% use theseIndices to pick sample of random images 
+theseNatImages = natImages(:,:,theseIndices);
+% normalize pixel intensity
+theseNatImages = normalizeIntensity(theseNatImages);
+% repeat and organize
+theseNatImages = repmat(theseNatImages,1,1,7);
+theseNatImages = reshape(theseNatImages,768,768,7,7);
+theseNatImages = permute(theseNatImages,[1 2 4 3]);
+
+
+im.n = reshape(theseNatImages, 768,768,49);
+
 
 for scanNum = 1:runs
     
@@ -54,15 +63,7 @@ for scanNum = 1:runs
     %% Natural Images
     
     
-theseNatImages = natImages(:,:,theseIndices);
 
-theseNatImages = repmat(theseNatImages,1,1,7);
-
-theseNatImages = reshape(theseNatImages,768,768,7,7);
-
-theseNatImages = permute(theseNatImages,[1 2 4 3]);
-
-im.n = reshape(theseNatImages, 768,768,49);
     
     
 %     %% white noise
@@ -254,9 +255,9 @@ im.n = reshape(theseNatImages, 768,768,49);
     stimulus.diodeSeq   = diodeindex;
     
     
-    savename = fullfile(savepth, ['gammaStimuli_params' num2str(scanNum) '.mat']);
+    %savename = fullfile(savepth, ['gammaStimuli_params' num2str(scanNum) '.mat']);
     
-    save(savename, 'stimulus');
+    %save(savename, 'stimulus');
     
     fprintf('done! \n');
     
