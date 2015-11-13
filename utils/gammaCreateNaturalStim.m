@@ -44,52 +44,21 @@ theseIndices = randsample(72,nNatural);
 
 % use theseIndices to pick sample of random images 
 theseNatImages = natImages(:,:,theseIndices);
+% resize images 
+scale = sz/size(theseNatImages,1);
+theseNatImages = imresize(theseNatImages, scale);
 % normalize pixel intensity
 theseNatImages = normalizeIntensity(theseNatImages);
-% repeat and organize
+% repeat and rearrange array
 theseNatImages = repmat(theseNatImages,1,1,7);
-theseNatImages = reshape(theseNatImages,768,768,7,7);
+theseNatImages = reshape(theseNatImages,sz,sz,7,7);
 theseNatImages = permute(theseNatImages,[1 2 4 3]);
 
 
-im.n = reshape(theseNatImages, 768,768,49);
+im.n = reshape(theseNatImages, sz,sz,49);
 
-
+%% 
 for scanNum = 1:runs
-    
-    %fprintf(['\n making images for scan ' num2str(scanNum) '...']);
-    
-    
-    %% Natural Images
-    
-    
-
-    
-    
-%     %% white noise
-%     im.wn = zeros(sz, sz, nImages, 'uint8');
-%     n = 0; % white noise
-%     for ii = 1:nImages
-%         
-%         tmp = noiseonf(sz, n);      % make a white noise stimulus       
-%         im.wn(:,:,ii) = scale_images(tmp); % 8 bit integers
-%         
-%     end
-    
-%     %% binarized white noise
-%     im.bin_wn = zeros(sz, sz, nImages, 'uint8');
-%     n = 0; % white noise
-%     for ii = 1:nImages
-%         
-%         tmp = noiseonf(sz, n);      % make a white noise stimulus
-%         inds = tmp > median(tmp(:)); 
-%         tmp(inds) = 1;
-%         tmp(~inds) = 0;
-%         im.bin_wn(:,:,ii) = scale_images(tmp); % 8 bit integers
-%         
-%     end
-%     
-    
     %% binarized pink noise
     im.pn = zeros(sz, sz, nImages, 'uint8');
     n = 1; % pink noise
