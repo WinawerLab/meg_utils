@@ -7,15 +7,15 @@
 % which image to use as template for intensity? if false, uses uniform distribution
 useAverageStimulus = false; % true = use mean of 1000ms stims for template
 
-visualizeBeforeAfter = true; 
+visualizeBeforeAfter = false; 
 
 normalizeMethod = 'rms'; % rms or histogram
 
-low_or_high_contrast = 'low'; 
+low_or_high_contrast = 'low'; % low, medium, or high
 
 masking = true;
 
-save_images = false; 
+save_images = true; 
 %% import toolbox and images
 
 % path to SHINE toolbox
@@ -25,50 +25,24 @@ addpath(genpath(projectDir))
 
 
 % use saved images if not passed as arg
-if nargin==0 % load all images from Hermes et al. 
-    load('/Volumes/server/Projects/MEG/Gamma/stimuli/example_V1_electrode_faceshouses.mat');
-    im = out.image;
-    clear out;
-    sz = 768; % scale to MEG display
-    scale   = sz/size(im,1);
-    toMatch = imresize(im,scale);
-else % use input images
-    sz = size(im,3); 
-    toMatch = im;
+load('/Volumes/server/Projects/MEG/Gamma/stimuli/example_V1_electrode_faceshouses.mat');
+im = out.image;
+clear out;
+sz = 768; % scale to MEG display
+scale   = sz/size(im,1);
+toMatch = imresize(im,scale);
+
+
+switch low_or_high_contrast
+    case 'high',    im_range = 128 + 1000*[-1 1];
+    case 'medium',  im_range = 128 + 64*[-1 1];
+    case 'low',     im_range = 128 + 14*[-1 1];
 end
+template_sd = std(im_range);
 
+%rescale to MEG display res
 
-switch normalizeMethod
-    case 'histogram'
-        if useAverageStimulus % use average intensities of the previous experiment's stimuli
-            x = load('/Volumes/server/Projects/MEG/Gamma/stimuli/1000ms stimuli/gammaStimuli_params1.mat');
-            stims = x.stimulus.images;
-            im_template = mean(stims,3);
-            im_template = sort(im_template);
-        else
-            % image with uniform distribution of pixel intensity between 0:255
-            switch low_or_high_contrast
-                case 'high'
-                    im_template = reshape(repmat(0:255, 2304,1), 768, 768);
-                case 'medium'
-                    im_template = reshape(repmat(round(linspace(128-64, 128+64, 256)), 2304,1), 768, 768);
-                case 'low'
-                    im_template = reshape(repmat(round(linspace(128-28, 128+28, 256)), 2304,1), 768, 768);
-            end
-            im_template = sort(im_template(:)); % match function uses sorted list
-        end
-        
-    case 'rms'
-        switch low_or_high_contrast
-            case 'high',    im_template = 128 + 1000*[-1 1];
-            case 'medium',  im_template = 128 + 64*[-1 1];
-            case 'low',     im_template = 128 + 14*[-1 1];
-        end
-        template_sd = std(im_template);
-end
- %rescale to MEG display res
-
-outputImage = ones(size(toMatch));
+outputImage = ones(size(toMatch), 'double');
 
 %% masking
 
@@ -91,12 +65,7 @@ fprintf('[%s]: Normalizing %d images ', mfilename, size(im,3));
 for i = 1:size(im,3)
     thisImage = toMatch(:,:,i);
     
-    switch normalizeMethod
-        case 'histogram'            
-            outputImage(:,:,i) = match(thisImage, im_template, mask);
-        case 'rms'            
-            outputImage(:,:,i) = thisImage/std(thisImage(:))*template_sd;
-    end
+    outputImage(:,:,i) = thisImage/std(thisImage(:))*template_sd;
     fprintf('.'); drawnow
 end
 
@@ -108,19 +77,18 @@ fprintf('\n')
 [x, y] = meshgrid(linspace(-1,1,sz));
 % mask = ones(sz); % no masking
 
-R             = sqrt(0.2*x.^2 + 0.2*y.^2);
-r_min         = .1;
-r_max         = .5;
-Edge          = (R-r_min) / (r_max - r_min);
+R             = sqrt(x.^2 + y.^2);
+r_min         = .7;
+Edge          = (R-r_min) / (1 - r_min);
 Edge(R<r_min) = 0;
-Edge(R>r_max) = 1;
+Edge(R>1) = 1;
 
 cosMask       = (cos(Edge*pi)+1)/2;
-blank         = ones(sz,sz) * 0.5;
 
-
-maskedOutputImage(:,:,1) = outputImage(:,:,1).*cosMask + (1-cosMask).*blank;
-
+maskedOutputImage = zeros(size(outputImage), 'double');
+for ii = 1:size(outputImage,3)
+    maskedOutputImage(:,:,ii) = outputImage(:,:,ii).*cosMask;
+end
 % understand cosine mask
 figure (100), clf, colormap gray
 subplot(3, 2, 1)
@@ -136,16 +104,13 @@ imagesc(cosMask)
 title('cosMask')
 
 
-subplot(3, 2, 4)
-imagesc(blank)
-title('blank')
 
 subplot(3, 2,5)
-imagesc(outputImage(:,:,1))
+imagesc(outputImage(:,:,1), [-128 127])
 title('beforemask')
 
 subplot(3, 2,6)
-imagesc(maskedOutputImage(:,:,1))
+imagesc(maskedOutputImage(:,:,1), [-128 127])
 title('aftermask')
 
 %%
@@ -172,16 +137,16 @@ title('aftermask')
 
 %% save/visualize
 
-outputImage = outputImage + 128;
-outputImage = uint8(outputImage);
+maskedOutputImage = maskedOutputImage + 128;
+maskedOutputImage = uint8(maskedOutputImage);
 toMatch     = toMatch + 128;
 toMatch     = uint8(toMatch);
 
 if save_images
-for ii = 1:size(outputImage,3)
+for ii = 1:size(maskedOutputImage,3)
     file_name = sprintf('%s_contrast_image number_%d.png', low_or_high_contrast, ii);
     test_save_pth = '/Volumes/server/Projects/MEG/Gamma/natural_images/nat_images_rms/circular_masked/';
-    imwrite(outputImage(:,:,ii), strcat(test_save_pth, file_name));
+    imwrite(maskedOutputImage(:,:,ii), strcat(test_save_pth, file_name));
 end
 end
 
@@ -212,7 +177,7 @@ if visualizeBeforeAfter
         imagesc(toMatch(:,:,ii)), title('Original')
         
         subplot(2, 2, 3)
-        imagesc(im_template, [0 255]), title('Template')
+        imagesc(im_range, [0 255]), title('Template')
         
         subplot(2, 2, 4)
         imagesc(outputImage(:,:,ii), [0 255]), title('Normalized')
