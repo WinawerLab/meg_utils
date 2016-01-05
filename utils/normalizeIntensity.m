@@ -11,11 +11,11 @@ visualizeBeforeAfter = false;
 
 normalizeMethod = 'rms'; % rms or histogram
 
-low_or_high_contrast = 'low'; % low, medium, or high
+low_or_high_contrast = 'high'; % low, medium, or high
 
 masking = true;
 
-save_images = true; 
+save_images = false; 
 %% import toolbox and images
 
 % path to SHINE toolbox
@@ -188,5 +188,14 @@ if visualizeBeforeAfter
     
 end
 
+
+maskedLow = zeros(size(maskedOutputImage), 'uint8');
+maskedLow = maskedOutputImage;
+
+maskedMedium = zeros(size(maskedOutputImage), 'uint8');
+maskedMedium = maskedOutputImage;
+
+maskedHigh = zeros(size(maskedOutputImage), 'uint8');
+maskedHigh = maskedOutputImage;
 
 
