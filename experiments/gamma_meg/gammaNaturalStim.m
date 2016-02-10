@@ -1,7 +1,21 @@
 %% gammaNaturalStimuli
-% generates .mat files containing the stimuli images
-% contains faces and houses of different contrast levels
-% gratings and high contrast noise
+%
+% generates and saves stimulus strucutres for running meg natural image
+% experiment with vistadisp. 
+%
+% The files that are generated contain the following fields:
+%   images (X x Y X n) array (X = rows, Y = cols, n = number of images)
+%   cmap: 256 x 3 colormap (each column is 1:256 unless we are doing
+%               something unusual with images)
+%   seq: numframes x 1 indicating the sequence of images to be presented
+%               during the experiment
+%   seqtiming: numframes x 1 indicating the time (in seconds) at which each image is shown
+%   fixSeq:    numframes x 1 indicating the fixation image to be shown
+%                   (typically 1s and 2s that slowly alternate)
+%
+%
+%  Stimulus set contains faces, houses, gratings, and noise at 3 different
+%  contrast levels
 % 
 % stimulus categories:
 % 1)houseH
@@ -10,20 +24,24 @@
 % 4)faceH
 % 5)faceM
 % 6)faceL
-% 7)binarizedWhiteNoise
-% 8)gratings
+% 7)binarizedWhiteNoise (why white nosie?? we should do pink noise)
+% 8)gratings (what spatial frequeny?? We should use the highest SF from prior experiments - what is that?? in numbers)
 % 9)blank
 %
 % Nicholas Chua (2015), script for generating noise and gratings by Dora Hermes
 
 
 %% parameters
+saveFiles = false;
+visualizeImages = true;
+
 
 background = 128; % mean pixel intensity
-range = [1 225]; % pixel range
+range = [1 255]; % pixel range
 imageDuration = 1.0; % in milliseconds
 blankDuration = 0.5; % ITI duration
 
+% Each run will have 9 repeats of 13 images = 117 trials
 nImages = 9; % images per category
 nCategories = 13; % images excluding ITI
 nTotal = nImages * nCategories;
@@ -38,29 +56,26 @@ savePath = fullfile(projectPath, 'stimuli/natural_images');
 imagePath = fullfile(projectPath, '/natural_images_tools/nat_images_before');
 if ~exist(savePath, 'dir'), mkdir(savePath); end
 
-addpath(genpath('~/matlab/git/meg_utils'));
-
 addpath(genpath('~/matlab/git/vistadisp/'));
 
 scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range) + min(range));
 
-% number of .mat files generated
+% number of .mat files generated - each one has a different random order of
+% trials
 totalRuns = 12;
 
-saveFiles = true;
-visualizeImages = true;
+
 
 %% houses
 nHouseImages = 3; % number of different house images
-houseIndices = [1 14 72]; % file number of selected image
+% File number of selected image. 
+%   Natural scene images come from Hermes et al, 2014. These numbers are
+%   indices into the order of these images
+houseIndices = [1 14 72]; 
 
 house1 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(1))));
 house2 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(2))));
 house3 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(3))));
-
-% houseH = uint8(zeros(sz, sz, nImages/nHouseImages));
-% houseM = uint8(zeros(sz, sz, nImages/nHouseImages));
-% houseL = uint8(zeros(sz, sz, nImages/nHouseImages));
 
 houseH = zeros(sz, sz, nImages/nHouseImages);
 houseM = zeros(sz, sz, nImages/nHouseImages);
@@ -92,7 +107,9 @@ for i = 1:size(houseH, 3)
     houseM(:,:,i) = scale_images(houseM(:,:,i));
     houseL(:,:,i) = scale_images(houseL(:,:,i));
 end
-
+houseH = uint8(houseH);
+houseM = uint8(houseM);
+houseL = uint8(houseL);
 %% faces
 nFaceImages = 3; % number of different house images
 faceIndices = [16 39 66]; % file number of selected image
