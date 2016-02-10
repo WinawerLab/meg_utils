@@ -12,7 +12,7 @@ function [outIm]=normalizeLaplacian(im, args)
 visualizeTransformations = false;
 
 if nargin == 0 % load example image
-    imageName = '/Volumes/server/Projects/MEG/Gamma/natural_images/nat_images_before/nat_image16.png';
+    imageName = '/Volumes/server/Projects/MEG/Gamma/natural_images_tools/nat_images_before/nat_image16.png';
     imLoad = mean(double(imread(imageName)), 3); % load image for demo
     targetContrast = 0.7;
 else % use input image and contrast parameter
@@ -34,7 +34,7 @@ imRange = [-.5 .5];
 
 %% add path to functions
 % sketchReconPyr.m and sketchBuildPyr.m
-path = '//Volumes/server/Projects/MEG/Gamma/natural_images/pyramid';
+path = '//Volumes/server/Projects/MEG/Gamma/natural_images_tools/pyramid';
 addpath(genpath(path));
 
 %% Build a Laplacian pyramid
@@ -78,8 +78,8 @@ if visualizeTransformations
     subplot(1,3,3);imshow(equalizedImage, imRange); title('after equalization');
 end
 
-equalizedImage = equalizedImage * mx * 2; % rescale to original px range
-outIm = equalizedImage;
+equalizedImage = (equalizedImage + 0.5)*mx; % rescale to original px range
+outIm = uint8(equalizedImage);
 
 
 end

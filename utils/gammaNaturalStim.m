@@ -25,7 +25,7 @@ imageDuration = 1.0; % in milliseconds
 blankDuration = 0.5; % ITI duration
 
 nImages = 9; % images per category
-nCategories = 9; % images excluding ITI
+nCategories = 13; % images excluding ITI
 nTotal = nImages * nCategories;
 nTotalWithITI = 2 * nTotal;
 
@@ -34,17 +34,21 @@ runDuration = (nTotal * imageDuration) + (nTotal * blankDuration);
 sz = 768; % native resolution of MEG display restricted to a square
 
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
-savePath = fullfile(projectPath, 'stimuli/natural_images/stimuli_files_feb');
-imagePath = fullfile(projectPath, '/natural_images/nat_images_before');
+savePath = fullfile(projectPath, 'stimuli/natural_images');
+imagePath = fullfile(projectPath, '/natural_images_tools/nat_images_before');
 if ~exist(savePath, 'dir'), mkdir(savePath); end
+
+addpath(genpath('~/matlab/git/meg_utils'));
+
+addpath(genpath('~/matlab/git/vistadisp/'));
 
 scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range) + min(range));
 
 % number of .mat files generated
-totalRuns = 15;
+totalRuns = 12;
 
 saveFiles = true;
-visualizeImages = false;
+visualizeImages = true;
 
 %% houses
 nHouseImages = 3; % number of different house images
@@ -53,6 +57,10 @@ houseIndices = [1 14 72]; % file number of selected image
 house1 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(1))));
 house2 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(2))));
 house3 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(3))));
+
+% houseH = uint8(zeros(sz, sz, nImages/nHouseImages));
+% houseM = uint8(zeros(sz, sz, nImages/nHouseImages));
+% houseL = uint8(zeros(sz, sz, nImages/nHouseImages));
 
 houseH = zeros(sz, sz, nImages/nHouseImages);
 houseM = zeros(sz, sz, nImages/nHouseImages);
@@ -78,6 +86,12 @@ houseH = repmat(houseH, 1, 1, nImages/nHouseImages);
 houseM = repmat(houseM, 1, 1, nImages/nHouseImages);
 houseL = repmat(houseL, 1, 1, nImages/nHouseImages);
 
+% scale and convert to uint8
+for i = 1:size(houseH, 3)
+    houseH(:,:,i) = scale_images(houseH(:,:,i));
+    houseM(:,:,i) = scale_images(houseM(:,:,i));
+    houseL(:,:,i) = scale_images(houseL(:,:,i));
+end
 
 %% faces
 nFaceImages = 3; % number of different house images
@@ -86,6 +100,10 @@ faceIndices = [16 39 66]; % file number of selected image
 face1 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(1))));
 face2 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(2))));
 face3 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(3))));
+
+% faceH = uint8(zeros(sz, sz, nImages/nFaceImages));
+% faceM = uint8(zeros(sz, sz, nImages/nFaceImages));
+% faceL = uint8(zeros(sz, sz, nImages/nFaceImages));
 
 faceH = zeros(sz, sz, nImages/nFaceImages);
 faceM = zeros(sz, sz, nImages/nFaceImages);
@@ -111,37 +129,60 @@ faceH = repmat(faceH, 1, 1, nImages/nFaceImages);
 faceM = repmat(faceM, 1, 1, nImages/nFaceImages);
 faceL = repmat(faceL, 1, 1, nImages/nFaceImages);
 
+% scale and convert to uint8
+for i = 1:size(faceH, 3)
+    faceH(:,:,i) = scale_images(faceH(:,:,i));
+    faceM(:,:,i) = scale_images(faceM(:,:,i));
+    faceL(:,:,i) = scale_images(faceL(:,:,i));
+end
+
+%% 
 for run = 1:totalRuns
     fprintf(['\n making images for scan ' num2str(run) '...']);
     
     %% white noise
     
-    bWhiteNoise = zeros(sz, sz, nImages, 'uint8');
-    n = 0;
+    whiteNoise = zeros(sz, sz, nImages*3, 'uint8');
+    whiteNoiseH = zeros(sz, sz, nImages, 'uint8');
+    whiteNoiseM = zeros(sz, sz, nImages, 'uint8');
+    whiteNoiseL = zeros(sz, sz, nImages, 'uint8');
     
-    for ii = 1:nImages
+    n = 0; % white noise
+    
+    for ii = 1:nImages*3 % 3 contrast conditions
         tmp = noiseonf(sz, n);
         inds = tmp > median(tmp(:));
         tmps(inds) = 1;
         tmps(~inds) = 0;
-        bWhiteNoise(:,:,ii) = scale_images(tmp);
+        whiteNoise(:,:,ii) = scale_images(tmp);
     end
     
+    for iii = 1:nImages
+        whiteNoiseH(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii),'high');
+        whiteNoiseM(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+9),'medium');
+        whiteNoiseL(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+18),'low');
+    end
     
     
     
     %% gratings
     
     widths = 8; % [8 16 32 64]; pixles
-    gratings = zeros(sz, sz, nImages * length(widths));
+    gratings = zeros(sz, sz, nImages * length(widths) * 3);
     [x, y] = meshgrid((1:sz)/sz, (1:sz)/sz);
     
     for iii = 1:length(widths)
-        for n = 1:nImages
+        for n = 1:nImages*3 % 3 contrast conditions
             ph = n/nImages * 2 * pi;
             tmp = square(x * 2 * pi * widths(iii) + ph) + 1 * 255;
             gratings(:,:,n) = scale_images(tmp);
         end
+    end
+    
+    for iii = 1:nImages
+        gratingsH(:,:,iii) = normalizeLaplacian(gratings(:,:,iii),'high');
+        gratingsM(:,:,iii) = normalizeLaplacian(gratings(:,:,iii+9),'medium');
+        gratingsL(:,:,iii) = normalizeLaplacian(gratings(:,:,iii+18),'low');
     end
     
     %% blank stimuli
@@ -155,7 +196,8 @@ for run = 1:totalRuns
     %% Concatenate all stimuli images and shuffle
     
     images = cat(3, houseH, houseM, houseL, faceH, faceM, faceL,...
-        bWhiteNoise, gratings, blank, ITI);
+        whiteNoiseH, whiteNoiseM, whiteNoiseL, gratingsH, gratingsM,...
+        gratingsL, blank, ITI);
     
     stimIndex = 1:(nTotal); % index of all stimuli images
     [~, randIndex] = sort(rand(size(stimIndex))); % shuffle index randomly
@@ -168,6 +210,24 @@ for run = 1:totalRuns
     % index of stimulus categories
     categoryIndex = ceil((sequence/nImages));
     
+    
+    % apply soft circular aperture
+    for i = 1:size(images,3)
+        images(:,:,i) = cosineMask(images(:,:,i));
+    end
+    
+    %% save images
+    sampleSavePath = fullfile(savePath, 'sampleImages');
+    
+    for i = 1:nImages:size(images,3)
+        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+        imwrite(images(:,:,i), saveName);
+    end
+    
+    for i = 2:nImages:size(images,3)
+        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+        imwrite(images(:,:,i), saveName);
+    end
     %% photodiode
     
     diodeIndex = zeros(length(categoryIndex), 1);
@@ -181,10 +241,10 @@ for run = 1:totalRuns
     if visualizeImages
         figure(2);
         for ii = 1:size(images, 3);
-            imagesc(images(:,:,ii));
+            imagesc(images(:,:,ii),range);
             colormap gray;
             axis image off;
-            pause(0.1);
+            pause(0.2);
         end
     end
     %% stimulus parameters
