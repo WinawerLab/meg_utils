@@ -24,7 +24,7 @@
 % 4)faceH
 % 5)faceM
 % 6)faceL
-% 7)binarizedWhiteNoise (why white nosie?? we should do pink noise)
+% 7)binarizedpinkNoise
 % 8)gratings (what spatial frequeny?? We should use the highest SF from prior experiments - what is that?? in numbers)
 % 9)blank
 %
@@ -42,18 +42,18 @@ imageDuration = 1.0; % in milliseconds
 blankDuration = 0.5; % ITI duration
 
 % Each run will have 9 repeats of 13 images = 117 trials
-nImages = 9; % images per category
-nCategories = 13; % images excluding ITI
-nTotal = nImages * nCategories;
-nTotalWithITI = 2 * nTotal;
+nImages         = 9;    % images per category
+nCategories     = 13;   % images excluding ITI
+nTotal          = nImages * nCategories;
+nTotalWithITI   = 2 * nTotal;
 
 runDuration = (nTotal * imageDuration) + (nTotal * blankDuration);
 
 sz = 768; % native resolution of MEG display restricted to a square
 
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
-savePath = fullfile(projectPath, 'stimuli/natural_images');
-imagePath = fullfile(projectPath, '/natural_images_tools/nat_images_before');
+savePath    = fullfile(projectPath, 'stimuli/natural_images');
+imagePath   = fullfile(projectPath, 'cerebral_cortex_datashare/example_V1_electrode_faceshouses.mat');
 if ~exist(savePath, 'dir'), mkdir(savePath); end
 
 addpath(genpath('~/matlab/git/vistadisp/'));
@@ -73,9 +73,11 @@ nHouseImages = 3; % number of different house images
 %   indices into the order of these images
 houseIndices = [1 14 72]; 
 
-house1 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(1))));
-house2 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(2))));
-house3 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', houseIndices(3))));
+load(imagePath, 'out');
+imagesOrig = out.image+128; clear out;
+house1 = imresize( imagesOrig(:,:, houseIndices(1)), [sz sz]);
+house2 = imresize( imagesOrig(:,:, houseIndices(2)), [sz sz]);
+house3 = imresize( imagesOrig(:,:, houseIndices(3)), [sz sz]);
 
 houseH = zeros(sz, sz, nImages/nHouseImages);
 houseM = zeros(sz, sz, nImages/nHouseImages);
@@ -85,6 +87,9 @@ houseL = zeros(sz, sz, nImages/nHouseImages);
 houseH(:,:,1) = normalizeLaplacian(house1, 'high');
 houseH(:,:,2) = normalizeLaplacian(house2, 'high');
 houseH(:,:,3) = normalizeLaplacian(house3, 'high');
+
+
+
 
 % medium contrast
 houseM(:,:,1) = normalizeLaplacian(house1, 'medium');
@@ -96,27 +101,46 @@ houseL(:,:,1) = normalizeLaplacian(house1, 'low');
 houseL(:,:,2) = normalizeLaplacian(house2, 'low');
 houseL(:,:,3) = normalizeLaplacian(house3, 'low');
 
+
 % repeat images to obtain nImages number of houses
 houseH = repmat(houseH, 1, 1, nImages/nHouseImages);
 houseM = repmat(houseM, 1, 1, nImages/nHouseImages);
 houseL = repmat(houseL, 1, 1, nImages/nHouseImages);
 
 % scale and convert to uint8
-for i = 1:size(houseH, 3)
-    houseH(:,:,i) = scale_images(houseH(:,:,i));
-    houseM(:,:,i) = scale_images(houseM(:,:,i));
-    houseL(:,:,i) = scale_images(houseL(:,:,i));
-end
+% for i = 1:size(houseH, 3)
+%     houseH(:,:,i) = scale_images(houseH(:,:,i));
+%     houseM(:,:,i) = scale_images(houseM(:,:,i));
+%     houseL(:,:,i) = scale_images(houseL(:,:,i));
+% end
 houseH = uint8(houseH);
 houseM = uint8(houseM);
 houseL = uint8(houseL);
+
+
+stdH = std(double(reshape(houseH, sz*sz,[])));
+stdM = std(double(reshape(houseM, sz*sz,[])));
+stdL = std(double(reshape(houseL, sz*sz,[])));
+
+figure, 
+for ii = 1:3
+    subplot(3,3,0+ii); histogram(houseH(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdH(ii)));
+    
+    subplot(3,3,3+ii); histogram(houseM(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdM(ii)));
+    
+    subplot(3,3,6+ii); histogram(houseL(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdL(ii)));
+end
+
 %% faces
 nFaceImages = 3; % number of different house images
 faceIndices = [16 39 66]; % file number of selected image
 
-face1 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(1))));
-face2 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(2))));
-face3 = imread(fullfile(imagePath, sprintf('/nat_image%d.png', faceIndices(3))));
+face1 = imresize( imagesOrig(:,:, faceIndices(1)), [sz sz]);
+face2 = imresize( imagesOrig(:,:, faceIndices(2)), [sz sz]);
+face3 = imresize( imagesOrig(:,:, faceIndices(3)), [sz sz]);
 
 % faceH = uint8(zeros(sz, sz, nImages/nFaceImages));
 % faceM = uint8(zeros(sz, sz, nImages/nFaceImages));
@@ -147,51 +171,74 @@ faceM = repmat(faceM, 1, 1, nImages/nFaceImages);
 faceL = repmat(faceL, 1, 1, nImages/nFaceImages);
 
 % scale and convert to uint8
-for i = 1:size(faceH, 3)
-    faceH(:,:,i) = scale_images(faceH(:,:,i));
-    faceM(:,:,i) = scale_images(faceM(:,:,i));
-    faceL(:,:,i) = scale_images(faceL(:,:,i));
+% for i = 1:size(faceH, 3)
+%     faceH(:,:,i) = scale_images(faceH(:,:,i));
+%     faceM(:,:,i) = scale_images(faceM(:,:,i));
+%     faceL(:,:,i) = scale_images(faceL(:,:,i));
+% end
+
+faceH = uint8(faceH);
+faceM = uint8(faceM);
+faceL = uint8(faceL);
+
+
+stdH = std(double(reshape(faceH, sz*sz,[])));
+stdM = std(double(reshape(faceM, sz*sz,[])));
+stdL = std(double(reshape(faceL, sz*sz,[])));
+
+figure, 
+for ii = 1:3
+    subplot(3,3,0+ii); histogram(faceH(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdH(ii)));
+    
+    subplot(3,3,3+ii); histogram(faceM(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdM(ii)));
+    
+    subplot(3,3,6+ii); histogram(faceL(:,:,ii)); xlim([0 255]);
+    title(sprintf('Std = %6.2f', stdL(ii)));
 end
+
+
 
 %% 
 for run = 1:totalRuns
     fprintf(['\n making images for scan ' num2str(run) '...']);
     
-    %% white noise
+    %% pink noise
     
-    whiteNoise = zeros(sz, sz, nImages*3, 'uint8');
-    whiteNoiseH = zeros(sz, sz, nImages, 'uint8');
-    whiteNoiseM = zeros(sz, sz, nImages, 'uint8');
-    whiteNoiseL = zeros(sz, sz, nImages, 'uint8');
+    pinkNoise  = zeros(sz, sz, nImages*3, 'uint8');
+    pinkNoiseH = zeros(sz, sz, nImages, 'uint8');
+    pinkNoiseM = zeros(sz, sz, nImages, 'uint8');
+    pinkNoiseL = zeros(sz, sz, nImages, 'uint8');
     
-    n = 0; % white noise
+    n = 1; % pink noise
     
     for ii = 1:nImages*3 % 3 contrast conditions
         tmp = noiseonf(sz, n);
         inds = tmp > median(tmp(:));
         tmps(inds) = 1;
         tmps(~inds) = 0;
-        whiteNoise(:,:,ii) = scale_images(tmp);
+        pinkNoise(:,:,ii) = scale_images(tmp);
     end
     
     for iii = 1:nImages
-        whiteNoiseH(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii),'high');
-        whiteNoiseM(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+9),'medium');
-        whiteNoiseL(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+18),'low');
+        pinkNoiseH(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii),'high');
+        pinkNoiseM(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+9),'medium');
+        pinkNoiseL(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+18),'low');
     end
     
     
     
     %% gratings
     
-    widths = 8; % [8 16 32 64]; pixles
-    gratings = zeros(sz, sz, nImages * length(widths) * 3);
+    cycles = 64; % [8 16 32 64]; cycles per image
+    gratings = zeros(sz, sz, nImages * length(cycles) * 3);
     [x, y] = meshgrid((1:sz)/sz, (1:sz)/sz);
     
-    for iii = 1:length(widths)
+    for iii = 1:length(cycles)
         for n = 1:nImages*3 % 3 contrast conditions
             ph = n/nImages * 2 * pi;
-            tmp = square(x * 2 * pi * widths(iii) + ph) + 1 * 255;
+            tmp = square(x * 2 * pi * cycles(iii) + ph) + 1 * 255;
             gratings(:,:,n) = scale_images(tmp);
         end
     end
@@ -213,7 +260,7 @@ for run = 1:totalRuns
     %% Concatenate all stimuli images and shuffle
     
     images = cat(3, houseH, houseM, houseL, faceH, faceM, faceL,...
-        whiteNoiseH, whiteNoiseM, whiteNoiseL, gratingsH, gratingsM,...
+        pinkNoiseH, pinkNoiseM, pinkNoiseL, gratingsH, gratingsM,...
         gratingsL, blank, ITI);
     
     stimIndex = 1:(nTotal); % index of all stimuli images

@@ -20,7 +20,7 @@ else % use input image and contrast parameter
     switch args
         % change target contrast here
         case 'high'
-            targetContrast = 0.7;
+            targetContrast = 5;%0.7;
         case 'medium'
             targetContrast = 0.1;
         case 'low'
