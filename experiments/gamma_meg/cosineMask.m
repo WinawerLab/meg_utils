@@ -1,4 +1,4 @@
-function maskedIm = cosineMask(im)
+function [maskedIm, isolatedStd, isolatedMn] = cosineMask(im)
 %% cosineMask
 % applies a soft edge cosine mask to a square 2D image
 % change visualize to true to learn about the mask
@@ -26,7 +26,8 @@ maskedIm = uint8(tmp .*cosMask + bg);
 isolatedImage = double(maskedIm);
 isolatedImage(R > r_min) = NaN;
 
-standardDev = nanstd(isolatedImage(:));
+isolatedStd = nanstd(isolatedImage(:));
+isolatedMn  = nanmean(isolatedImage(:));
 
 %% Visualization
 if visualize
@@ -53,7 +54,7 @@ if visualize
     
     subplot(3,2,6)
     hist(isolatedImage(:))
-    title(sprintf('distribution SD = %2.2f', standardDev))
+    title(sprintf('distribution SD = %2.2f', isolatedStd))
     
     
 end

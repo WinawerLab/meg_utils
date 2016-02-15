@@ -150,7 +150,7 @@ faceH = zeros(sz, sz, nImages/nFaceImages);
 faceM = zeros(sz, sz, nImages/nFaceImages);
 faceL = zeros(sz, sz, nImages/nFaceImages);
 
-% high contrast
+% high contrast 
 faceH(:,:,1) = normalizeLaplacian(face1, 'high');
 faceH(:,:,2) = normalizeLaplacian(face2, 'high');
 faceH(:,:,3) = normalizeLaplacian(face3, 'high');
@@ -177,7 +177,7 @@ faceL = repmat(faceL, 1, 1, nImages/nFaceImages);
 %     faceL(:,:,i) = scale_images(faceL(:,:,i));
 % end
 
-faceH = uint8(faceH);
+faceH = uint8(faceH); 
 faceM = uint8(faceM);
 faceL = uint8(faceL);
 
@@ -275,10 +275,11 @@ for run = 1:totalRuns
     % index of stimulus categories
     categoryIndex = ceil((sequence/nImages));
     
-    
+    stdev = NaN(1,size(images,3));
+    mn    = NaN(1,size(images,3));
     % apply soft circular aperture
     for i = 1:size(images,3)
-        images(:,:,i) = cosineMask(images(:,:,i));
+        [images(:,:,i), stdev(i), mn(i)] = cosineMask(images(:,:,i));
     end
     
     %% save images
@@ -304,12 +305,14 @@ for run = 1:totalRuns
     
     %% preview stimuli
     if visualizeImages
-        figure(2);
+        figure;
         for ii = 1:size(images, 3);
-            imagesc(images(:,:,ii),range);
-            colormap gray;
-            axis image off;
-            pause(0.2);
+            %imagesc(images(:,:,ii),range);
+            %colormap gray;
+            %axis image off;
+            imshow(images(:,:,ii));
+            title(sprintf('Mean = %6.2f; Std = %6.2f', mn(ii), stdev(ii)));
+            waitforbuttonpress;%  pause(0.2);
         end
     end
     %% stimulus parameters

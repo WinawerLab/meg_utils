@@ -65,7 +65,7 @@ reconIm(reconIm < -0.5) = -0.5;
 
 
 %% Change contrast
-
+% reconIm = reconIm - median(reconIm(:));
 equalizedImage = reconIm/std(reconIm(:)) * targetContrast;
 %clip once more
 equalizedImage(equalizedImage>0.5) = 0.5;
