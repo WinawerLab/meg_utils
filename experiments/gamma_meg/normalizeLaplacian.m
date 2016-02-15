@@ -28,7 +28,7 @@ else % use input image and contrast parameter
     end
 end
     
-mx = max(imLoad(:)); 
+mx = 255; % assume 8 bits
 im = (imLoad - (mx/2))/mx; % transform px intensities to range [-.5 .5]
 imRange = [-.5 .5];
 
@@ -65,11 +65,17 @@ reconIm(reconIm < -0.5) = -0.5;
 
 
 %% Change contrast
-% reconIm = reconIm - median(reconIm(:));
+reconIm = reconIm - median(reconIm(:));
 equalizedImage = reconIm/std(reconIm(:)) * targetContrast;
 %clip once more
-equalizedImage(equalizedImage>0.5) = 0.5;
-equalizedImage(equalizedImage<-0.5) = -0.5;
+
+if targetContrast > 1,
+    equalizedImage(equalizedImage>=0) =  0.5;
+    equalizedImage(equalizedImage<0)  = -0.5;
+else
+    equalizedImage(equalizedImage>0.5) = 0.5;
+    equalizedImage(equalizedImage<-0.5) = -0.5;
+end
 
 if visualizeTransformations
     figure(111)
