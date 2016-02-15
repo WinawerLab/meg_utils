@@ -24,8 +24,8 @@
 % 4)faceH
 % 5)faceM
 % 6)faceL
-% 7)binarizedWhiteNoise (why white nosie?? we should do pink noise)
-% 8)gratings (what spatial frequeny?? We should use the highest SF from prior experiments - what is that?? in numbers)
+% 7)pinkNoise
+% 8)gratings
 % 9)blank
 %
 % Nicholas Chua (2015), script for generating noise and gratings by Dora Hermes
@@ -62,7 +62,7 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 
 % number of .mat files generated - each one has a different random order of
 % trials
-totalRuns = 12;
+totalRuns = 1;
 
 
 
@@ -159,32 +159,32 @@ for run = 1:totalRuns
     
     %% white noise
     
-    whiteNoise = zeros(sz, sz, nImages*3, 'uint8');
-    whiteNoiseH = zeros(sz, sz, nImages, 'uint8');
-    whiteNoiseM = zeros(sz, sz, nImages, 'uint8');
-    whiteNoiseL = zeros(sz, sz, nImages, 'uint8');
+    pinkNoise = zeros(sz, sz, nImages*3, 'uint8');
+    pinkNoiseH = zeros(sz, sz, nImages, 'uint8');
+    pinkNoiseM = zeros(sz, sz, nImages, 'uint8');
+    pinkNoiseL = zeros(sz, sz, nImages, 'uint8');
     
-    n = 0; % white noise
+    n = 1; % white noise
     
     for ii = 1:nImages*3 % 3 contrast conditions
         tmp = noiseonf(sz, n);
         inds = tmp > median(tmp(:));
         tmps(inds) = 1;
         tmps(~inds) = 0;
-        whiteNoise(:,:,ii) = scale_images(tmp);
+        pinkNoise(:,:,ii) = scale_images(tmp);
     end
     
     for iii = 1:nImages
-        whiteNoiseH(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii),'high');
-        whiteNoiseM(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+9),'medium');
-        whiteNoiseL(:,:,iii) = normalizeLaplacian(whiteNoise(:,:,iii+18),'low');
+        pinkNoiseH(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii),'high');
+        pinkNoiseM(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+9),'medium');
+        pinkNoiseL(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+18),'low');
     end
     
     
     
     %% gratings
     
-    widths = 8; % [8 16 32 64]; pixles
+    widths = 64; % [8 16 32 64]; pixles
     gratings = zeros(sz, sz, nImages * length(widths) * 3);
     [x, y] = meshgrid((1:sz)/sz, (1:sz)/sz);
     
@@ -213,7 +213,7 @@ for run = 1:totalRuns
     %% Concatenate all stimuli images and shuffle
     
     images = cat(3, houseH, houseM, houseL, faceH, faceM, faceL,...
-        whiteNoiseH, whiteNoiseM, whiteNoiseL, gratingsH, gratingsM,...
+        pinkNoiseH, pinkNoiseM, pinkNoiseL, gratingsH, gratingsM,...
         gratingsL, blank, ITI);
     
     stimIndex = 1:(nTotal); % index of all stimuli images
@@ -234,17 +234,17 @@ for run = 1:totalRuns
     end
     
     %% save images
-    sampleSavePath = fullfile(savePath, 'sampleImages');
-    
-    for i = 1:nImages:size(images,3)
-        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
-        imwrite(images(:,:,i), saveName);
-    end
-    
-    for i = 2:nImages:size(images,3)
-        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
-        imwrite(images(:,:,i), saveName);
-    end
+%     sampleSavePath = fullfile(savePath, 'sampleImages');
+%     
+%     for i = 1:nImages:size(images,3)
+%         saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+%         imwrite(images(:,:,i), saveName);
+%     end
+%     
+%     for i = 2:nImages:size(images,3)
+%         saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+%         imwrite(images(:,:,i), saveName);
+%     end
     %% photodiode
     
     diodeIndex = zeros(length(categoryIndex), 1);
