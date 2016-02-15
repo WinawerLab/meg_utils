@@ -24,8 +24,8 @@
 % 4)faceH
 % 5)faceM
 % 6)faceL
-% 7)binarizedpinkNoise
-% 8)gratings (what spatial frequeny?? We should use the highest SF from prior experiments - what is that?? in numbers)
+% 7)pinkNoise
+% 8)gratings
 % 9)blank
 %
 % Nicholas Chua (2015), script for generating noise and gratings by Dora Hermes
@@ -62,7 +62,7 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 
 % number of .mat files generated - each one has a different random order of
 % trials
-totalRuns = 12;
+totalRuns = 1;
 
 
 
@@ -233,6 +233,7 @@ for run = 1:totalRuns
     
     cycles = 64; % [8 16 32 64]; cycles per image
     gratings = zeros(sz, sz, nImages * length(cycles) * 3);
+
     [x, y] = meshgrid((1:sz)/sz, (1:sz)/sz);
     
     for iii = 1:length(cycles)
@@ -281,17 +282,17 @@ for run = 1:totalRuns
     end
     
     %% save images
-    sampleSavePath = fullfile(savePath, 'sampleImages');
-    
-    for i = 1:nImages:size(images,3)
-        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
-        imwrite(images(:,:,i), saveName);
-    end
-    
-    for i = 2:nImages:size(images,3)
-        saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
-        imwrite(images(:,:,i), saveName);
-    end
+%     sampleSavePath = fullfile(savePath, 'sampleImages');
+%     
+%     for i = 1:nImages:size(images,3)
+%         saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+%         imwrite(images(:,:,i), saveName);
+%     end
+%     
+%     for i = 2:nImages:size(images,3)
+%         saveName = fullfile(sampleSavePath, ['stimImage' num2str(i) '.png']);
+%         imwrite(images(:,:,i), saveName);
+%     end
     %% photodiode
     
     diodeIndex = zeros(length(categoryIndex), 1);
