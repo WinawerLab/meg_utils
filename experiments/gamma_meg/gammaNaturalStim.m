@@ -69,6 +69,9 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 % trials
 totalRuns = 1;
 
+targetContrast = [5 0.1 0.02]; % for px intensity range of [-0.5 0.5]
+% 5 effectively binarizes the stimuli
+
 
 
 %% houses
@@ -227,9 +230,9 @@ for run = 1:totalRuns
     end
     
     for iii = 1:nImages
-        pinkNoiseH(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii),'high');
-        pinkNoiseM(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+9),'medium');
-        pinkNoiseL(:,:,iii) = normalizeLaplacian(pinkNoise(:,:,iii+18),'low');
+        pinkNoiseH(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii),targetContrast(1));
+        pinkNoiseM(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+9),targetContrast(2));
+        pinkNoiseL(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+18),targetContrast(3));
     end
     
     
@@ -250,9 +253,9 @@ for run = 1:totalRuns
     end
     
     for iii = 1:nImages
-        gratingsH(:,:,iii) = normalizeLaplacian(gratings(:,:,iii),'high');
-        gratingsM(:,:,iii) = normalizeLaplacian(gratings(:,:,iii+9),'medium');
-        gratingsL(:,:,iii) = normalizeLaplacian(gratings(:,:,iii+18),'low');
+        gratingsH(:,:,iii) = scaleIntensity(gratings(:,:,iii),targetContrast(1));
+        gratingsM(:,:,iii) = scaleIntensity(gratings(:,:,iii+9),targetContrast(2));
+        gratingsL(:,:,iii) = scaleIntensity(gratings(:,:,iii+18),targetContrast(3));
     end
     
     %% blank stimuli
