@@ -34,7 +34,7 @@
 %% parameters
 saveFiles = false;
 visualizeImages = true;
-
+mask_radius = 0.9;
 
 background = 128; % mean pixel intensity
 range = [1 255]; % pixel range
@@ -53,8 +53,8 @@ sz = 768; % native resolution of MEG display restricted to a square
 
 % make a circular mask
 [x, y] = meshgrid(linspace(-1,1,sz));
-mask = x.^2 + y.^2 <= .8;
-mask = true(sz);
+mask = x.^2 + y.^2 <= mask_radius.^2;
+%mask = true(sz);
 
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
 savePath    = fullfile(projectPath, 'stimuli/natural_images');
@@ -115,12 +115,7 @@ houseH = repmat(houseH, 1, 1, nImages/nHouseImages);
 houseM = repmat(houseM, 1, 1, nImages/nHouseImages);
 houseL = repmat(houseL, 1, 1, nImages/nHouseImages);
 
-% scale and convert to uint8
-% for i = 1:size(houseH, 3)
-%     houseH(:,:,i) = scale_images(houseH(:,:,i));
-%     houseM(:,:,i) = scale_images(houseM(:,:,i));
-%     houseL(:,:,i) = scale_images(houseL(:,:,i));
-% end
+
 houseH = uint8(houseH);
 houseM = uint8(houseM);
 houseL = uint8(houseL);
@@ -178,12 +173,6 @@ faceH = repmat(faceH, 1, 1, nImages/nFaceImages);
 faceM = repmat(faceM, 1, 1, nImages/nFaceImages);
 faceL = repmat(faceL, 1, 1, nImages/nFaceImages);
 
-% scale and convert to uint8
-% for i = 1:size(faceH, 3)
-%     faceH(:,:,i) = scale_images(faceH(:,:,i));
-%     faceM(:,:,i) = scale_images(faceM(:,:,i));
-%     faceL(:,:,i) = scale_images(faceL(:,:,i));
-% end
 
 faceH = uint8(faceH); 
 faceM = uint8(faceM);
@@ -287,7 +276,7 @@ for run = 1:totalRuns
     mn    = NaN(1,size(images,3));
     % apply soft circular aperture
     for i = 1:size(images,3)
-        [images(:,:,i), stdev(i), mn(i)] = cosineMask(images(:,:,i));
+        [images(:,:,i), stdev(i), mn(i)] = cosineMask(images(:,:,i), mask_radius);
     end
     
     %% save images
@@ -319,7 +308,7 @@ for run = 1:totalRuns
             %colormap gray;
             %axis image off;
             imshow(images(:,:,ii));
-            title(sprintf('Mean = %6.2f; Std = %6.2f', mn(ii), stdev(ii)));
+            title(sprintf('Image %d\tMean = %6.2f; Std = %6.2f',ii, mn(ii), stdev(ii)));
             waitforbuttonpress;%  pause(0.2);
         end
     end

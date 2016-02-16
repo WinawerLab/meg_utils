@@ -13,6 +13,7 @@ function outIm = scaleIntensity(im, targetContrast)
 mx = 255; % assume 8 bits
 im = (im - (mx/2))/mx; % scale range to [-0.5 0.5]
 
+im = double(im);
 %% change contrast
 equalizedImage = im/std(im(:)) * targetContrast;
 

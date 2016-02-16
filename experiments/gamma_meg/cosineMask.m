@@ -1,7 +1,9 @@
-function [maskedIm, isolatedStd, isolatedMn] = cosineMask(im)
+function [maskedIm, isolatedStd, isolatedMn] = cosineMask(im, r_min)
 %% cosineMask
 % applies a soft edge cosine mask to a square 2D image
 % change visualize to true to learn about the mask
+
+if ~exist('r_min', 'var'), r_min = .8; end
 
 visualize = true;
 %% make the mask
@@ -10,7 +12,6 @@ bg = 128; % the mask should be grey (mean luminanace)
 
 [x, y]        = meshgrid(linspace(-1,1,sz));
 R             = sqrt(x.^2 + y.^2);
-r_min         = .8; % adjust this to change size of aperture
 Edge          = (R-r_min) / (1 - r_min);
 Edge(R<r_min) = 0;
 Edge(R>1)     = 1;
