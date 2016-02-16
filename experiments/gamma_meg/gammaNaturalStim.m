@@ -121,21 +121,21 @@ houseM = uint8(houseM);
 houseL = uint8(houseL);
 
 
-stdH = std(double(reshape(houseH, sz*sz,[])));
-stdM = std(double(reshape(houseM, sz*sz,[])));
-stdL = std(double(reshape(houseL, sz*sz,[])));
-
-figure, 
-for ii = 1:3
-    subplot(3,3,0+ii); histogram(houseH(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdH(ii)));
-    
-    subplot(3,3,3+ii); histogram(houseM(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdM(ii)));
-    
-    subplot(3,3,6+ii); histogram(houseL(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdL(ii)));
-end
+% stdH = std(double(reshape(houseH, sz*sz,[])));
+% stdM = std(double(reshape(houseM, sz*sz,[])));
+% stdL = std(double(reshape(houseL, sz*sz,[])));
+% 
+% figure, 
+% for ii = 1:3
+%     subplot(3,3,0+ii); histogram(houseH(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdH(ii)));
+%     
+%     subplot(3,3,3+ii); histogram(houseM(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdM(ii)));
+%     
+%     subplot(3,3,6+ii); histogram(houseL(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdL(ii)));
+% end
 
 %% faces
 nFaceImages = 3; % number of different house images
@@ -179,22 +179,22 @@ faceM = uint8(faceM);
 faceL = uint8(faceL);
 
 
-stdH = std(double(reshape(faceH, sz*sz,[])));
-stdM = std(double(reshape(faceM, sz*sz,[])));
-stdL = std(double(reshape(faceL, sz*sz,[])));
-
-figure, 
-for ii = 1:3
-    subplot(3,3,0+ii); histogram(faceH(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdH(ii)));
-    
-    subplot(3,3,3+ii); histogram(faceM(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdM(ii)));
-    
-    subplot(3,3,6+ii); histogram(faceL(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdL(ii)));
-end
-
+% stdH = std(double(reshape(faceH, sz*sz,[])));
+% stdM = std(double(reshape(faceM, sz*sz,[])));
+% stdL = std(double(reshape(faceL, sz*sz,[])));
+% 
+% figure, 
+% for ii = 1:3
+%     subplot(3,3,0+ii); histogram(faceH(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdH(ii)));
+%     
+%     subplot(3,3,3+ii); histogram(faceM(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdM(ii)));
+%     
+%     subplot(3,3,6+ii); histogram(faceL(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdL(ii)));
+% end
+% 
 
 
 %% 
@@ -219,9 +219,9 @@ for run = 1:totalRuns
     end
     
     for iii = 1:nImages
-        pinkNoiseH(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii),targetContrast(1));
-        pinkNoiseM(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+9),targetContrast(2));
-        pinkNoiseL(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+18),targetContrast(3));
+        pinkNoiseH(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii),targetContrast(1),mask);
+        pinkNoiseM(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+9),targetContrast(2),mask);
+        pinkNoiseL(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+18),targetContrast(3),mask);
     end
     
     
