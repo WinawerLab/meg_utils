@@ -1,4 +1,4 @@
-function [outIm]=normalizeLaplacian(im, args)
+function [outIm]=normalizeLaplacian(im, varargin)
 %% normalizeLaplacian
 % normalize the contrast level of an array of images
 % by 1)high pass filtering of using Laplacian Pyramid
@@ -12,30 +12,32 @@ function [outIm]=normalizeLaplacian(im, args)
 visualizeTransformations = false;
 
 if nargin == 0 % load example image
-    imageName = '/Volumes/server/Projects/MEG/Gamma/natural_images_tools/nat_images_before/nat_image16.png';
-    imLoad = mean(double(imread(imageName)), 3); % load image for demo
+    imGray = double(imread('cameraman.tif')); % load image for demo
     targetContrast = 0.7;
 else % use input image and contrast parameter
-    imLoad = mean(double(im),3);
-    switch args
-        % change target contrast here
-        case 'high'
-            targetContrast = 5;%0.7;
-        case 'medium'
-            targetContrast = 0.1;
-        case 'low'
-            targetContrast = 0.02;
+    imGray = mean(double(im),3);
+    if isnumeric(varargin{1})
+        targetContrast = varargin{1};
+    else
+        switch varargin{1}
+            % change target contrast here
+            case 'high'
+                targetContrast = 5;%0.7;
+            case 'medium'
+                targetContrast = 0.1;
+            case 'low'
+                targetContrast = 0.02;
+        end
     end
+    
+    if length(varargin)>1, mask = varargin{2}; end
 end
     
-mx = 255; % assume 8 bits
-im = (imLoad - (mx/2))/mx; % transform px intensities to range [-.5 .5]
-imRange = [-.5 .5];
+if ~exist('mask', 'var'), mask = true(size(imGray)); end
 
-%% add path to functions
-% sketchReconPyr.m and sketchBuildPyr.m
-path = '//Volumes/server/Projects/MEG/Gamma/natural_images_tools/pyramid';
-addpath(genpath(path));
+mx = 255; % assume 8 bits
+im = (imGray - (mx/2))/mx; % transform px intensities to range [-.5 .5]
+imRange = [-.5 .5];
 
 %% Build a Laplacian pyramid
 layers = 8;
@@ -45,9 +47,11 @@ layers = 8;
 
 if visualizeTransformations
    
+    figure;
     for ii = 1:layers
-        figure(3);imagesc(origPyramid{ii}, imRange); colormap gray; axis image; title(sprintf('%ith pyramid',ii));
-        pause(0.5);
+        subplot(3,3,ii)
+        imagesc(origPyramid{ii}, imRange); 
+        colormap gray; axis image; title(sprintf('%ith pyramid',ii));        
     end
       
 end
@@ -65,7 +69,7 @@ reconIm(reconIm < -0.5) = -0.5;
 
 
 %% Change contrast
-reconIm = reconIm - median(reconIm(:));
+%reconIm = reconIm - median(reconIm(mask(:)));
 equalizedImage = reconIm/std(reconIm(:)) * targetContrast;
 %clip once more
 
@@ -73,7 +77,7 @@ if targetContrast > 1,
     equalizedImage(equalizedImage>=0) =  0.5;
     equalizedImage(equalizedImage<0)  = -0.5;
 else
-    equalizedImage(equalizedImage>0.5) = 0.5;
+    equalizedImage(equalizedImage>0.5)  = 0.5;
     equalizedImage(equalizedImage<-0.5) = -0.5;
 end
 

@@ -51,6 +51,11 @@ runDuration = (nTotal * imageDuration) + (nTotal * blankDuration);
 
 sz = 768; % native resolution of MEG display restricted to a square
 
+% make a circular mask
+[x, y] = meshgrid(linspace(-1,1,sz));
+mask = x.^2 + y.^2 <= .8;
+mask = true(sz);
+
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
 savePath    = fullfile(projectPath, 'stimuli/natural_images');
 imagePath   = fullfile(projectPath, 'cerebral_cortex_datashare/example_V1_electrode_faceshouses.mat');
@@ -84,22 +89,22 @@ houseM = zeros(sz, sz, nImages/nHouseImages);
 houseL = zeros(sz, sz, nImages/nHouseImages);
 
 % high contrast
-houseH(:,:,1) = normalizeLaplacian(house1, 'high');
-houseH(:,:,2) = normalizeLaplacian(house2, 'high');
-houseH(:,:,3) = normalizeLaplacian(house3, 'high');
+houseH(:,:,1) = normalizeLaplacian(house1, 'high', mask);
+houseH(:,:,2) = normalizeLaplacian(house2, 'high', mask);
+houseH(:,:,3) = normalizeLaplacian(house3, 'high', mask);
 
 
 
 
 % medium contrast
-houseM(:,:,1) = normalizeLaplacian(house1, 'medium');
-houseM(:,:,2) = normalizeLaplacian(house2, 'medium');
-houseM(:,:,3) = normalizeLaplacian(house3, 'medium');
+houseM(:,:,1) = normalizeLaplacian(house1, 'medium', mask);
+houseM(:,:,2) = normalizeLaplacian(house2, 'medium', mask);
+houseM(:,:,3) = normalizeLaplacian(house3, 'medium', mask);
 
 % low contrast
-houseL(:,:,1) = normalizeLaplacian(house1, 'low');
-houseL(:,:,2) = normalizeLaplacian(house2, 'low');
-houseL(:,:,3) = normalizeLaplacian(house3, 'low');
+houseL(:,:,1) = normalizeLaplacian(house1, 'low', mask);
+houseL(:,:,2) = normalizeLaplacian(house2, 'low', mask);
+houseL(:,:,3) = normalizeLaplacian(house3, 'low', mask);
 
 
 % repeat images to obtain nImages number of houses
@@ -151,19 +156,19 @@ faceM = zeros(sz, sz, nImages/nFaceImages);
 faceL = zeros(sz, sz, nImages/nFaceImages);
 
 % high contrast 
-faceH(:,:,1) = normalizeLaplacian(face1, 'high');
-faceH(:,:,2) = normalizeLaplacian(face2, 'high');
-faceH(:,:,3) = normalizeLaplacian(face3, 'high');
+faceH(:,:,1) = normalizeLaplacian(face1, 'high', mask);
+faceH(:,:,2) = normalizeLaplacian(face2, 'high', mask);
+faceH(:,:,3) = normalizeLaplacian(face3, 'high', mask);
 
 % medium contrast
-faceM(:,:,1) = normalizeLaplacian(face1, 'medium');
-faceM(:,:,2) = normalizeLaplacian(face2, 'medium');
-faceM(:,:,3) = normalizeLaplacian(face3, 'medium');
+faceM(:,:,1) = normalizeLaplacian(face1, 'medium', mask);
+faceM(:,:,2) = normalizeLaplacian(face2, 'medium', mask);
+faceM(:,:,3) = normalizeLaplacian(face3, 'medium', mask);
 
 % low contrast
-faceL(:,:,1) = normalizeLaplacian(face1, 'low');
-faceL(:,:,2) = normalizeLaplacian(face2, 'low');
-faceL(:,:,3) = normalizeLaplacian(face3, 'low');
+faceL(:,:,1) = normalizeLaplacian(face1, 'low', mask);
+faceL(:,:,2) = normalizeLaplacian(face2, 'low', mask);
+faceL(:,:,3) = normalizeLaplacian(face3, 'low', mask);
 
 % repeat images to obtain nImages number of face
 faceH = repmat(faceH, 1, 1, nImages/nFaceImages);
