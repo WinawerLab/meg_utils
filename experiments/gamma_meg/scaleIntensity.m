@@ -9,7 +9,12 @@ function outIm = scaleIntensity(imIn, targetContrast, mask)
 % natural scene images use the function normalizeLaplacian 
 % nicholas chua 2016
 
-if~exist('mask', 'var'), mask = true(size(imIn)); end
+if~exist('mask', 'var'), 
+    mask = true(size(imIn));
+    grating = true;
+else
+    grating = false;
+end
 
 %% scale range
 im = double(imIn);
@@ -19,7 +24,10 @@ im = (im - (mx/2))/mx; % scale range to [-0.5 0.5]
 im = double(im);
 %% change contrast
 equalizedImage = im/std(im(:)) * targetContrast;
-equalizedImage = equalizedImage - median(equalizedImage(mask(:)));
+
+if ~grating
+    equalizedImage = equalizedImage - median(equalizedImage(mask(:)));
+end
 
 % crop values that exceed the range
 if targetContrast > 1,
