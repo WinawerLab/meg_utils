@@ -32,8 +32,8 @@
 
 
 %% parameters
-saveFiles = false;
-visualizeImages = true;
+saveFiles = true;
+visualizeImages = false;
 mask_radius = 0.9;
 
 background = 128; % mean pixel intensity
@@ -67,7 +67,7 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 
 % number of .mat files generated - each one has a different random order of
 % trials
-totalRuns = 1;
+totalRuns = 12;
 
 targetContrast = [5 0.1 0.02]; % for px intensity range of [-0.5 0.5]
 % 5 effectively binarizes the stimuli
@@ -121,25 +121,25 @@ houseM = uint8(houseM);
 houseL = uint8(houseL);
 
 
-stdH = std(double(reshape(houseH, sz*sz,[])));
-stdM = std(double(reshape(houseM, sz*sz,[])));
-stdL = std(double(reshape(houseL, sz*sz,[])));
-
-figure, 
-for ii = 1:3
-    subplot(3,3,0+ii); histogram(houseH(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdH(ii)));
-    
-    subplot(3,3,3+ii); histogram(houseM(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdM(ii)));
-    
-    subplot(3,3,6+ii); histogram(houseL(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdL(ii)));
-end
+% stdH = std(double(reshape(houseH, sz*sz,[])));
+% stdM = std(double(reshape(houseM, sz*sz,[])));
+% stdL = std(double(reshape(houseL, sz*sz,[])));
+% 
+% figure, 
+% for ii = 1:3
+%     subplot(3,3,0+ii); histogram(houseH(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdH(ii)));
+%     
+%     subplot(3,3,3+ii); histogram(houseM(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdM(ii)));
+%     
+%     subplot(3,3,6+ii); histogram(houseL(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdL(ii)));
+% end
 
 %% faces
 nFaceImages = 3; % number of different house images
-faceIndices = [16 39 66]; % file number of selected image
+faceIndices = [29 39 66]; % file number of selected image
 
 face1 = imresize( imagesOrig(:,:, faceIndices(1)), [sz sz]);
 face2 = imresize( imagesOrig(:,:, faceIndices(2)), [sz sz]);
@@ -179,22 +179,22 @@ faceM = uint8(faceM);
 faceL = uint8(faceL);
 
 
-stdH = std(double(reshape(faceH, sz*sz,[])));
-stdM = std(double(reshape(faceM, sz*sz,[])));
-stdL = std(double(reshape(faceL, sz*sz,[])));
-
-figure, 
-for ii = 1:3
-    subplot(3,3,0+ii); histogram(faceH(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdH(ii)));
-    
-    subplot(3,3,3+ii); histogram(faceM(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdM(ii)));
-    
-    subplot(3,3,6+ii); histogram(faceL(:,:,ii)); xlim([0 255]);
-    title(sprintf('Std = %6.2f', stdL(ii)));
-end
-
+% stdH = std(double(reshape(faceH, sz*sz,[])));
+% stdM = std(double(reshape(faceM, sz*sz,[])));
+% stdL = std(double(reshape(faceL, sz*sz,[])));
+% 
+% figure, 
+% for ii = 1:3
+%     subplot(3,3,0+ii); histogram(faceH(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdH(ii)));
+%     
+%     subplot(3,3,3+ii); histogram(faceM(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdM(ii)));
+%     
+%     subplot(3,3,6+ii); histogram(faceL(:,:,ii)); xlim([0 255]);
+%     title(sprintf('Std = %6.2f', stdL(ii)));
+% end
+% 
 
 
 %% 
@@ -219,9 +219,9 @@ for run = 1:totalRuns
     end
     
     for iii = 1:nImages
-        pinkNoiseH(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii),targetContrast(1));
-        pinkNoiseM(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+9),targetContrast(2));
-        pinkNoiseL(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+18),targetContrast(3));
+        pinkNoiseH(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii),targetContrast(1),mask);
+        pinkNoiseM(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+9),targetContrast(2),mask);
+        pinkNoiseL(:,:,iii) = scaleIntensity(pinkNoise(:,:,iii+18),targetContrast(3),mask);
     end
     
     
@@ -276,7 +276,7 @@ for run = 1:totalRuns
     mn    = NaN(1,size(images,3));
     % apply soft circular aperture
     for i = 1:size(images,3)
-        [images(:,:,i), stdev(i), mn(i)] = cosineMask(images(:,:,i), mask_radius);
+        [images(:,:,i), stdev(i), mn(i)] = cosineMask(images(:,:,i), mask_radius,i);
     end
     
     %% save images
@@ -301,17 +301,24 @@ for run = 1:totalRuns
     end
     
     %% preview stimuli
-    if visualizeImages
-        figure;
-        for ii = 1:size(images, 3);
-            %imagesc(images(:,:,ii),range);
-            %colormap gray;
-            %axis image off;
-            imshow(images(:,:,ii));
-            title(sprintf('Image %d\tMean = %6.2f; Std = %6.2f',ii, mn(ii), stdev(ii)));
-            waitforbuttonpress;%  pause(0.2);
-        end
-    end
+%     if visualizeImages
+%         figure;
+%         for ii = 1:size(images, 3);
+%             %imagesc(images(:,:,ii),range);
+%             %colormap gray;
+%             %axis image off;
+%             subplot(1,2,1)
+%             imshow(images(:,:,ii));
+%             subplot(1,2,2)
+%             hist(images(mask(:)));
+%             title(sprintf('Image %d\tMean = %6.2f; Std = %6.2f',ii, mn(ii), stdev(ii)));
+%             %savefig(fullfile(savePath, sprintf('/histogram_%d', ii)));
+%             waitforbuttonpress;
+%             %pause(0.2);
+%            
+%             
+%         end
+%     end
     %% stimulus parameters
     
     stimulus.images = images;
