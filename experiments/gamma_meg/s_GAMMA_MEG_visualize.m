@@ -5,30 +5,40 @@
 
 fs                            = 1000;
 intertrial_trigger_num        = 10;
-which_session_to_visualize    = 5:6; %[7:12,14:16];
+which_session_to_visualize    = 8; %[7:12,14:16];
 save_images                   = true;
-using_denoised_data           = false;
-suffix                        = 'localregression_multi_100';
+using_denoised_data           = true;
+suffix                        = 'denoised_localregression_multi_100';
 
 if isempty(which('ft_prepare_layout'))
     meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 end
 
+% Where to find data?
+project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
 
+% Type of data
+data_pth       = '*_Gamma_*subj*';
+
+
+% Find subject path
+d = dir(fullfile(project_pth, data_pth));
+%   restrict to directories
+subj_pths = struct2cell(d);
 
 
 %% Loop over data sets
 for session_num = which_session_to_visualize
     
-   condition_names = gamma_get_condition_names(session_num);
-
+    condition_names = gamma_get_condition_names(session_num);
+    
     path_to_data = meg_gamma_get_path(session_num);
     %% Define paths and load data
     load_pth    = fullfile(path_to_data, 'processed');
     
     if using_denoised_data
         save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1}, 'denoised');
-        d        =  dir(fullfile(load_pth, '*_denoisedData_*boot*'));tmp
+        d        =  dir(fullfile(load_pth, '*_denoisedData_*boot*'));
         badChannels = [];
     else
         save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1});
@@ -36,13 +46,13 @@ for session_num = which_session_to_visualize
         badChannels = zeros(1,157);
     end
     
-    results         = load(fullfile(load_pth, d(1).name));
+    results         = load(fullfile(load_pth, d(2).name));
     
     num_conditions = size(results.w_pwr,2);
     num_channels   = size(results.w_pwr,1);
     
     if isempty(badChannels)
-        denoisedData   = load(fullfile(project_pth, subj_pths{session_num-1}, 'processed',sprintf('s0%d_denoisedData.mat',session_num)));
+        denoisedData   = load(fullfile(path_to_data, 'processed',sprintf('s0%d_denoisedData.mat',session_num)));
         badChannels    = denoisedData.bad_channels;
     end
     
@@ -78,7 +88,7 @@ for session_num = which_session_to_visualize
         sprintf('%s - %s', condition_names{6}, condition_names{10})...
         sprintf('%s - %s', condition_names{7}, condition_names{10})...
         sprintf('%s - %s', condition_names{8}, condition_names{10})...
-        sprintf('%s - %s', condition_names{9}, condition_names{10})...        
+        sprintf('%s - %s', condition_names{9}, condition_names{10})...
         'noise - baseline'...
         'gratings - baseline'...
         'noise - gratings'...
@@ -96,7 +106,7 @@ for session_num = which_session_to_visualize
     w_gauss_mn = nanmean(results.w_gauss,3);
     w_pwr_mn   = nanmean(results.w_pwr,3);
     
-    % compute SNR    
+    % compute SNR
     snr_fit_bl  = zeros(num_channels, num_contrasts);
     snr_gauss_f = zeros(num_channels, num_contrasts);
     
@@ -132,7 +142,7 @@ for session_num = which_session_to_visualize
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
-        hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_Gamma_SNR_local_%s.eps',suffix))); 
+        hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_Gamma_SNR_local_%s.eps',suffix)));
         close(fH)
     end
     
@@ -141,7 +151,7 @@ for session_num = which_session_to_visualize
     threshold = 0;%3;
     fH = figure; clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
     plot_range = [-1 1] * ceil(max(max(abs(snr_w_pwr(:,1:9)))));
-
+    
     for c = 1:9
         subplot(3,3,c)
         data_to_plot = snr_w_pwr(:,c)';
@@ -151,9 +161,9 @@ for session_num = which_session_to_visualize
         colormap parula
     end
     if save_images;  hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s',suffix))); close(fH);end
-   
     
-
+    
+    
     %     %% Noise (Gamma SNR - baseline)
     %     this_contrast = 12;
     %
@@ -211,32 +221,32 @@ for session_num = which_session_to_visualize
     % TODO: threshold maps by significance: w_gauss_mn./w_gauss_sd>2
     
     
-%     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight (median-baseline) before denoising')
-%     for cond = 1:9
-%         subplot(3,3,cond)
-%         ft_plotOnMesh(to157chan((w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)'),~badChannels,0), condition_names{cond});
-%         set(gca, 'CLim', [0 .2])
-%         colormap parula
-% 
-%     end
-%     
-%     if save_images
-%         hgexport(fH,fullfile(save_pth, 'Mesh_Gaussian_weight_per_condition_local_regression1.eps'));
-%     end
-%     
-%     fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
-%     for cond = 1:9
-%         subplot(3,3,cond)
-%         ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
-%         set(gca, 'CLim', [0 .2])
-%         colormap parula
-% 
-%     end
-%     
-%     if save_images
-%         hgexport(fH, fullfile(save_pth, sprintf('Mesh_Broadband_per_condition_%s.eps',suffix)));
-%         
-%     end
+    %     fH = figure(998); clf, set(fH, 'name', 'Gaussian weight (median-baseline) before denoising')
+    %     for cond = 1:9
+    %         subplot(3,3,cond)
+    %         ft_plotOnMesh(to157chan((w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)'),~badChannels,0), condition_names{cond});
+    %         set(gca, 'CLim', [0 .2])
+    %         colormap parula
+    %
+    %     end
+    %
+    %     if save_images
+    %         hgexport(fH,fullfile(save_pth, 'Mesh_Gaussian_weight_per_condition_local_regression1.eps'));
+    %     end
+    %
+    %     fH = figure(999); clf, set(fH, 'name', 'Broadband weight')
+    %     for cond = 1:9
+    %         subplot(3,3,cond)
+    %         ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
+    %         set(gca, 'CLim', [0 .2])
+    %         colormap parula
+    %
+    %     end
+    %
+    %     if save_images
+    %         hgexport(fH, fullfile(save_pth, sprintf('Mesh_Broadband_per_condition_%s.eps',suffix)));
+    %
+    %     end
     
     
     
@@ -253,7 +263,7 @@ for session_num = which_session_to_visualize
         ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
         set(gca, 'CLim', [0 .2])
         colormap parula
-
+        
     end
     
     if save_images
@@ -267,7 +277,7 @@ for session_num = which_session_to_visualize
         ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
         set(gca, 'CLim', [0 .2])
         colormap parula
-
+        
     end
     
     if save_images
@@ -275,6 +285,6 @@ for session_num = which_session_to_visualize
         close(fH)
     end
     
-   
     
- end
+    
+end
