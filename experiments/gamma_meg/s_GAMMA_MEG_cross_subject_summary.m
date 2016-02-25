@@ -2,9 +2,11 @@
 
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 data_pth                      = '*_Gamma_*subj*';
-which_session_to_visualize    = 5:9; %[5:9,10:12,14:16];
+% which_session_to_visualize    = 5:9;
 % which_session_to_visualize    = [10:12,14:16]; %
-save_images                   = true;
+ which_session_to_visualize    = [5:9,10:12,14:16]; %
+
+save_images                   = false;
 using_denoised_data           = true;
 % suffix                        = 'localregression_multi_100';
 suffix                        = 'denoisedData_bootstrapped_localregression_multi_100';
@@ -112,9 +114,13 @@ for session_num = which_session_to_visualize
 end
 
 
-x1 = [.23 .3 .754]; % red
+x1 = [.23 .3 .754]; % blue
 x2 = [.75 .75 .75]; % gray
-x3 = [.706 .016 .150]; % blue
+x3 = [.706 .016 .150]; % red
+
+x1 = [0 0 1]; % blue
+x2 = [1 1 1]*0; % gray
+x3 = [1 0 0]; % red
 
 pos = linspace(x1(1),x2(1),32);
 neg = linspace(x2(1),x3(1),32);
@@ -139,16 +145,15 @@ blue_gray_red_cmap =  [first_column,second_column,third_column];
 save_pth = fullfile(project_pth,'Images');
 
 %% SNR Mesh for Gaussian bump
-
+subjects = 1:5;
 for data_type = 1:2
-    scrsz = get(0,'ScreenSize');
     
     switch data_type 
         case 1
-            data = mean(snr_w_gauss_summary(1:9,:,:),3);
+            data = mean(snr_w_gauss_summary(1:9,:,subjects),3);
             str = 'Gamma';
         case 2
-            data = mean(snr_w_pwr_summary(1:9,:,:),3);
+            data = mean(snr_w_pwr_summary(1:9,:,subjects),3);
             str = 'Broadband';
     end
     
@@ -156,17 +161,17 @@ for data_type = 1:2
 %     fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  
    
     plot_range = [-1 1] * ceil(max(abs(data(:))));
-    threshold =  0; % A threshold of 2 seems to be reasonable
-    for c = [3:4];%[1:2,5:9]; %
+    threshold =  2;%0; % A threshold of 2 seems to be reasonable
         fH = figure; clf; 
        set(fH, 'name', sprintf('%s SNR', str))
-%         subplot(3,3,c)
+    for c = 1:9% [3:4];%[1:2,5:9]; %
+         subplot(3,3,c)
         data_to_plot = data(c,:);
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(data_to_plot, contrastnames{c});
         set(gca, 'CLim', plot_range);
-        colormap(blue_gray_red_cmap);
-%         colormap(jmaColors('coolhotcortex'))
+  %      colormap(blue_gray_red_cmap);
+       colormap(jmaColors('coolhotcortex'))
         
      if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
