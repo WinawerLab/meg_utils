@@ -15,7 +15,7 @@ ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subjects                      = 4:11; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
+subjects                      = 9; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -30,7 +30,7 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 blank_condition               = 10;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                       = true;
 denoise_with_nonphys_channels = true;
-save_data                     = true;
+save_data                     = false;
 
 
 % Find subject path
@@ -141,9 +141,9 @@ for subject = subjects
     % For a good understanding of the data, run
     % s_Gamma_fit_data_afte_denoising.m. These figures plotted below are
     % just a sanity check.
-%     figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
-%         'Noise Pool', [],'2d', 'interpolation', 'nearest');
-%     
+    figure, ft_plotOnMesh(to157chan(results.noisepool, ~bad_channels, 0), ...
+        'Noise Pool', [],'2d', 'interpolation', 'nearest');
+    
 %     figure, ft_plotOnMesh(to157chan(results.finalmodel.r2, ~bad_channels, 0), ...
 %         'Denoised Broadband R2',  [], [],  'CLim', [0 5]);
 %     
