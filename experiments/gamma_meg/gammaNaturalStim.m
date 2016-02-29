@@ -69,7 +69,7 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 % trials
 totalRuns = 12;
 
-targetContrast = [5 0.1 0.02]; % for px intensity range of [-0.5 0.5]
+targetContrast = [5 0.1 0.05]; %[5 0.1 0.02] %[5 0.1 0.05]
 % 5 effectively binarizes the stimuli
 
 
