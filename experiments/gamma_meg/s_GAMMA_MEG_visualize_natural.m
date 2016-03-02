@@ -19,23 +19,25 @@ subj_pths = struct2cell(d);
 fs                            = 1000;
 intertrial_trigger_num        = 14;
 which_session_to_visualize    = 18; %[7:12,14:16];
-save_images                   = false;
+save_images                   = true;
 using_denoised_data           = false;
-suffix                        = 'preliminary';
+suffix                        = 'localregression_multi';
 conditions                    = gamma_get_condition_names(which_session_to_visualize);
 
 for session_num = which_session_to_visualize
     %% load data
     condition_names = gamma_get_condition_names(session_num);
     path_to_data = meg_gamma_get_path(session_num);
+    [~, subject_folder] = fileparts(path_to_data);
+
     load_pth    = fullfile(path_to_data, 'processed');
     
     if using_denoised_data
-        save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1}, 'denoised');
+        save_pth = fullfile(project_pth,'/Images',subject_folder, 'denoised');
         d        =  dir(fullfile(load_pth, '*_denoisedData_*boot*'));
         badChannels = [];
     else
-        save_pth = fullfile(project_pth,'/Images',subj_pths{session_num-1});
+        save_pth = fullfile(project_pth,'/Images',subject_folder);
         d        =  dir(fullfile(load_pth, sprintf('*%s*', suffix)));
         badChannels = zeros(1,157);
     end
@@ -92,10 +94,10 @@ for session_num = which_session_to_visualize
     threshold = 0;%3;
     
     % gaussian weight for each stimuli
-    fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]);  set(fH, 'name', 'Gaussian SNR' )
-    plot_range = [-1 1] * ceil(max(max(abs(snr_w_gauss(:,1:9)))));
+    fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)]);  set(fH, 'name', 'Gaussian SNR' )
+    plot_range = [-1 1] * (max(max(abs(snr_w_gauss(:,1:9)))));
     for c = 1:12
-        subplot(3,4,c)
+        subplot(4,3,c)
         data_to_plot = snr_w_gauss(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), conditions{c});
@@ -114,17 +116,20 @@ for session_num = which_session_to_visualize
     
     scrsz = get(0,'ScreenSize');
     threshold = 0;%3;
-    fH = figure; clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]); set(fH, 'name', 'Broadband SNR')
-    plot_range = [-1 1] * ceil(max(max(abs(snr_w_pwr(:,1:9)))));
+    fH = figure; clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)]); set(fH, 'name', 'Broadband SNR')
+    plot_range = [-1 1] * (max(max(abs(snr_w_pwr(:,1:9)))));
     
-    for c = 1:9
-        subplot(3,3,c)
+    for c = 1:12
+        subplot(4,3,c)
         data_to_plot = snr_w_pwr(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
         ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), conditions{c});
         set(gca, 'CLim', plot_range)
         colormap parula
     end
-    if save_images;  hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s',suffix))); close(fH);end
+    if save_images;  
+        hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s.eps',suffix))); 
+        close(fH);
+    end
     
 end

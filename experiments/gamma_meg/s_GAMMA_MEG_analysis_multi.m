@@ -46,11 +46,13 @@ fs                            = 1000;        % sample rate
 epoch_start_end               = [0.050 1.049];% start and end of epoch, relative to trigger, in seconds
 
 intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
+intertrial_trigger_num        = 14;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
 save_spectral_data            = true;
 
-which_sessions_to_analyze    = [16];   % subject 99 for synthetic data
+which_sessions_to_analyze    = [16];    % subject 99 for synthetic data
+which_sessions_to_analyze    = [17 18]; % face / house / grating experiment
 
 suffix                        = 'localregression_multi';
 
@@ -86,6 +88,8 @@ for session_num = which_sessions_to_analyze
         
         %% Make epochs
         [ts, conditions]  = meg_make_epochs(raw_ts, trigger, epoch_start_end, fs);
+        
+        clear raw_ts;
         % remove intertrial intervals
         iti               = conditions == intertrial_trigger_num;
         ts                = ts(:,~iti, :);
@@ -99,7 +103,7 @@ for session_num = which_sessions_to_analyze
         conditions(idx) = [];
     end
     
-    if sum(conditions == 12) > 0;
+    if sum(conditions == 12)  > 0 && length(condition_names) < 12;
         idx           = find(conditions==12);
         ts(:,idx, :)  = [];
         conditions(idx) = [];
@@ -260,7 +264,7 @@ for session_num = which_sessions_to_analyze
     
     
     %% Save Processed Data
-    filename = fullfile(save_pth', sprintf('s0%d_%s.mat',session_num,suffix));
+    filename = fullfile(save_pth, sprintf('s0%d_%s.mat',session_num,suffix));
     save (filename, 'num_conditions', 'f_sel', 'data_channels', 'nboot', 'f_use4fit', ...
         'fit_bl', 'w_pwr', 'w_gauss', 'gauss_f', 'fit_f2', 'w_gauss_mn', 'w_pwr_mn', 'fit_bl_mn');
     
