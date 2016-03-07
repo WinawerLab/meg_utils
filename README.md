@@ -1,7 +1,8 @@
 meg_utils
 =========
-This is a set of Matlab tools for analyzing MEG data. 
+This is a set of Matlab tools for analyzing MEG or EEG data. 
 The data we work with is acquired at NYU's MEG lab http://psych.nyu.edu/nellab/meglab.html. 
+Or at the NYU's EEG lab usinga 128 channel EGI cap & NetStation software.
 
 In this repository you can find the following folders:
 
@@ -11,7 +12,7 @@ In this repository you can find the following folders:
 		* HPC:				Scripts and functions to run analyses on the High Performance Cluster (HPC)
 		* Scripts:			
 			* Analysis: 	Scripts and their subfunctions to run a full analysis trees
-			* Visualization:Scripts and functions to run full visualization analyses
+			* Visualization: Scripts and functions to run full visualization analyses
 	* sseeg
 	* ssmeg
 	
