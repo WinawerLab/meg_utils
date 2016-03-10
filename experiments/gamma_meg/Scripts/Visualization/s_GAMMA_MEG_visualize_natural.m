@@ -33,11 +33,11 @@ for session_num = which_session_to_visualize
     load_pth    = fullfile(path_to_data, 'processed');
     
     if using_denoised_data
-        save_pth = fullfile(project_pth,'/Images',subject_folder, 'denoised');
+        save_pth = fullfile(project_pth,subject_folder,'figs','denoised');
         d        =  dir(fullfile(load_pth, '*_denoisedData_*boot*'));
         badChannels = [];
     else
-        save_pth = fullfile(project_pth,'/Images',subject_folder);
+        save_pth = fullfile(project_pth,subject_folder,'figs');
         d        =  dir(fullfile(load_pth, sprintf('*%s*', suffix)));
         badChannels = zeros(1,157);
     end
@@ -107,7 +107,7 @@ for session_num = which_session_to_visualize
     
     if save_images
         if ~exist(save_pth, 'dir'), mkdir(save_pth); end
-        hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_Gamma_SNR_local_%s.eps',suffix)));
+        hgexport(fH, fullfile(save_pth,sprintf('%s_Per_Condition_Gamma_SNR_local_%s.eps',date,suffix)));
         close(fH)
     end
     
@@ -128,7 +128,7 @@ for session_num = which_session_to_visualize
         colormap parula
     end
     if save_images;  
-        hgexport(fH, fullfile(save_pth,sprintf('Per_Condition_BB_SNR_%s.eps',suffix))); 
+        hgexport(fH, fullfile(save_pth,sprintf('%s_Per_Condition_BB_SNR_%s.eps',date, suffix))); 
         close(fH);
     end
     
