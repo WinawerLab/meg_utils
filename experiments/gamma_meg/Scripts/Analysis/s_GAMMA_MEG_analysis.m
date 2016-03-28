@@ -39,7 +39,7 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 1;           % number of bootstrap samples
+nboot                         = 50;           % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -53,9 +53,9 @@ intertrial_trigger_num        = 11;          % the MEG trigger value that corres
 save_images                   = false;
 save_spectral_data            = true;
 
-which_sessions_to_analyze    = 7;   % subject 99 for synthetic data
+which_sessions_to_analyze    = 18;   % subject 99 for synthetic data
 
-suffix                        = 'local_regression';
+suffix                        = 'local_regression+50_bootstrap';
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})

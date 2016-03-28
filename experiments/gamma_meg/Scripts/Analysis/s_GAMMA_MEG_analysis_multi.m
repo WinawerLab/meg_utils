@@ -36,7 +36,7 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 1;           % number of bootstrap samples
+nboot                         = 100;           % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
@@ -45,16 +45,16 @@ denoise_via_pca               = false;       % Do you want to use meg denoise?
 fs                            = 1000;        % sample rate
 epoch_start_end               = [0.050 1.049];% start and end of epoch, relative to trigger, in seconds
 
-intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
+%intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
 intertrial_trigger_num        = 14;          % the MEG trigger value that corresponds to the intertrial interval
 
 save_images                   = false;
 save_spectral_data            = true;
 
-which_sessions_to_analyze    = [16];    % subject 99 for synthetic data
-which_sessions_to_analyze    = [17 18]; % face / house / grating experiment
+%which_sessions_to_analyze    = [16];    % subject 99 for synthetic data
+which_sessions_to_analyze    = [17 18 19]; % face / house / grating experiment
 
-suffix                        = 'localregression_multi';
+suffix                        = 'localregression_multi_100_boots';
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})

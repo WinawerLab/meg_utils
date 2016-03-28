@@ -32,8 +32,8 @@
 
 
 %% parameters
-saveFiles = true;
-visualizeImages = false;
+saveFiles = false;
+visualizeImages = true;
 mask_radius = 0.9;
 
 background = 128; % mean pixel intensity
@@ -58,7 +58,7 @@ mask = x.^2 + y.^2 <= mask_radius.^2;
 
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
 savePath    = fullfile(projectPath, 'stimuli/natural_images');
-imagePath   = fullfile(projectPath, 'cerebral_cortex_datashare/example_V1_electrode_faceshouses.mat');
+imagePath   = fullfile(projectPath, 'code/cerebral_cortex_datashare/example_V1_electrode_faceshouses.mat');
 if ~exist(savePath, 'dir'), mkdir(savePath); end
 
 addpath(genpath('~/matlab/git/vistadisp/'));
@@ -67,7 +67,7 @@ scale_images = @(x) uint8((x - min(x(:))) / (max(x(:)) - min(x(:))) * diff(range
 
 % number of .mat files generated - each one has a different random order of
 % trials
-totalRuns = 12;
+totalRuns = 1;
 
 targetContrast = [5 0.1 0.05]; %[5 0.1 0.02] %[5 0.1 0.05]
 % 5 effectively binarizes the stimuli
@@ -300,7 +300,7 @@ for run = 1:totalRuns
         end
     end
     
-    %% preview stimuli
+    % preview stimuli
 %     if visualizeImages
 %         figure;
 %         for ii = 1:size(images, 3);
@@ -312,9 +312,9 @@ for run = 1:totalRuns
 %             subplot(1,2,2)
 %             hist(images(mask(:)));
 %             title(sprintf('Image %d\tMean = %6.2f; Std = %6.2f',ii, mn(ii), stdev(ii)));
-%             %savefig(fullfile(savePath, sprintf('/histogram_%d', ii)));
-%             waitforbuttonpress;
-%             %pause(0.2);
+%             savefig(fullfile(savePath, sprintf('image_hist/histogram_%d', ii)));
+%             %waitforbuttonpress;
+%             pause(0.1);
 %            
 %             
 %         end

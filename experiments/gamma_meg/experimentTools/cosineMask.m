@@ -5,10 +5,11 @@ function [maskedIm, isolatedStd, isolatedMn] = cosineMask(im, r_min,ii)
 
 if ~exist('r_min', 'var'), r_min = .8; end
 
-visualize = true;
+visualize = false;
+saveimage = true;
 
 projectPath = '/Volumes/server/Projects/MEG/Gamma';
-savePath    = fullfile(projectPath, 'stimuli/natural_images');
+savePath    = fullfile(projectPath, 'stimuli/natural_images/histograms3.22');
 %% make the mask
 sz = size(im,1);
 bg = 128; % the mask should be grey (mean luminanace)
@@ -33,9 +34,16 @@ isolatedImage(R > r_min) = NaN;
 isolatedStd = nanstd(isolatedImage(:));
 isolatedMn  = nanmean(isolatedImage(:));
 
-%% Visualization
+%% save just image
+if saveimage && mod(ii,9) < 4
+    figure (100), clf, colormap gray
+    imshow(maskedIm)
+    hgexport(gcf,fullfile(savePath, sprintf('/image_%d', ii)));
+end
 
-if ii > 27 && ii < 58
+%% Visualization
+if visualize
+%if ii > 27 && ii < 58
     figure (100), clf, colormap gray
 %     subplot(3, 2, 1)
 %     imagesc(R),
@@ -61,8 +69,9 @@ if ii > 27 && ii < 58
     hist(isolatedImage(:))
     title(sprintf('distribution SD = %2.2f MN = %2.2f', isolatedStd, isolatedMn))
     
-    %hgexport(gcf,fullfile(savePath, sprintf('/histogram_%d', ii)));
+    hgexport(gcf,fullfile(savePath, sprintf('/histogram_%d', ii)));
     %waitforbuttonpress;
     pause(0.1);
+%end
 end
 end
