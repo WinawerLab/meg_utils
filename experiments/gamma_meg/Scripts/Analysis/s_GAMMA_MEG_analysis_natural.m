@@ -1,3 +1,9 @@
+%% OBSOLETE
+
+error('This script is obsolete')
+
+return
+
 %% s_GAMMA_MEG_analysis_natural.m
 % Analyse data from MEG gamma experiments
 % (Written with the natural stimuli data in mind, but should be
