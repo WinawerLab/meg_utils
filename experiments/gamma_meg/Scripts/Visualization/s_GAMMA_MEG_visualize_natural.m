@@ -18,7 +18,7 @@ subj_pths = struct2cell(d);
 % data parameters
 fs                            = 1000;
 intertrial_trigger_num        = 14;
-which_session_to_visualize    = 17; %[7:12,14:16];
+which_session_to_visualize    = 20; %[7:12,14:16];
 save_images                   = true;
 using_denoised_data           = false;
 suffix                        = 'localregression_multi_100_boots';

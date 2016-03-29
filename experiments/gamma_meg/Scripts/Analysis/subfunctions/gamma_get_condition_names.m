@@ -17,9 +17,9 @@ function [condition_names, baseline_condition] = gamma_get_condition_names(sessi
 
 if session_number < 10
     condition_group = 1;
-elseif session_number >= 10 && session_number < 16
+elseif ismember(session_number, 10:15)
     condition_group = 2;
-else 
+else
     condition_group = 3;
 end
 
