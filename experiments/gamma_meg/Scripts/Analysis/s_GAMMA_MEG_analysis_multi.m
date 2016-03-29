@@ -52,7 +52,7 @@ save_images                   = false;
 save_spectral_data            = true;
 
 %which_sessions_to_analyze    = [16];    % subject 99 for synthetic data
-which_sessions_to_analyze    = [17 18 19]; % face / house / grating experiment
+which_sessions_to_analyze    = 20; % face / house / grating experiment
 
 suffix                        = 'localregression_multi_100_boots';
 
