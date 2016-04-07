@@ -1,9 +1,9 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-session_num       = 18;
+session_num       = 19;
 fs                = 1000;
-nboot             = 100;
+nboot             = 10;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -19,9 +19,12 @@ verbose               = false;
 % condition names correspond to trigger numbers
 condition_names  = gamma_get_condition_names(session_num);
 
+% save data/figures?
+save_data = false;
+%save_figs = false;
 
 % fieldtrip path
-% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 % Where to find data?
 project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
@@ -38,7 +41,7 @@ isdir     = cell2mat(subj_pths(4,:));
 subj_pths = subj_pths(1,isdir);
 
 %% loop over subjects
-for subject = subjects
+for subject = session_num
 
 % Load denoised timeseries
 data = load(fullfile(meg_gamma_get_path(subject), 'processed',sprintf('s0%d_denoisedData.mat',subject)));
@@ -50,12 +53,12 @@ badEpochs = data.bad_epochs;
 badChannels = data.bad_channels;
 
 % Get raw ts for triggers and then conditions again
-raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*Gamma*');
+raw_ts = meg_load_sqd_data(fullfile(meg_gamma_get_path(subject), 'raw'), '*Gamma*');
 trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
 
 % get rid of artifact triggers that appear before the experiment in subj
 % 15
-if subject == 14
+if subject == 15
     trigger(1:200000,:) = 0;
 end
 
@@ -98,7 +101,7 @@ if nboot >= 1
 else
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), size(ts,3));
 end
-
+warning off 'MATLAB:subsassigndimmismatch'
 % compute the mean amplitude spectrum for each electrode in each condition
 fprintf('Computing bootstraps for each condition\n');
 for ii = 1:length(conditions_unique)
@@ -175,7 +178,7 @@ for cond = 1:num_conditions
                     w_gauss(chan, cond, bootnum),...
                     gauss_f(chan, cond, bootnum),...
                     fit_f2(cond,:, chan, bootnum)] = ...
-                    gamma_fit_data(f,f_use4fit,data_base,data_fit);
+                    gamma_fit_data_localregression_multi(f,f_use4fit,data_base,data_fit);
             catch ME
                 warning(ME.identifier, ME.message)
             end
@@ -205,12 +208,12 @@ w_gauss_md = nanmedian(w_gauss,3);
 gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
-
+if save_data
 fname = fullfile(meg_gamma_get_path(subject), 'processed',sprintf('s0%d_denoisedData_bootstrapped100_4',subject));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);
-
+end
 end
 %% Do some plotting
 

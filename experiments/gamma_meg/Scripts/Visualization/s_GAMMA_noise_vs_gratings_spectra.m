@@ -10,6 +10,7 @@ data_pth                      = '*_Gamma_*subj*';
 subjects                       = [1:11,13:15];
 save_images                   = true;
 
+
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 d = dir(fullfile(project_pth, data_pth));

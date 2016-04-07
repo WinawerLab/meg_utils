@@ -11,11 +11,13 @@
 project_pth                   = '/Volumes/server/Projects/MEG/Gamma/Data';
 ft_pth                        = '/Volumes/server/Projects/MEG/code/fieldtrip';
 
+addpath(genpath('~/matlab/git/denoiseproject'))
+
 % Type of data
 data_pth                      = '*_Gamma_*subj*';
 
 % Subject number to analyze
-subjects                      = 9; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
+subjects                      = 17; % 99 means synthetic data (remember to set denoise_with_nonphys_channels to false)
 
 % preprocessing parameters (see dfdPreprocessData)
 var_threshold                 = [0.05 20];
@@ -26,11 +28,11 @@ environmental_channels        = 158:160;
 trigger_channels              = 161:164;
 epoch_start_end               = [0.050 1.049];% start and end of epoch, relative to trigger, in seconds
 fs                            = 1000;        % sample rate
-intertrial_trigger_num        = 11;          % the MEG trigger value that corresponds to the intertrial interval
-blank_condition               = 10;          % the MEG trigger value that corresponds to trials with zero contrast
+intertrial_trigger_num        = 14;          % the MEG trigger value that corresponds to the intertrial interval
+blank_condition               = 13;          % the MEG trigger value that corresponds to trials with zero contrast
 verbose                       = true;
 denoise_with_nonphys_channels = true;
-save_data                     = false;
+save_data                     = true;
 
 
 % Find subject path
