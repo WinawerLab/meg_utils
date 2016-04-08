@@ -22,7 +22,7 @@ function [baseline_fit,w_broadband,w_gauss,gauss_f,fit_f2] = ...
 f_sel  = ismember(f,f_use4fit);
 
 % Data for fitting baseline (presumably the mean across all conditions)
-x_base = data_base(f_sel); % 1 x num frequencies
+x_base = data_base(f_sel)'; % 1 x num frequencies
 
 % Data for fitting condition of interest
 x_in   = data_fit(f_sel,:)'; % num_conditions x num frequencies

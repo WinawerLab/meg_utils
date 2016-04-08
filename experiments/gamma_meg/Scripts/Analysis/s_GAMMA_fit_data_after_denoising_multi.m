@@ -3,7 +3,7 @@
 % Define variables
 session_num       = 19;
 fs                = 1000;
-nboot             = 10;
+nboot             = 1;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -24,7 +24,7 @@ save_data = false;
 %save_figs = false;
 
 % fieldtrip path
-meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+% meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
 
 % Where to find data?
 project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
@@ -148,7 +148,7 @@ f_sel=ismember(f,f_use4fit);
 num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
 num_channels = size(ts,3);
-out_exp = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+out_exp = NaN(110,num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
 w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
 w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
 gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
@@ -173,7 +173,7 @@ for cond = 1:num_conditions
             % NaNs, and NaNs will cause an error
             try
                 [...
-                    out_exp(chan, cond, bootnum), ...
+                    out_exp(:,chan, cond, bootnum), ...
                     w_pwr(chan, cond, bootnum), ...
                     w_gauss(chan, cond, bootnum),...
                     gauss_f(chan, cond, bootnum),...
