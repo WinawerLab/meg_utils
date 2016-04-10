@@ -36,7 +36,7 @@ denoise_with_nonphys_channels = true;        % Regress out time series from 3 nu
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
 remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
 
-nboot                         = 10;           % number of bootstrap samples
+nboot                         = 1;           % number of bootstrap samples
 
 produce_figures               = true;        % If you want figures in case of debugging, set to true
 
