@@ -152,7 +152,7 @@ f_sel=ismember(f,f_use4fit);
 num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
 num_channels = size(ts,3);
-out_exp = NaN(110,num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+out_exp = NaN(length(f_use4fit),num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
 w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
 w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
 gauss_f = NaN(num_channels,num_conditions, nboot);     % gaussian peak frequency
@@ -194,19 +194,19 @@ fprintf('done!\n')
 warning on 'MATLAB:subsassigndimmismatch'
 
 % summarize bootstrapped fits
-out_exp_mn = nanmean(out_exp,3);
+out_exp_mn = nanmean(out_exp,4);
 w_pwr_mn   = nanmean(w_pwr,3);
 w_gauss_mn = nanmean(w_gauss,3);
 gauss_f_mn = nanmean(gauss_f,3);
 fit_f2_mn  = nanmean(fit_f2,4);
 
-out_exp_sd = nanstd(out_exp,[],3);
+out_exp_sd = nanstd(out_exp,[],4);
 w_pwr_sd   = nanstd(w_pwr,[],3);
 w_gauss_sd = nanstd(w_gauss,[],3);
 gauss_f_sd = nanstd(gauss_f,[],3);
 fit_f2_sd  = nanstd(fit_f2,[],4);
 
-out_exp_md = nanmedian(out_exp,3);
+out_exp_md = nanmedian(out_exp,4);
 w_pwr_md   = nanmedian(w_pwr,3);
 w_gauss_md = nanmedian(w_gauss,3);
 gauss_f_md = nanmedian(gauss_f,3);
@@ -223,32 +223,32 @@ end
 
 %% Power (mean condition)
 fH = figure(996); clf, set(fH, 'name', 'Gaussian weight Before denoising')
-for cond = 1:9
-    subplot(3,3,cond)
+for cond = 1:length(conditions_unique)-1
+    subplot(3,4,cond)
     ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [0 .2])
 end
 
 
 fH = figure(997); clf, set(fH, 'name', 'Broadband weight Before denoising')
-for cond = 1:9
-    subplot(3,3,cond)
+for cond = 1:length(conditions_unique)-1
+    subplot(3,4,cond)
     ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [0 2])
 end
 
 %% Weights (mean condition - baseline)
 fH = figure(998); clf, set(fH, 'name', 'Gaussian weight')
-for cond = 1:9
-    subplot(3,3,cond)
+for cond = 1:length(conditions_unique)-1
+    subplot(3,4,cond)
     ft_plotOnMesh(to157chan(w_gauss_mn(:,cond)' - w_gauss_mn(:,num_conditions)', ~badChannels, 0), condition_names{cond});
     set(gca, 'CLim', [-1 1] *.1)
 end
 
 
 fH = figure(1001); clf; set(fH, 'name', 'Broadband weight')
-for cond = 1:9
-    subplot(3,3,cond)
+for cond = 1:length(conditions_unique)-1
+    subplot(3,4,cond)
     ft_plotOnMesh(to157chan(w_pwr_mn(:,cond)' - w_pwr_mn(:,num_conditions)',~badChannels,0), condition_names{cond});
     set(gca, 'CLim', [-1 1] *.02)
 end
