@@ -35,9 +35,9 @@ denoise_with_nonphys_channels = true;
 save_data                     = true;
 
 
-% Find subject path
+Find subject path
 d = dir(fullfile(project_pth, data_pth));
-%   restrict to directories
+  restrict to directories
 subj_pths = struct2cell(d);
 isdir     = cell2mat(subj_pths(4,:));
 subj_pths = subj_pths(1,isdir);
@@ -57,7 +57,7 @@ for subject = subjects
         [ts, conditions] = gamma_synthetize_validation_data();
     else
         %% Load data (SLOW)
-        raw_ts = meg_load_sqd_data(fullfile(project_pth, subj_pths{subject}, 'raw'), '*Gamma*');
+        raw_ts = meg_load_sqd_data(fullfile(meg_gamma_get_path(subject), 'raw'), '*Gamma*');
         
         %% Extract triggers
         trigger = meg_fix_triggers(raw_ts(:,trigger_channels));
@@ -133,7 +133,8 @@ for subject = subjects
     [results,evalout,denoisedspec,denoisedts] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
     
     if save_data
-        save(fullfile(project_pth, sprintf('s0%d_denoisedData.mat',subject+1)),'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
+        save(fullfile(meg_gamma_get_path(subject), 'processed', sprintf('s_%03d_denoisedData.mat', subject)),...
+            'results','evalout','bad_channels','bad_epochs','denoisedts','opt')
     end
     
     %% Look at results 

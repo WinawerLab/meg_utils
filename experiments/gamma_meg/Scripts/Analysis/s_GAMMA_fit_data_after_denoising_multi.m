@@ -1,9 +1,9 @@
 %% Script to model gamma and broadband at the same time, after denoising
 
 % Define variables
-session_num       = 19;
+session_num       = 18;
 fs                = 1000;
-nboot             = 1;
+nboot             = 100;
 trigger_channels  = 161:164;
 data_channels     = 1:157;
 epoch_start_end   = [0.25 1.049];% start and end of epoch, relative to trigger, in seconds
@@ -32,6 +32,10 @@ project_pth    = '/Volumes/server/Projects/MEG/Gamma/Data';
 % Type of data
 data_pth       = '*_Gamma_*subj*';
 
+% suffix for saved data files
+suffix         = sprintf('denoisedDataFits_%d_boots',nboot);
+dateSuffix     = sprintf('%s_%s', suffix, datestr(now, 'mm.dd.yy'));
+
 
 % Find subject path
 d = dir(fullfile(project_pth, data_pth));
@@ -44,7 +48,7 @@ subj_pths = subj_pths(1,isdir);
 for subject = session_num
 
 % Load denoised timeseries
-data = load(fullfile(meg_gamma_get_path(subject), 'processed',sprintf('s0%d_denoisedData.mat',subject)));
+data = load(fullfile(meg_gamma_get_path(subject), 'raw',sprintf('s0%d_denoisedData.mat',subject)));
 ts = data.denoisedts{1};
 ts = permute(ts,[2,3,1]);
 
@@ -90,7 +94,7 @@ clear raw_ts
 % Truncate design
 conditions = conditions(~badEpochs);
 
-% compute spectral data
+%% compute spectral data
 t = (1:size(ts,1))/fs;
 f = (0:length(t)-1)/max(t);
 
@@ -209,7 +213,7 @@ gauss_f_md = nanmedian(gauss_f,3);
 fit_f2_md  = nanmedian(fit_f2,4);
 
 if save_data
-fname = fullfile(meg_gamma_get_path(subject), 'processed',sprintf('s0%d_denoisedData_bootstrapped100_4',subject));
+fname = fullfile(meg_gamma_get_path(subject), 'processed',sprintf('s0%d_%s',subject, dateSuffix));
     parsave([fname '.mat'], 'out_exp', out_exp, 'w_pwr', w_pwr, ...
         'w_gauss', w_gauss, 'gauss_f', gauss_f,...
         'fit_f2', fit_f2, 'nboot', nboot);

@@ -18,12 +18,12 @@ subj_pths = struct2cell(d);
 % data parameters
 fs                            = 1000;
 intertrial_trigger_num        = 14;
-which_session_to_visualize    = 20; %[7:12,14:16];
-save_images                   = true;
-using_denoised_data           = false;
+which_session_to_visualize    = 18; %[7:12,14:16];
+save_images                   = false;
+using_denoised_data           = true;
 suffix                        = 'localregression_multi_100_boots';
 conditions                    = gamma_get_condition_names(which_session_to_visualize);
-
+ %% loop over sessions
 for session_num = which_session_to_visualize
     %% load data
     condition_names = gamma_get_condition_names(session_num);
@@ -35,7 +35,7 @@ for session_num = which_session_to_visualize
     if using_denoised_data
         save_pth = fullfile(project_pth,subject_folder,'figs','denoised');
         d        =  dir(fullfile(load_pth, '*_denoisedData_*boot*'));
-        badChannels = [];
+        badChannels = zeros(1,157);
     else
         save_pth = fullfile(project_pth,subject_folder,'figs');
         d        =  dir(fullfile(load_pth, sprintf('*%s*', suffix)));
@@ -95,12 +95,12 @@ for session_num = which_session_to_visualize
     
     % gaussian weight for each stimuli
     fH = figure; clf; set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)]);  set(fH, 'name', 'Gaussian SNR' )
-    plot_range = [-1 1] * (max(max(abs(snr_w_gauss(:,1:9)))));
+    plot_range = [-1 1] * (max(max(abs(snr_w_gauss(:,1:length(conditions))))));
     for c = 1:12
         subplot(4,3,c)
         data_to_plot = snr_w_gauss(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
-        ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), conditions{c});
+        ft_plotOnMesh(to157chan(data_to_plot,badChannels,0), conditions{c});
         set(gca, 'CLim', plot_range)
         colormap parula
     end
@@ -117,13 +117,13 @@ for session_num = which_session_to_visualize
     scrsz = get(0,'ScreenSize');
     threshold = 0;%3;
     fH = figure; clf, set(fH, 'position',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)]); set(fH, 'name', 'Broadband SNR')
-    plot_range = [-1 1] * (max(max(abs(snr_w_pwr(:,1:9)))));
+    plot_range = [-1 1] * (max(max(abs(snr_w_pwr(:,1:length(conditions))))));
     
     for c = 1:12
         subplot(4,3,c)
         data_to_plot = snr_w_pwr(:,c)';
         data_to_plot(abs(data_to_plot) < threshold) = 0;
-        ft_plotOnMesh(to157chan(data_to_plot,~badChannels,0), conditions{c});
+        ft_plotOnMesh(to157chan(data_to_plot',~badChannels,0), conditions{c});
         set(gca, 'CLim', plot_range)
         colormap parula
     end
