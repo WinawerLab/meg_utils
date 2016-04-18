@@ -11,9 +11,7 @@ function [tsDenoised] = gamma_denoise(ts, conditions, sessionNum)
 % Outputs : denoisedTs - epoched time series that has been denoised
 
 %% Options and parameters
-ENV_DENOISE     = true; % use environmental channel denoising?
-ENV_CHANNELS    = 158:160;
-DATA_CHANNELS   = 1:157;
+
 EPOCH_START_END = [0.050 1.049];
 fs              = 1000;
 subject         = sessionNum;
@@ -93,7 +91,8 @@ ts = permute(ts, [3 1 2]);
 
 if save_data
     thisDate = datestr(now, 'mm.dd.yy');
-    save(fullfile(meg_gamma_get_path(subject), 'processed', sprintf('s_%03d_denoisedData%s.mat', subject, thisDate)),...
-        'results','evalout','tsDenoised','opt')
+    fileName = sprintf('s_%03d_denoisedData%s.mat', subject, thisDate);
+    save(fullfile(meg_gamma_get_path(subject), 'processed', fileName),...
+        'results','evalout','tsDenoised','opt', denoisedspec)
 end
 end
