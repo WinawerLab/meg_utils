@@ -1,12 +1,12 @@
 %% s_GAMMA_data_pipeline
 %  new wrapper script for a new analysis pipeline
-%  goals:      ~ eliminate redundant (processes that are repeated
-%              in both the analysis and denoising scripts
+%  goals:      ~ eliminate redundancies (processes that are repeated
+%              in both the analysis and denoising scripts)
 %              ~ allow both the analysis and visualization functions to
 %              take denoised and undenoised data
-%              ~ save files in a organized structures
+%              ~ save files in organized structures
 %              ~ allow for parallel processing (and eventual HPC
-%              compadibility
+%              compatability
 %
 % Nicholas Chua
 
@@ -19,7 +19,6 @@ end
 
 
 whichSessions          = 18;
-denoiseData            = true;
 environmentalChannels  = 158:160;
 dataChannels           = 1:157;
 
@@ -51,7 +50,7 @@ for sessionNum = whichSessions
     
     % remove badEpochs and badChannels from ts after environmental
     % denoising
-    ts = tmp(:, ~badEpochs, :);
+    ts = tmp(:, ~badEpochs, :); clear tmp;
     ts(:,:,badChannels) = NaN;
     conditionVector = conditionVector(~badEpochs);
     

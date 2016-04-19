@@ -14,9 +14,8 @@ function [tsDenoised] = gamma_denoise(ts, conditions, sessionNum)
 
 EPOCH_START_END = [0.050 1.049];
 fs              = 1000;
-subject         = sessionNum;
 
-if subject >= 17
+if sessionNum >= 17
     ITI       = 14;
 else
     ITI       = 10;
@@ -29,8 +28,7 @@ verbose = true;
 %% get paths
 % path to denoising project
 addpath(genpath('~/matlab/git/denoiseproject'))
-% path so session folder
-sessionPath = meg_gamma_get_path(sessionNum);
+
 % path to filed trip
 if isempty(which('sqdread')),
     meg_add_fieldtrip_paths(ft_pth,{'yokogawa', 'sqdproject'})
@@ -93,8 +91,8 @@ tsDenoised = permute(tsDenoised, [2 3 1]); % back to time x epochs x chan
 
 if save_data
     thisDate = datestr(now, 'mm.dd.yy');
-    fileName = sprintf('s_%03d_denoisedData%s.mat', subject, thisDate);
-    save(fullfile(meg_gamma_get_path(subject), 'processed', fileName),...
+    fileName = sprintf('s_%03d_denoisedData%s.mat', sessionNum, thisDate);
+    save(fullfile(meg_gamma_get_path(sessionNum), 'processed', fileName),...
         'results','evalout','tsDenoised','opt', 'denoisedspec')
 end
 end

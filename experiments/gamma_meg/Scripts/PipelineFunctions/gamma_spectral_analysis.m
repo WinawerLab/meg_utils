@@ -1,4 +1,4 @@
-function results = gamma_spectral_analysis(ts, conditions, nboot, subject)
+function results = gamma_spectral_analysis(ts, conditions, nboot, sessionNum)
 %% [spectralData, fitData, summaryStats] = gamma_spectral_analysis(ts, conditions)
 %  performs the spectral analysis, bootstrapping, and curve fitting for
 %  s_GAMMA_pipeline
@@ -36,7 +36,6 @@ conditions = conditions(~ITI);
 
 conditions_unique = unique(conditions);
 num_conditions = length(conditions_unique);
-num_time_points = size(ts,1);
 
 % compute spectral data
 t = (1:size(ts,1))/fs;
@@ -83,9 +82,6 @@ end
 fprintf('Done!\n');
 
 % Summarize bootstrapped spectral by mean and std over bootstraps
-if save_spectral_data
-    save(fullfile(save_pth,sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots')
-end
 spectral_data_mean = nanmean(spectral_data_boots, 4);
 
 
@@ -111,8 +107,7 @@ fprintf('Fitting gamma and broadband values for each channel and each condition'
 for chan = data_channels
     
     fprintf('Channel %d of %d\n', chan, length(data_channels)); drawnow;
-    
-    
+        
     for bootnum = 1:nboot
         
         % the baseline is the same for all conditions, so just compute it once
@@ -156,8 +151,14 @@ fit_f2_mn  = nanmean(fit_f2,4);
 results = struct('spectral_data_mean', spectral_data_mean, 'fit_bl_mn', fit_bl_mn, 'w_pwr_mn', w_pwr_mn, 'w_gauss_mn', w_gauss_mn, ...
     'gauss_f_mn', gauss_f_mn, 'fit_f2_mn', fit_f2_mn);
 
+save_pth = fullfile(meg_gamma_get_path(sessionNum), 'processed');
+
+if save_spectral_data
+    save(fullfile(save_pth,sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots', '-v7.3')
+end
+
 if save_results
-    save(fullfile(save_pth,sprintf('s%03d_summary&fits_%s.mat', subject, suffix)),'results')
+    save(fullfile(save_pth,sprintf('s%03d_summary&fits_%s.mat', sessionNum, suffix)),'results', '-v7.3')
 end
 
 
