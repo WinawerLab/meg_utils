@@ -1,6 +1,6 @@
 %% s_GAMMA_data_pipeline
 %  new wrapper script for a new analysis pipeline
-%  principles: ~ eliminate operation redundency (processes that are repeated
+%  goals:      ~ eliminate redundant (processes that are repeated
 %              in both the analysis and denoising scripts
 %              ~ allow both the analysis and visualization functions to
 %              take denoised and undenoised data
