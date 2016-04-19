@@ -89,10 +89,12 @@ ts = permute(ts, [3 1 2]);
 % Denoise for broadband analysis
 [results,evalout,denoisedspec,tsDenoised] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
 
+tsDenoised = permute(tsDenoised, [2 3 1]); % back to time x epochs x chan
+
 if save_data
     thisDate = datestr(now, 'mm.dd.yy');
     fileName = sprintf('s_%03d_denoisedData%s.mat', subject, thisDate);
     save(fullfile(meg_gamma_get_path(subject), 'processed', fileName),...
-        'results','evalout','tsDenoised','opt', denoisedspec)
+        'results','evalout','tsDenoised','opt', 'denoisedspec')
 end
 end

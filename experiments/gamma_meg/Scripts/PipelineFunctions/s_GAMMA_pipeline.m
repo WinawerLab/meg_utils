@@ -23,9 +23,9 @@ denoiseData            = true;
 environmentalChannels  = 158:160;
 dataChannels           = 1:157;
 
-environmentalDenoising = true;
-PCADenoising           = true;
-nBoot                  = 10;
+environmentalDenoising = false;
+PCADenoising           = false;
+nBoot                  = 5;
 
 %% Loop over sessions
 for sessionNum = whichSessions
@@ -51,7 +51,8 @@ for sessionNum = whichSessions
     
     % remove badEpochs and badChannels from ts after environmental
     % denoising
-    ts = tmp(:, ~badEpochs, ~badChannels);
+    ts = tmp(:, ~badEpochs, :);
+    ts(:,:,badChannels) = NaN;
     conditionVector = conditionVector(~badEpochs);
     
     % denoise using Kuper's PCA
@@ -60,7 +61,11 @@ for sessionNum = whichSessions
     end
     %% Spectral analysis, bootstraping, and fitting
     
-    results = gamma_spectral_analysis(ts, conditionVector, nboot);
+    % results is a struct with fields:
+    % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
+    % gauss_f_mn, fit_f2_mn
+    results = gamma_spectral_analysis(ts, conditionVector, nBoot, sessionNum);
+    
     
 end
 

@@ -28,7 +28,7 @@ x_base = data_base(f_sel)'; % 1 x num frequencies
 x_in   = data_fit(f_sel,:)'; % num_conditions x num frequencies
 
 % fit baseline with local linear regression, 1 x num_frequencies
-baseline_fit = localregression(f_use4fit,log(x_base),f_use4fit,[],[], []);
+baseline_fit = localregression(f_use4fit,log(x_base)',f_use4fit,[],[], []);
 
 x_to_fit = bsxfun(@minus, log(x_in), baseline_fit); % 1 x num_frequencies
 

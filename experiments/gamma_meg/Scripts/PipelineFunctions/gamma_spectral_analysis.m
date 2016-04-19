@@ -1,4 +1,4 @@
-function results = gamma_spectral_analysis(ts, conditions, nboot)
+function results = gamma_spectral_analysis(ts, conditions, nboot, subject)
 %% [spectralData, fitData, summaryStats] = gamma_spectral_analysis(ts, conditions)
 %  performs the spectral analysis, bootstrapping, and curve fitting for
 %  s_GAMMA_pipeline
@@ -16,22 +16,36 @@ function results = gamma_spectral_analysis(ts, conditions, nboot)
 %            8) 'spectral_data'
 
 %% Parameters
-results = struct;
-fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
 data_channels = 1:157;
 fs = 1000;
 epoch_start_end = [0.050 1.049];
 
+save_spectral_data = false;
+suffix = datestr(now, 'mm.dd.yy');
 
 %% Calculate Spectral Data
 
+
+
+% remove ITI epochs from data
+ITInum = max(conditions);
+ts = ts(:,conditions ~= ITInum, :);
+ITI = conditions == ITInum;
+conditions = conditions(~ITI);
+
 conditions_unique = unique(conditions);
+num_conditions = length(conditions_unique);
+num_time_points = size(ts,1);
 
 % compute spectral data
 t = (1:size(ts,1))/fs;
 f = (0:length(t)-1)/max(t);
 
+% use these frequencies
+fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+
 spectral_data = abs(fft(ts))/length(t)*2;
+% freq x conditions x channels x bootstraps
 spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
 
 % compute the mean amplitude spectrum for each electrode in each condition
@@ -71,21 +85,21 @@ fprintf('Done!\n');
 if save_spectral_data
     save(fullfile(save_pth,sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots')
 end
+spectral_data_mean = nanmean(spectral_data_boots, 4);
 
-results.spectraldata = spectral_data;
 
 %% Broadband and Gaussian Fit
 
 % binary array conrresponding to freq
-results.f_sel = ismember(f,fitFreq);
-results.num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
+f_sel = ismember(f,fitFreq);
+num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
 num_channels = length(data_channels);
 %     fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
-results.w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
-results.w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
-results.gauss_f = NaN(num_channels, 1, nboot);                 % gaussian peak frequency
-results.fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
+w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
+w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
+gauss_f = NaN(num_channels, 1, nboot);                 % gaussian peak frequency
+fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
 
 warning off 'MATLAB:subsassigndimmismatch'
 
@@ -109,12 +123,12 @@ for chan = data_channels
             data_fit = spectral_data_boots(:,:,chan, bootnum);
             
             [...
-                results.sfit_bl(chan, :, bootnum), ...
-                results.w_pwr(chan, :, bootnum), ...
-                results.w_gauss(chan, :, bootnum),...
-                results.gauss_f(chan, 1, bootnum),...
-                results.fit_f2(:,:, chan, bootnum)] = ...
-                gamma_fit_data_localregression_multi(f,f_use4fit,data_base,data_fit);
+                fit_bl(chan, :, bootnum), ...
+                w_pwr(chan, :, bootnum), ...
+                w_gauss(chan, :, bootnum),...
+                gauss_f(chan, 1, bootnum),...
+                fit_f2(:,:, chan, bootnum)] = ...
+                gamma_fit_data_localregression_multi(f,fitFreq,data_base,data_fit);
             
             %fH = figure(1); clf;
             %plot(f, exp(fit_f2(:,:, chan, bootnum))','r', f, spectral_data_boots(:,:,chan, bootnum), 'k')
@@ -128,16 +142,22 @@ fprintf('done!\n')
 
 warning on 'MATLAB:subsassigndimmismatch'
 
-results.gauss_f = repmat(results.gauss_f, [1 num_conditions 1]);
+gauss_f = repmat(gauss_f, [1 num_conditions 1]);
 
 
 % summarize bootstrapped fits
-results.fit_bl_mn  = nanmean(fit_bl,3);
-results.w_pwr_mn   = nanmean(w_pwr,3);
-results.w_gauss_mn = nanmean(w_gauss,3);
-results.gauss_f_mn = nanmean(gauss_f,2);
-results.fit_f2_mn  = nanmean(fit_f2,4);
+fit_bl_mn  = nanmean(fit_bl,3);
+w_pwr_mn   = nanmean(w_pwr,3);
+w_gauss_mn = nanmean(w_gauss,3);
+gauss_f_mn = nanmean(gauss_f,2);
+fit_f2_mn  = nanmean(fit_f2,4);
 
+results = struct('spectral_data_mean', spectral_data_mean, 'fit_bl_mn', fit_bl_mn, 'w_pwr_mn', w_pwr_mn, 'w_gauss_mn', w_gauss_mn, ...
+    'gauss_f_mn', gauss_f_mn, 'fit_f2_mn', fit_f2_mn);
+
+if save_results
+    save(fullfile(save_pth,sprintf('s%03d_summary&fits_%s.mat', subject, suffix)),'results')
+end
 
 
 end
