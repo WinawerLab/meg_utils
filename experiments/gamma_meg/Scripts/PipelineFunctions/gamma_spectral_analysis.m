@@ -20,7 +20,8 @@ data_channels = 1:157;
 fs = 1000;
 epoch_start_end = [0.050 1.049];
 
-save_spectral_data = false;
+save_spectral_data = false; % all the bootstraps 
+save_results       = true; % spectral mean and fits
 suffix = datestr(now, 'mm.dd.yy');
 
 %% Calculate Spectral Data
