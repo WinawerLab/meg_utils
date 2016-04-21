@@ -3,8 +3,8 @@
 %  goals:      ~ eliminate redundancies (processes that are repeated
 %              in both the analysis and denoising scripts)
 %              ~ allow both the analysis and visualization functions to
-%              take denoised and undenoised data
-%              ~ save files in organized structures
+%              take either denoised or undenoised data as input
+%              ~ save files in organized structures and locations
 %              ~ allow for parallel processing (and eventual HPC
 %              compatability
 %
