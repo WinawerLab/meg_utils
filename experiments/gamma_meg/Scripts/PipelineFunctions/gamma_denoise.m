@@ -45,7 +45,7 @@ end
 
 fs              = 1000; % frequency resolution
 
-SAVE_DATA = true;
+SAVE_DATA = false;
 verbose = true;
 
 %% get paths
@@ -110,7 +110,7 @@ ts = permute(ts, [3 1 2]);
 % Denoise for broadband analysis
 [results,evalout,denoisedspec,tsDenoised] = denoisedata(design_mtrx,ts,evokedfun,evalfun,opt);
 
-tsDenoised = permute(tsDenoised, [2 3 1]); % back to time x epochs x chan
+tsDenoised = permute(tsDenoised{1}, [2 3 1]); % back to time x epochs x chan
 
 if SAVE_DATA
     thisDate = datestr(now, 'mm.dd.yy');

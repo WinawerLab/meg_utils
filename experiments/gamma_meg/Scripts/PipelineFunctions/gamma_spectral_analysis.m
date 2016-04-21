@@ -41,12 +41,12 @@ suffix   = sprintf('%dboots%s_%s', nBoot, denoiseStr, thisDate);
 
 %% Calculate Spectral Data
 % remove ITI epochs from data
-if ~params.pcaDenoise % this is already done in gamma_denoise
-    ITInum = params.ITI;
-    ts = ts(:,conditions ~= ITInum, :);
-    ITI = conditions == ITInum;
-    conditions = conditions(~ITI);
-end
+
+ ITInum = params.ITI;
+ ts = ts(:,conditions ~= ITInum, :);
+ ITI = conditions == ITInum;
+ conditions = conditions(conditions~=ITI);
+
 
 conditions_unique = unique(conditions);
 num_conditions = length(conditions_unique);
