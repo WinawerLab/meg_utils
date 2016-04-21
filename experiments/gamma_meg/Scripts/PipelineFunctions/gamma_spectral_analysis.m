@@ -37,7 +37,7 @@ else
     denoiseStr = '';
 end
 
-suffix   = sprinft('%sboots%s_%s', nBoot, denoiseStr, thisDate);
+suffix   = sprintf('%dboots%s_%s', nBoot, denoiseStr, thisDate);
 
 %% Calculate Spectral Data
 % remove ITI epochs from data

@@ -71,7 +71,7 @@ for sessionNum = whichSessions
     % results is a struct with fields:
     % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
     % gauss_f_mn, fit_f2_mn
-    results = gamma_spectral_analysis(ts, param);
+    results = gamma_spectral_analysis(ts, params);
     
     
 end

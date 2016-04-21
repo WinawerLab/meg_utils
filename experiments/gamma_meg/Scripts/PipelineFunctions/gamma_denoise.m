@@ -75,7 +75,7 @@ design_mtrx = conditions2design(conditions);
 % ------------------------------------------------------------------------
 
 % Define denoise Parameters (see denoisedata.m)
-opt.pcchoose        = 1.05;
+opt.pcchoose        = -10;%1.05;
 opt.npcs2try        = 10;
 opt.resampling      = {'xval','xval'}; % could be {'boot' 'boot'};
 opt.pcselmethod     = 'r2';            % could be 'snr';
