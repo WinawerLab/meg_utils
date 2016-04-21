@@ -1,28 +1,51 @@
-function [tsDenoised] = gamma_denoise(ts, conditions, sessionNum)
+function [tsDenoised] = gamma_denoise(varargin)
 % [denoisedTs] = gamma_denoise(ts, conditions, sessionNum, badChannels, badEpochs)
 % wrapper function for Eline's PCA denoising program
 % takes the epoched time series and returns a denoised version of the same
 % format
 % additional information about the denoising process can be saved to file
 %
-% Inputs  : ts - epoched time series that has been preprocessed
-%         : condVector - a vector of trigger values corresponding to the
-%        epochs in the ts. condVector must be size(ts, 2)
+% Inputs:   ts - epoched time series that has been preprocessed
+%           param - structure containing the experimental/analysis
+%                   parameters
+%                                 ~ or ~
+%           ts - epoched time series that has been preprocessed
+%           condition - vector with trigger values corresponding to
+%                       conditions
+%           sessionNum - int describing the session number as listed in the
+%                        data folder on the server
 % Outputs : denoisedTs - epoched time series that has been denoised
 
 %% Options and parameters
-
-EPOCH_START_END = [0.050 1.049];
-fs              = 1000;
-
-if sessionNum >= 17
-    ITI       = 14;
+ts             = varargin{1};
+if nargin == 2 % using the parameters structure
+    params     = varargin{2};
+    conditions = params.conditionVector;
+    sessionNum = params.sessionNumber;
+    EPOCH_START_END = params.epochRange;
+    ITI        = params.ITI;
+    blankCond  = params.baselineCondition;
+elseif nargin == 3
+    conditions = varargin{2};
+    sessionNum = varargin{3};
+    EPOCH_START_END = [0.050 1.049];
+    
+    if sessionNum >= 17
+        ITI       = 14;
+    else
+        ITI       = 11;
+    end
+    blankCond = ITI -1;
+    
 else
-    ITI       = 10;
+    message    = 'invalid number of input arguments';
+    error(message);
 end
-blankCond = ITI -1;
 
-save_data = true;
+
+fs              = 1000; % frequency resolution
+
+SAVE_DATA = true;
 verbose = true;
 
 %% get paths
@@ -89,7 +112,7 @@ ts = permute(ts, [3 1 2]);
 
 tsDenoised = permute(tsDenoised, [2 3 1]); % back to time x epochs x chan
 
-if save_data
+if SAVE_DATA
     thisDate = datestr(now, 'mm.dd.yy');
     fileName = sprintf('s_%03d_denoisedData%s.mat', sessionNum, thisDate);
     save(fullfile(meg_gamma_get_path(sessionNum), 'processed', fileName),...

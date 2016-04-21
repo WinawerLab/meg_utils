@@ -23,14 +23,17 @@ environmentalChannels  = 158:160;
 dataChannels           = 1:157;
 
 environmentalDenoising = false;
-PCADenoising           = false;
+PCADenoising           = true;
 nBoot                  = 5;
 
 %% Loop over sessions
 for sessionNum = whichSessions
-    %% get paths/file suffix
+    %% get paths/parameters
     
     sessionPath = meg_gamma_get_path(sessionNum);
+    params = gamma_get_parameters(sessionNum);
+    
+    params.nBoot =  nBoot;
     
     %    dataPath    = fullfile(sessionPath, 'raw');
     %    savePath    = fullfile(path_to_data, 'processed');
@@ -39,31 +42,36 @@ for sessionNum = whichSessions
     %% preprocessing
     
     % badChannels and badEpochs to be preserved before env denoise
-    [tmp, conditionVector, badChannels, badEpochs] = gamma_preprocess_raw(sessionNum);
+    [tmp, conditionVector, params.badChannels,...
+        params.badEpochs] = gamma_preprocess_raw(sessionNum);
     
     %% Denoising
     
     % denoise using environmental channels
     if environmentalDenoising
-        tmp = meg_environmental_denoising(tmp, environmentalChannels, dataChannels);
+        tmp               = meg_environmental_denoising(tmp,...
+                             environmentalChannels, dataChannels);
+        params.envDenoise = 1;
     end
     
     % remove badEpochs and badChannels from ts after environmental
     % denoising
-    ts = tmp(:, ~badEpochs, :); clear tmp;
-    ts(:,:,badChannels) = NaN;
-    conditionVector = conditionVector(~badEpochs);
+    ts                            = tmp(:, ~params.badEpochs, :); 
+    clear tmp;
+    ts(:,:,params.badChannels)    = NaN;
+    params.conditionVector        = conditionVector(~params.badEpochs);
     
     % denoise using Kuper's PCA
     if PCADenoising
-        ts = gamma_denoise(ts, conditionVector, sessionNum);
+        ts                = gamma_denoise(ts, params);
+        params.pcaDenoise = 1;
     end
     %% Spectral analysis, bootstraping, and fitting
     
     % results is a struct with fields:
     % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
     % gauss_f_mn, fit_f2_mn
-    results = gamma_spectral_analysis(ts, conditionVector, nBoot, sessionNum);
+    results = gamma_spectral_analysis(ts, param);
     
     
 end

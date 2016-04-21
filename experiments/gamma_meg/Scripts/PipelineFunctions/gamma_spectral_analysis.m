@@ -1,10 +1,10 @@
-function results = gamma_spectral_analysis(ts, conditions, nboot, sessionNum)
+function results = gamma_spectral_analysis(ts, params)
 %% [spectralData, fitData, summaryStats] = gamma_spectral_analysis(ts, conditions)
 %  performs the spectral analysis, bootstrapping, and curve fitting for
 %  s_GAMMA_pipeline
 % input: ts - epoched timeseries, can be denoised or not yet denoised
-%      : conditions - a vector of integers representing the condition of
-%      each epoch
+%      : params - structure containing experimental parameters obtained
+%        from gamma_get_parameters.m
 % output: spectralResults - a structure containing:
 %            1) 'f_sel'
 %            2) 'f_use4fit'
@@ -16,23 +16,37 @@ function results = gamma_spectral_analysis(ts, conditions, nboot, sessionNum)
 %            8) 'spectral_data'
 
 %% Parameters
-data_channels = 1:157;
-fs = 1000;
-epoch_start_end = [0.050 1.049];
+data_channels     = 1:157;
+fs                = 1000;
+epoch_start_end   = params.epochRange;
+nBoot             = params.nBoot;
+conditions        = params.conditionVector;
+sessionNum        = params.sessionNumber;
 
-save_spectral_data = false; % all the bootstraps 
-save_results       = true; % spectral mean and fits
-suffix = datestr(now, 'mm.dd.yy');
+% save options
+SAVE_SPECTRAL_DATA = false; % all the bootstraps 
+SAVE_RESULTS       = true; % spectral mean and fits
+
+%% Get suffix for this spectral analysis based on parameters
+
+thisDate = datestr(now, 'mm.dd.yy');
+
+if params.pcaDenoise
+    denoiseStr = '_denoised';
+else
+    denoiseStr = '';
+end
+
+suffix   = sprinft('%sboots%s_%s', nBoot, denoiseStr, thisDate);
 
 %% Calculate Spectral Data
-
-
-
 % remove ITI epochs from data
-ITInum = max(conditions);
-ts = ts(:,conditions ~= ITInum, :);
-ITI = conditions == ITInum;
-conditions = conditions(~ITI);
+if ~params.pcaDenoise % this is already done in gamma_denoise
+    ITInum = params.ITI;
+    ts = ts(:,conditions ~= ITInum, :);
+    ITI = conditions == ITInum;
+    conditions = conditions(~ITI);
+end
 
 conditions_unique = unique(conditions);
 num_conditions = length(conditions_unique);
@@ -46,7 +60,7 @@ fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=1
 
 spectral_data = abs(fft(ts))/length(t)*2;
 % freq x conditions x channels x bootstraps
-spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
+spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nBoot);
 
 % compute the mean amplitude spectrum for each electrode in each condition
 fprintf('Computing bootstraps for each condition\n');
@@ -59,7 +73,7 @@ for ii = 1:length(conditions_unique)
     % spectral data, time points x epochs x channel
     these_data = spectral_data(:,these_epochs,data_channels);
     
-    if nboot > 1
+    if nBoot > 1
         % reshape so that epochs are in rows (needed for bootstrp)
         these_data = permute(these_data, [2 1 3]);
         
@@ -67,10 +81,10 @@ for ii = 1:length(conditions_unique)
         bootfun = @(x) squeeze(exp(nanmean(log(x),1)));
         
         % bootstat by definition is a matrix: nboot x (freq x channel)
-        bootstat = bootstrp(nboot, bootfun, these_data);
+        bootstat = bootstrp(nBoot, bootfun, these_data);
         
         % reshape bootstat to 3D-array: nboot x freq x channel
-        bootstat = reshape(bootstat, nboot, length(t), []);
+        bootstat = reshape(bootstat, nBoot, length(t), []);
         
         % spectral_data_boots is freq x condition x channel x boot
         spectral_data_boots(:,ii,:,:) = permute(bootstat,[2 3 1]);
@@ -87,16 +101,16 @@ spectral_data_mean = nanmean(spectral_data_boots, 4);
 
 %% Broadband and Gaussian Fit
 
-% binary array conrresponding to freq
-f_sel = ismember(f,fitFreq);
+% binary array describing the frequiencies not ommitted from the fit
+params.f_sel = ismember(f,fitFreq);
 num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
 num_channels = length(data_channels);
-%     fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
-w_pwr   = NaN(num_channels,num_conditions, nboot);     % broadband power
-w_gauss = NaN(num_channels,num_conditions, nboot);     % gaussian height
-gauss_f = NaN(num_channels, 1, nboot);                 % gaussian peak frequency
-fit_f2  = NaN(num_conditions,num_time_points,num_channels, nboot); % fitted spectrum
+fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+w_pwr   = NaN(num_channels,num_conditions, nBoot);     % broadband power
+w_gauss = NaN(num_channels,num_conditions, nBoot);     % gaussian height
+gauss_f = NaN(num_channels, 1, nBoot);                 % gaussian peak frequency
+fit_f2  = NaN(num_conditions,num_time_points,num_channels, nBoot); % fitted spectrum
 
 warning off 'MATLAB:subsassigndimmismatch'
 
@@ -108,7 +122,7 @@ for chan = data_channels
     
     fprintf('Channel %d of %d\n', chan, length(data_channels)); drawnow;
         
-    for bootnum = 1:nboot
+    for bootnum = 1:nBoot
         
         % the baseline is the same for all conditions, so just compute it once
         data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
@@ -153,12 +167,16 @@ results = struct('spectral_data_mean', spectral_data_mean, 'fit_bl_mn', fit_bl_m
 
 save_pth = fullfile(meg_gamma_get_path(sessionNum), 'processed');
 
-if save_spectral_data
-    save(fullfile(save_pth,sprintf('spectral_data_%s.mat',suffix)),'spectral_data_boots', '-v7.3')
+%% Save spectral data and results
+% this is a really big file
+if SAVE_SPECTRAL_DATA
+    save(fullfile(save_pth,sprintf('s%03d_spectral_data_%s.mat', sessionNum, ...
+        suffix)),'spectral_data_boots', '-v7.3')
 end
-
-if save_results
-    save(fullfile(save_pth,sprintf('s%03d_summary&fits_%s.mat', sessionNum, suffix)),'results', '-v7.3')
+% this is not
+if SAVE_RESULTS
+    save(fullfile(save_pth,sprintf('s%03d_summary&fits_%s.mat', sessionNum, ...
+        suffix)),'results', '-v7.3')
 end
 
 
