@@ -61,6 +61,13 @@ for sessionNum = whichSessions
     ts(:,:,params.badChannels)    = NaN;
     params.conditionVector        = conditionVector(~params.badEpochs);
     
+    % prepare timeseries for PCA and spectral analysis by removing
+    % ITI epochs from the timeseries and conditionVector
+    
+    ITIepochs  = params.conditionVector == params.ITI;
+    ts         = ts(:, ~ITIepochs, :);
+    params.conditionVector = params.conditionVector(params.conditionVector ~= params.ITI);
+    
     % denoise using Kuper's PCA
     if PCADenoising
         ts                = gamma_denoise(ts, params);
@@ -71,7 +78,7 @@ for sessionNum = whichSessions
     % results is a struct with fields:
     % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
     % gauss_f_mn, fit_f2_mn
-    results = gamma_spectral_analysis(ts, params);
+    results = gamma_spectral_analysis(ts(:,:,dataChannels), params);
     
     
 end

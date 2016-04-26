@@ -58,10 +58,10 @@ if isempty(which('sqdread')),
 end
 
 %% Get time series ready for denoising
-% remove intertrial epochs
-ITIepochs  = conditions == ITI;
-ts         = ts(:, ~ITIepochs, :);
-conditions = conditions(conditions ~= ITI);
+% remove intertrial epochs ( THIS SHOULD BE DONE OUTSIDE THE DENOISE FUNC)
+% ITIepochs  = conditions == ITI;
+% ts         = ts(:, ~ITIepochs, :);
+% conditions = conditions(conditions ~= ITI);
 
 % change the trigger value of blank stim to 0
 conditions(conditions == blankCond) = 0;

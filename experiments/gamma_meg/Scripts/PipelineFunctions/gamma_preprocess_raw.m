@@ -28,10 +28,14 @@ verbose               = true;
 
 SAVE_PREPROCESSED = false;
 
-%% Get session paths
+%% Get paths
 
 % parent dir to this session's folder on the server
 sessionPath = meg_gamma_get_path(sessionNum);
+
+% this now uses the dfdPreprocessData function from the denoise project
+% repository
+addpath(genpath('~/matlab/git/denoiseproject'))
 
 %% Load sqd file
 
@@ -47,8 +51,8 @@ trigger = meg_fix_triggers(raw(:,trigger_channels));
 
 %% Find and return bad channels/epochs
 
-[ts(:,:,data_channels), badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
-    var_threshold, bad_channel_threshold, bad_epoch_threshold, 'meg160xyz', verbose);
+[ts(:,:,data_channels), badChannels, badEpochs] = dfdPreprocessData(ts(:,:,data_channels), ...
+    var_threshold, bad_channel_threshold, bad_epoch_threshold, verbose);
 
 
 %% Save if needed 

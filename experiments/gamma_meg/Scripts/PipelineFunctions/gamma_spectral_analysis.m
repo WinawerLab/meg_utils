@@ -42,10 +42,11 @@ suffix   = sprintf('%dboots%s_%s', nBoot, denoiseStr, thisDate);
 %% Calculate Spectral Data
 % remove ITI epochs from data
 
- ITInum = params.ITI;
- ts = ts(:,conditions ~= ITInum, :);
- ITI = conditions == ITInum;
- conditions = conditions(conditions~=ITI);
+% ITI epochs already removed somewhere??
+%  ITInum = params.ITI;
+%  ts = ts(:,conditions ~= ITInum, :);
+%  ITI = conditions == ITInum;
+%  conditions = conditions(conditions~=ITI);
 
 
 conditions_unique = unique(conditions);
@@ -105,12 +106,18 @@ spectral_data_mean = nanmean(spectral_data_boots, 4);
 params.f_sel = ismember(f,fitFreq);
 num_time_points = round((epoch_start_end(2)-epoch_start_end(1)+0.001)*fs);
 
+% per loop sizes
+% fit_bl: chan x 112 x boot
+% w_pwr: chan x cond x boot
+% gauss_f : chan x 1 x boot
+% fit_f2: freq x cond x chan x boot
+
 num_channels = length(data_channels);
-fit_bl  = NaN(num_channels,num_conditions, nboot);     % slope of spectrum in log/log space
+% fit_bl  = NaN(num_channels,length(fitFreq), nBoot);     % slope of spectrum in log/log space
 w_pwr   = NaN(num_channels,num_conditions, nBoot);     % broadband power
 w_gauss = NaN(num_channels,num_conditions, nBoot);     % gaussian height
 gauss_f = NaN(num_channels, 1, nBoot);                 % gaussian peak frequency
-fit_f2  = NaN(num_conditions,num_time_points,num_channels, nBoot); % fitted spectrum
+fit_f2  = NaN(num_conditions,800,num_channels, nBoot); % fitted spectrum
 
 warning off 'MATLAB:subsassigndimmismatch'
 

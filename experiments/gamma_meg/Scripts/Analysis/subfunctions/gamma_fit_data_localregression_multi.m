@@ -62,6 +62,7 @@ BBplusG = bsxfun(@plus, G, w_broadband);
 BLplusBBplusG = bsxfun(@plus, BBplusG, baseline_fit');
 fit_f2(f_sel, :) = BLplusBBplusG;
 fit_f2 = fit_f2';
+baseline_fit = squeeze(baseline_fit);
 
 function F = gamma_broadband_fit(x,D,f,sigma, idx_gw, idx_bw)
 % D:         data (log power)
