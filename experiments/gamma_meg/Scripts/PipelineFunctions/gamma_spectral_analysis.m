@@ -135,7 +135,7 @@ for chan = data_channels
         data_base = exp(mean(log(spectral_data_boots(:,:,chan, bootnum)),2));
         data_base = data_base';
         
-        if all(isfinite(data_base))
+        if all(isfinite(data_base)) && mean(data_base) > 0
             
             data_fit = spectral_data_boots(:,:,chan, bootnum);
             
