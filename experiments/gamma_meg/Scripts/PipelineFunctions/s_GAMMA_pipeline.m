@@ -81,6 +81,9 @@ for sessionNum = whichSessions
     results = gamma_spectral_analysis(ts(:,:,dataChannels), params);
     
     
+    %% Visualization
+    gamma_visualize_spectral(params, results);
+    
 end
 
 
