@@ -70,10 +70,19 @@ for sessionNum = whichSessions
     
     % denoise using Kuper's PCA
     if PCADenoising
+        ts                = ts(:,:,~params.badChannels);        
         ts                = gamma_denoise(ts, params);
+
+        sz = size(ts);
+        ts = reshape(ts, [], sz(3));
+        ts = to157chan(ts, ~params.badChannels, NaN);
+        ts = reshape(ts, sz(1), sz(2), []);
+        
         params.pcaDenoise = 1;
+        
     end
     %% Spectral analysis, bootstraping, and fitting
+
     
     % results is a struct with fields:
     % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
