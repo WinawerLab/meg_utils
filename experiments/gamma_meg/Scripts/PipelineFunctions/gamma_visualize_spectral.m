@@ -50,6 +50,26 @@ if SAVE_FIGS
         datestr(now, 'mm_dd_yy'));
 end
 %% 1. All conditions plotted on the same spectrogram for each channel
+plotThis = false;
+if plotThis
+    for chan = 1:157
+        figure(1); clf;
+        set(gcf, 'color', 'w');
+        hold all;
+        
+        for ii = 1:length(conditionNames)
+            plot(f(f_sel), smooth(specData(f_sel, ii, chan), 2)',...
+                'color', colormap(ii,:,:),'LineWidth', 2);
+        end
+        legend(conditionNames)
+        waitforbuttonpress;
+    end
+end
+%% 2. All conditions' line fit plotted on the same spectrogram for each channel
+
+% fit_f2_mn is chan x freq x chan
+fit_f2_mn = permute(results.fit_f2_mn, [2 1 3]);
+
 
 for chan = 1:157
     figure(1); clf;
@@ -57,14 +77,12 @@ for chan = 1:157
     hold all;
     
     for ii = 1:length(conditionNames)
-        plot(f(f_sel), smooth(specData(f_sel, ii, chan), 2)',...
+        plot(f(f_sel), smooth(fit_f2_mn(f_sel, ii, chan), 2)',...
             'color', colormap(ii,:,:),'LineWidth', 2);
     end
     legend(conditionNames)
-    pause(0.5);
+    waitforbuttonpress;
 end
-
-
 
 
 end

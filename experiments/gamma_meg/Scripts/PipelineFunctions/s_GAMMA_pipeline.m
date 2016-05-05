@@ -89,8 +89,16 @@ for sessionNum = whichSessions
     % gauss_f_mn, fit_f2_mn
     results = gamma_spectral_analysis(ts(:,:,dataChannels), params);
     
+    % save(fullfile(meg_gamma_get_path(18),'processed',sprintf('s%03d_sample_params.mat', sessionNum)), 'params');
+    
     
     %% Visualization
+    % load sample spectral data for test purposes
+    a = load(fullfile(fullfile(meg_gamma_get_path(18), 'processed'),sprintf('s%03d_summary&fits_%s.mat', 18, ...
+        'test_spectra_for_plot'))); results = a.results;
+    b = load(fullfile(meg_gamma_get_path(18), 'processed', sprintf('s%03d_sample_params.mat', 18))); params = b.params;
+    
+    
     gamma_visualize_spectral(params, results);
     
 end
