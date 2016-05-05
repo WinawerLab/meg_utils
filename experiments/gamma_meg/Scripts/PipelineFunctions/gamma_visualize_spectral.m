@@ -55,7 +55,7 @@ f_plot = f;
 f_plot(~f_sel) = NaN;
 
 % fit_f2_mn is chan x freq x chan
-fit_f2_mn = exp(permute(results.fit_f2_mn, [2 1 3]));
+fit_f2_mn = exp(permute(results.fit_f2_mn, [2 1 3])); % NOTE: spectral data is exponentiated in gamma_spectral_analysis
 
 fH = figure; set(gcf, 'color', 'w');
 
