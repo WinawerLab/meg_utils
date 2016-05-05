@@ -40,6 +40,7 @@ f_sel          = ismember(f, fitFreq); % boolean array of frequencies used
 
 % get figure params
 colormap = parula(length(conditionNames));
+colormap(params.baselineCondition,:) = [0 0 0];
 
 % Define the prefix and suffix of files to be saved
 if SAVE_FIGS
@@ -50,18 +51,29 @@ if SAVE_FIGS
         datestr(now, 'mm_dd_yy'));
 end
 %% 1. All conditions plotted on the same spectrogram for each channel
+f_plot = f;
+f_plot(~f_sel) = NaN;
+
+% fit_f2_mn is chan x freq x chan
+fit_f2_mn = exp(permute(results.fit_f2_mn, [2 1 3]));
+
+fH = figure; set(gcf, 'color', 'w');
+
 plotThis = true;
 if plotThis
     for chan = 1:157
-        figure(1); clf;
-        set(gcf, 'color', 'w');
-        hold all;
-        
-        for ii = 1:length(conditionNames)
-            plot(f(f_sel), smooth(specData(f_sel, ii, chan), 2)',...
-                'color', colormap(ii,:,:),'LineWidth', 2);
-        end
+        subplot(1,2,1); cla
+        set(gca, 'Colororder', colormap); hold on
+        plot(f_plot, specData(:, :, chan),...
+            'LineWidth', 2); %'color', colormap(ii,:,:)
         legend(conditionNames)
+        yl = get(gca, 'YLim');
+        
+        subplot(1,2,2); cla
+        set(gca, 'Colororder', colormap); hold on
+        plot(f_plot, fit_f2_mn(:, :, chan),...
+            'LineWidth', 2); % 'color', colormap(ii,:,:),
+        set(gca, 'YLim', yl);
         waitforbuttonpress;
     end
 end
@@ -77,7 +89,7 @@ for chan = 1:157
     hold all;
     
     for ii = 1:length(conditionNames)
-        plot(f(f_sel), smooth(fit_f2_mn(f_sel, ii, chan), 2)',...
+        plot(f_plot, smooth(fit_f2_mn(:, ii, chan), 2)',...
             'color', colormap(ii,:,:),'LineWidth', 2);
     end
     legend(conditionNames)
