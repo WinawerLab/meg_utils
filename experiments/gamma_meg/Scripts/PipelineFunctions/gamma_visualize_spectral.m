@@ -16,7 +16,56 @@ function [] = gamma_visualize_spectral(params, results)
 %
 % Nicholas Chua 2016
 
-%% Get parameters and 
+%% Get parameters and spectral data
+
+%options
+SAVE_FIGS = false;
+
+% get experiment params
+sessionNum     = params.sessionNumber;
+nBoot          = params.nBoot;
+conditionNames = gamma_get_condition_names(sessionNum);
+
+% get analysis results
+specData       = results.spectral_data_mean;
+numFreq        = size(specData, 1); % the number of frequency bins in data
+%fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
+fitFreq        = results.fitFreq; % the frequencies used to fit data
+
+fs             = 1000; % resolution
+t              = (1:numFreq)/fs;
+f              = (0:length(t)-1)/max(t);
+f_sel          = ismember(f, fitFreq); % boolean array of frequencies used
+
+
+% get figure params
+colormap = parula(length(conditionNames));
+
+% Define the prefix and suffix of files to be saved
+if SAVE_FIGS
+    isDenoised = '';
+    if param.pcaDenoise, isDenoised = '_denoised'; end
+    prefix = sprintf('s_%3d', sessionNum);
+    suffix = sprintf('_%dbootstraps%s_%s', nBoot, isDenoised,...
+        datestr(now, 'mm_dd_yy'));
+end
+%% 1. All conditions plotted on the same spectrogram for each channel
+
+for chan = 1:157
+    figure(1); clf;
+    set(gcf, 'color', 'w');
+    hold all;
+    
+    for ii = 1:length(conditionNames)
+        plot(f(f_sel), smooth(specData(f_sel, ii, chan), 2)',...
+            'color', colormap(ii,:,:),'LineWidth', 2);
+    end
+    legend(conditionNames)
+    pause(0.5);
+end
+
+
+
 
 end
 

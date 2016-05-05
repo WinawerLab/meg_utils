@@ -50,7 +50,7 @@ verbose = true;
 
 %% get paths
 % path to denoising project
-if isempty(which('denoisedata'), run('~/matlab/git/denoiseproject/dfdAddPaths'); end
+if isempty(which('denoisedata')), run('~/matlab/git/denoiseproject/dfdAddPaths'); end
 
 % path to filed trip
 if isempty(which('sqdread')),
