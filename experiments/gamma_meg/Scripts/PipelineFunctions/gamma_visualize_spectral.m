@@ -50,7 +50,7 @@ if SAVE_FIGS
         datestr(now, 'mm_dd_yy'));
 end
 %% 1. All conditions plotted on the same spectrogram for each channel
-plotThis = false;
+plotThis = true;
 if plotThis
     for chan = 1:157
         figure(1); clf;
@@ -81,6 +81,7 @@ for chan = 1:157
             'color', colormap(ii,:,:),'LineWidth', 2);
     end
     legend(conditionNames)
+    title(chan)
     waitforbuttonpress;
 end
 

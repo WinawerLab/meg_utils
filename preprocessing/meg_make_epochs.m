@@ -27,7 +27,7 @@ function [ts, conditions] = meg_make_epochs(raw_ts, trigger, epoch_time, fs, whi
 
 if ~exist('which_data','var') 
     onset_times = find(trigger);
-elseif which_data == 'eye';
+elseif strcmp(which_data, 'eye');
     onset_times = trigger;
     if onset_times(1) == 0; onset_times(1) = 1; end % First trigger can't be 0.
 end
