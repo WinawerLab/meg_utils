@@ -63,14 +63,14 @@ plotThis = true;
 if plotThis
     for chan = 1:157
         subplot(1,2,1); cla
-        set(gca, 'Colororder', colormap); hold on
+        set(gca, 'Colororder', colormap, 'XScale', 'log', 'XLim', [35 200]); hold on
         plot(f_plot, specData(:, :, chan),...
             'LineWidth', 2); %'color', colormap(ii,:,:)
         legend(conditionNames)
         yl = get(gca, 'YLim');
         
         subplot(1,2,2); cla
-        set(gca, 'Colororder', colormap); hold on
+        set(gca, 'Colororder', colormap, 'XScale', 'log', 'XLim', [35 200]); hold on
         plot(f_plot, fit_f2_mn(:, :, chan),...
             'LineWidth', 2); % 'color', colormap(ii,:,:),
         set(gca, 'YLim', yl);
@@ -101,7 +101,8 @@ end
 
 clf;
 figure(3);
-for chan = 1:157
+for chan = 1:10
+    set(gcf, 'Name', sprintf('Channel %d', chan));
    for cond = 1:length(conditionNames)-1
        subplot(4,3,cond); cla;
        % plot given stimuli condition
@@ -112,6 +113,7 @@ for chan = 1:157
        %set(gca, 'Color', colormap(cond, :));
        title(cell2mat(conditionNames(cond)));
        %title(sprintf('%s BB:%f.3;  G:%f.3', cell2mat(conditionNames(cond)), results.w_pwr_mn(chan, cond), results.w_gauss_mn(chan, cond)));
+       set(gca, 'XScale', 'log', 'XLim', [35 200]);
    end
    waitforbuttonpress;
 
