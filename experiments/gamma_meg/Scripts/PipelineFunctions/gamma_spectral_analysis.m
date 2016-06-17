@@ -117,7 +117,7 @@ num_channels = length(data_channels);
 w_pwr   = NaN(num_channels,num_conditions, nBoot);     % broadband power
 w_gauss = NaN(num_channels,num_conditions, nBoot);     % gaussian height
 gauss_f = NaN(num_channels, 1, nBoot);                 % gaussian peak frequency
-fit_f2  = NaN(num_conditions,800,num_channels, nBoot); % fitted spectrum
+fit_f2  = NaN(num_conditions,size(spectral_data_mean,1),num_channels, nBoot); % fitted spectrum
 
 warning off 'MATLAB:subsassigndimmismatch'
 

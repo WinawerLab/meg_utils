@@ -9,18 +9,22 @@ switch which_data
     case 'eye'
         inds                = triggers(:,2);
         keep_inds           = inds(1:12:end);
-        which_subject       = 7; % If eye data, we need to insert blanks slightly different, 
-                                 % and then do nothing like for subject 7
-                                 % in meg data.
         
-        blanks = [];
-        last_onperiod_onset_frames = keep_inds(6:6:end);
-        for jj = 1:length(last_onperiod_onset_frames)
-            for ii = 1:6
-                blanks = [blanks; ii*1000 + last_onperiod_onset_frames(jj)];
+        if which_subject == 6;        
+            blank = [];
+            last_onperiod_onset_frames = keep_inds(6:6:end);
+            for jj = 1:length(last_onperiod_onset_frames)
+                for ii = 1:6
+                    blank = [blank; ii*1000 + last_onperiod_onset_frames(jj)];
+                end
             end
+
+            which_subject       = 7; % Now we inserted the blank periods, we can treat this subject like subject 7 
+        else
+            blank = [];
         end
-        onsets = sort([keep_inds;blanks]);
+        
+        onsets = sort([keep_inds;blank]);
         
         
     case {'eeg','meg'}
