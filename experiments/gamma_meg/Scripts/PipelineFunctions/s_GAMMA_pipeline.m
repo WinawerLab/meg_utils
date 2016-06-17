@@ -18,7 +18,7 @@ if isempty(which('ft_prepare_layout'))
 end
 
 
-whichSessions          = 18;
+whichSessions          = 19;
 environmentalChannels  = 158:160;
 dataChannels           = 1:157;
 
@@ -94,11 +94,11 @@ for sessionNum = whichSessions
     
     %% Visualization
     % load sample spectral data for test purposes
-    a = load(fullfile(fullfile(meg_gamma_get_path(18), 'processed'),sprintf('s%03d_summary&fits_%s.mat', 18, ...
-        'test_spectra_for_plot'))); results = a.results;
-    b = load(fullfile(meg_gamma_get_path(18), 'processed', sprintf('s%03d_sample_params.mat', 18))); params = b.params;
-    
-    
+%     a = load(fullfile(fullfile(meg_gamma_get_path(18), 'processed'),sprintf('s%03d_summary&fits_%s.mat', 18, ...
+%         'test_spectra_for_plot'))); results = a.results; clear a;
+%     b = load(fullfile(meg_gamma_get_path(18), 'processed', sprintf('s%03d_sample_params.mat', 18))); params = b.params;
+%     
+%     
     gamma_visualize_spectral(params, results);
     
 end

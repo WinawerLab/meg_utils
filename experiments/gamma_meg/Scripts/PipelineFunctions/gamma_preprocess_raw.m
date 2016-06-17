@@ -39,15 +39,15 @@ addpath(genpath('~/matlab/git/denoiseproject'))
 
 %% Load sqd file
 
-raw = meg_load_sqd_data(fullfile(sessionPath, 'raw'), '*Gamma*');
+ts = meg_load_sqd_data(fullfile(sessionPath, 'raw'), '*Gamma*');
 
 %% Extract trigger sequence
 
-trigger = meg_fix_triggers(raw(:,trigger_channels));
+trigger = meg_fix_triggers(ts(:,trigger_channels));
 
 %% Partition into epochs
 
-[ts, conditions] = meg_make_epochs(raw, trigger, epoch_start_end, fs);
+[ts, conditions] = meg_make_epochs(ts, trigger, epoch_start_end, fs);
 
 %% Find and return bad channels/epochs
 

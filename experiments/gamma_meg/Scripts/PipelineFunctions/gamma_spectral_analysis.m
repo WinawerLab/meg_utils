@@ -170,7 +170,7 @@ gauss_f_mn = nanmean(gauss_f,2);
 fit_f2_mn  = nanmean(fit_f2,4);
 
 results = struct('spectral_data_mean', spectral_data_mean, 'fit_bl_mn', fit_bl_mn, 'w_pwr_mn', w_pwr_mn, 'w_gauss_mn', w_gauss_mn, ...
-    'gauss_f_mn', gauss_f_mn, 'fit_f2_mn', fit_f2_mn, 'fitFreq', fitFreq);
+    'gauss_f_mn', gauss_f_mn, 'fit_f2_mn', fit_f2_mn, 'fitFreq', fitFreq, 'params', params);
 
 save_pth = fullfile(meg_gamma_get_path(sessionNum), 'processed');
 
