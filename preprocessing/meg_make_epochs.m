@@ -44,6 +44,7 @@ for ii = 1:num_epochs
     ts(ii, :, :) = raw_ts(inds,:);    
 end
 
+clear raw_ts
 ts         = permute(ts, [2 1 3]);
 
 if ~exist('which_data','var'); conditions = trigger(onset_times); 
