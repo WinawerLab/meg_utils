@@ -1,61 +1,49 @@
-function [] = gamma_visualize_spectral(params, results)
+function [] = gamma_visualize_spectral(results)
 % creates figures out of the spectral data obtained from
 % gamma_spectral_analysis.m
 %
-% Input: params, a structure containing experimental and analysis parameters
-%                such as condition names, epoch length, bootstraps, and how
-%                the data is denoised. (See: gamma_get_parameters)
-%        results, a structure containing: - spectral_data_mean (of each
-%                                           condition and channel)
-%                                         - fit_bl_mn (median baseline fit)
-%                                         - w_pwr_mn (mean broadband
-%                                           height of each cond x chan)
-%                                         - w_gauss_mn (mean gamma height)
-%                                         - gauss_f_mn (gamma peak freq)
-%                                         - fit_f2_mn (fitted spectrum)
+% Input: 
+%   results (a struct which includes):
+%       spectralDataMean    :    3D array containing spectral data averaged across bootstraps (time x conditions x channels) 
+%       fitBaselineMean     :    2D array containing baseline fit averaged across bootstraps (channels x selected frequencies) 
+%       broadbandPowerMean  :    2D array containing broadband power elevation fit averaged across bootstraps (channels x conditions) 
+%       gammaPowerMean      :    2D array containing narrowband gamma power gaussian fit averaged across bootstraps (channels x conditions) 
+%       gammaPeakFreqMean   :    1D array containing peak frequency of gaussian bump (channels x 1) 
+%       modelFitAllFreqMean :    3D array containing modelfit for each frequency, condition, channel (frequencies, conditions, channels)
+%       fitFreq             :    1D array containing all frequencies used for model fit
+%       opt                 :    struct with options used when analyzing this dataset
 %
-% Nicholas Chua 2016
+% First version: Nicholas Chua April 2016
+%       7.7.2016: Clean up (EK)
 
-%% Get parameters and spectral data
-
-%options
-SAVE_FIGS = false;
-
-% get experiment params
-sessionNum     = params.sessionNumber;
-nBoot          = params.nBoot;
-conditionNames = gamma_get_condition_names(sessionNum);
-
-% get analysis results
+%% Prepare data
+conditionNames = gamma_get_condition_names(opt.params.sessionNumber);
 specData       = results.spectral_data_mean;
 numFreq        = size(specData, 1); % the number of frequency bins in data
-%fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200));
-fitFreq        = results.fitFreq; % the frequencies used to fit data
-
-fs             = 1000; % resolution
-t              = (1:numFreq)/fs;
+t              = (1:numFreq)/opt.fs;
 f              = (0:length(t)-1)/max(t);
-f_sel          = ismember(f, fitFreq); % boolean array of frequencies used
+f_sel          = ismember(f, opt.fitFreq); % boolean array of frequencies used
 
-
-% get figure params
+% Define colors
 colormap = parula(length(conditionNames));
-colormap(params.baselineCondition,:) = [0 0 0];
+colormap(opt.params.baselineCondition,:) = [0 0 0];
 
-% Define the prefix and suffix of files to be saved
-if SAVE_FIGS
-    isDenoised = '';
-    if param.pcaDenoise, isDenoised = '_denoised'; end
-    prefix = sprintf('s_%3d', sessionNum);
-    suffix = sprintf('_%dbootstraps%s_%s', nBoot, isDenoised,...
+% Define the file name of saved figures
+if opt.saveFigures
+    if opt.MEGDenoise; postFix = '_denoised'; else postFix = ''; end
+    preFix = sprintf('s_%3d', opt.params.sessionNumber);
+    saveName = sprintf('%s_boots%d%s_%s', preFix, opt.nBoot, postFix,...
         datestr(now, 'mm_dd_yy'));
 end
+
 %% 1. All conditions plotted on the same spectrogram for each channel
+
+% Define frequencies to plot
 f_plot = f;
 f_plot(~f_sel) = NaN;
 
-% fit_f2_mn is cond x freq x chan
-fit_f2_mn = exp(permute(results.fit_f2_mn, [2 1 3])); % NOTE: spectral data is exponentiated in gamma_spectral_analysis
+% Exponentiate modelfit modelFitAllFreqMean (conditions x frequencies x channels)
+fit = exp(permute(results.modelFitAllFreqMean, [2 1 3])); % NOTE: spectral data is exponentiated in gamma_spectral_analysis
 
 fig3 = figure; set(gcf, 'color', 'w');
 

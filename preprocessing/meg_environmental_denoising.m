@@ -1,6 +1,4 @@
-function ts_denoised = meg_environmental_denoising(ts,...
-    environmental_channels, data_channels, ...
-    produce_figures, verbose)
+function ts_denoised = meg_environmental_denoising(ts, opt)
 % This function uses the timeseries of the three MEG non-physiological
 % channels to denoise the physiological channels. 
 %  
@@ -22,74 +20,34 @@ function ts_denoised = meg_environmental_denoising(ts,...
 % OUTPUTS:
 %  ts_denoised               denoised time series
 
-%% Deal with inputs
-if ~exist('produce_figures', 'var') || isempty(produce_figures), 
-    produce_figures = 0; 
-end
-if ~exist('save_data', 'var') || isempty(save_data),       
-    save_data = 0;       
-end
-if ~exist('verbose', 'var') || isempty(verbose)
-    verbose = 0;
-end
-
 
 %% Make empty arrays for regressed 'clean' data
 ts_denoised = ts;
 
 % Start regression, keep residuals
-% warning off stats:regress:RankDefDesignMat
-
-for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
-    projectOut  = squeeze(ts(:,epoch,environmental_channels));
-    projectFrom = squeeze(ts(:,epoch,data_channels));
-    %projectionWeights  = pinv(projectOut) * projectFrom;
+for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168)) <--- EK: so do we need to do anything with this?!
+    projectOut  = squeeze(ts(:,epoch,opt.environmentalChannels));
+    projectFrom = squeeze(ts(:,epoch,opt.dataChannels));
     projectionWeights  = projectOut \ projectFrom;
-    ts_denoised(:,epoch,data_channels) = projectFrom - projectOut*projectionWeights;
+    ts_denoised(:,epoch,opt.dataChannels) = projectFrom - projectOut*projectionWeights;
 end
 
-% for channel = data_channels; 
-%     if verbose
-%         fprintf('[%s]: Channel %d\n', mfilename, channel);
-%     end
-%     for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
-%         
-%         %%% ON PERIODS %%%
-%         
-%         % Full
-%         [~,~,R] = regress(ts(:,epoch,channel),[squeeze(ts(:,epoch,environmental_channels)) ones(size(ts,1),1) ]);
-%         ts_denoised(:,epoch,channel) = R;
-%                 
-%         clear R
-%         
-%     end
-% end
-% warning on stats:regress:RankDefDesignMat
-
-
-
 %% For debugging: Make figures of all the raw epochs 
-if produce_figures
-
-    % And for two visual channels
-    chan_1 = 1;
-    figure; plot(squeeze(nanmean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(nanmean(ts(:,:,chan_1),2)),'b')
+if opt.verbose
+    % And for two visual channels (channel 1 and 14)
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,1),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,1),2)),'b')
     xlabel('Time (ms)')
-    ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
+    ylabel('Amplitude (pTesla)')
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', 1))
     legend('Denoised','Raw')
 
-
-    chan_1 = 14;
-    figure; plot(squeeze(nanmean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(nanmean(ts(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,14),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,14),2)),'b')
     xlabel('Time (ms)')
-    ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
+    ylabel('Amplitude (pTesla)')
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', 14))
     legend('Denoised','Raw')
-
-
 end
 
 

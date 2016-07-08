@@ -1,71 +1,46 @@
-function [ts, conditions, badChannels, badEpochs] = gamma_preprocess_raw(sessionNum)
-% [ts, conditionsVector] = gamma_preprosess_raw(sessionNum)
+function [ts, opt] = gamma_preprocess_raw(sessionNum, opt)
+% [ts, opt] = gamma_preprocess_raw(sessionNum, opt)
 % 
 % {For use in Nicholas' new pipeline}
 % loads the squid file
 % fixes trigger anomalies
-% epoches time series into a 3D (time x epoch x channel) matrix
+% epoches time series into a 3D (time x epoch x channel) array
 % 
-% Input : sessionNum of the data being analysed
-% Output: ts - 3D time series (time x epoch x channel)
-%       : conditions - vector of size(ts,2) with trigger values
-%       : badChannels - binary vector corresponding to channels that were
-%       removed
-%       : badEpochs - binary vector representing epochs that were removed
+% INPUTS 
+%    sessionNum  :    number of dataset being analysed
+%    opt         :    options for preprocessing
 
-%% preprocessing variables
-
-data_channels     = 1:157;
-trigger_channels  = 161:164;
-fs                = 1000; % sampling rate in milliseconds
-epoch_start_end   = [0.050 1.049]; % start and end of epoch in seconds
-
-% parameters for the removal of nuissance data
-var_threshold         = [0.05 20]; 
-bad_channel_threshold = 0.2;
-bad_epoch_threshold   = 0.2;
-verbose               = true;
-
-SAVE_PREPROCESSED = false;
-
-%% Get paths
-
-% parent dir to this session's folder on the server
-sessionPath = meg_gamma_get_path(sessionNum);
-
-% this now uses the dfdPreprocessData function from the denoise project
-% repository
-addpath(genpath('~/matlab/git/denoiseproject'))
+% OUTPUTS
+%    ts          :    3D time series (time x epochs x channels)
+%    opt struct added with:
+%       conditions  :    vector of size(ts,2) with trigger values
+%       badChannels :    binary vector representing channels that were removed
+%       badEpochs   :    binary vector representing epochs that were removed
 
 %% Load sqd file
-
-ts = meg_load_sqd_data(fullfile(sessionPath, 'raw'), '*Gamma*');
+ts = meg_load_sqd_data(fullfile(opt.sessionPath, 'raw'), '*Gamma*');
 
 %% Extract trigger sequence
-
-trigger = meg_fix_triggers(ts(:,trigger_channels));
+trigger = meg_fix_triggers(ts(:,opt.triggerChannels));
 
 %% Partition into epochs
-
-[ts, conditions] = meg_make_epochs(ts, trigger, epoch_start_end, fs);
+[ts, conditions] = meg_make_epochs(ts, trigger, opt.params.epochStartEnd, opt.fs);
 
 %% Find and return bad channels/epochs
+[ts(:,:,opt.dataChannels), badChannels, badEpochs] = dfdPreprocessData(ts(:,:,opt.dataChannels), ...
+    opt.varThreshold, opt.badChannelThreshold, opt.badEpochThreshold, opt.verbose);
 
-[ts(:,:,data_channels), badChannels, badEpochs] = dfdPreprocessData(ts(:,:,data_channels), ...
-    var_threshold, bad_channel_threshold, bad_epoch_threshold, verbose);
-
+opt.params.conditions  = conditions;
+opt.params.badChannels = badChannels;
+opt.params.badEpochs   = badEpochs;
+ts = ts(:,:,[opt.dataChannels opt.environmentalChannels]);
 
 %% Save if needed 
-
-if SAVE_PREPROCESSED
-    savePath    = fullfile(sessionPath, 'processed');
+if opt.saveData
+    savePath    = fullfile(opt.sessionPath, 'processed');
     if ~exist(savePath, 'dir'), mkdir(savePath); end
     fileName = fullfile(savePath, sprintf('s%03d_preprocessed_ts_%s.mat', sessionNum, datestr(now, 'mm.dd.yy')));
-    save(fileName, 'ts', 'conditions', 'badChannels', 'badEpochs');
+    save(fileName, 'ts', 'opt', '-v7.3');
 end
-
-
-
-
 
 end

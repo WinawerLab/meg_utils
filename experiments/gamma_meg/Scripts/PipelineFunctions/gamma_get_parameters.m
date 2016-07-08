@@ -28,23 +28,23 @@ end
 
 switch condition_group
     case 1
-        parameters.epochRange           = [0.050 0.549];
-        parameters.ITI                   = [];
+        parameters.epochStartEnd        = [0.050 0.549];
+        parameters.ITI                  = [];
         parameters.baselineCondition    = 11;
         
     case 2
-        parameters.epochRange           = [0.050 1.049];
-        parameters.ITI                   = 11;
+        parameters.epochStartEnd        = [0.050 1.049];
+        parameters.ITI                  = 11;
         parameters.baselineCondition    = 10;
         
     case 3
-        parameters.epochRange           = [0.050 1.049];
-        parameters.ITI                   = 11;
+        parameters.epochStartEnd        = [0.050 1.049];
+        parameters.ITI                  = 11;
         parameters.baselineCondition    = 10;
         
     case 4
-        parameters.epochRange           = [0.050 1.049];
-        parameters.ITI                   = 14;
+        parameters.epochStartEnd        = [0.050 1.049];
+        parameters.ITI                  = 14;
         parameters.baselineCondition    = 13;
 end
 

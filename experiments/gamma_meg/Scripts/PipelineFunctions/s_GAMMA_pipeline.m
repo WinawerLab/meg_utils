@@ -1,105 +1,147 @@
 %% s_GAMMA_data_pipeline
-%  new wrapper script for a new analysis pipeline
-%  goals:      ~ eliminate redundancies (processes that are repeated
-%              in both the analysis and denoising scripts)
-%              ~ allow both the analysis and visualization functions to
-%              take either denoised or undenoised data as input
-%              ~ save files in organized structures and locations
-%              ~ allow for parallel processing (and eventual HPC
-%              compatability
+%  
+% This is a script to run separate parts of analysis pipeline of the MEG 
+% Gamma project. One can save results or timeseries of every part, so that
+% this part of the analysis can be skipped in the future.
 %
-% Nicholas Chua
+% This pipeline workflow:
+%   (0) Load toolboxes and define options
+%   (1) Loading SQD files and preprocessing timeseries
+%   (2) Denoise timeseries (environmentally or MEG Denoise)
+%   (3) Compute spectra and fit Broadband / Gamma model
+%   (4) Visualize data
 
-%% Paths and options
+% Session descriptions (more details in meg_get_parameters.m):
+%       Session 2:9         500 ms stimuli, no the binary pink and brown noise stimuli
+%       Session 5:9         1000 ms stimuli, can be denoised
+%       Session 10:16       1000 ms stimuli, binary noise stimuli, can be denoised
+%       Session 13          noisy and should not be used
+%       Session 17-22       faces, houses, gratings, noise patterns at low, medium, and high contrast
 
-% add field trip paths
-if isempty(which('ft_prepare_layout'))
-    meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+% Dependencies:
+%       MEG utils toolbox   (for loading, preprocessing, visualing data)
+%       Fieldtrip toolbox   (for loading, visualing data)
+%       MEG denoise toolbox (for preprocessing and denoising data)
+%
+% First version: Nicholas Chua (April 2016)
+%       7.5.2016: Clean up (EK)
+%       7.7.2016: Adding option to run script on HPC (EK)
+
+%% ------------------------------------------------------------------------
+%  -------------------- 0. Define paths and options -----------------------
+%  ------------------------------------------------------------------------
+
+% Do you want to run the analysis on the HPC?
+opt.HPC = false;
+
+if opt.HPC
+    % Define root path
+    rootPath = which(mfilename);
+    rootPath = fileparts(rootPath);   
+    % Add meg_utils
+    addpath(genpath(fullfile(fileparts(fileparts(rootPath)))));  
+    % Add denoiseproject
+    addpath(genpath('~/denoiseproject'));    
+else % Add toolboxes located on the desktop
+    if isempty(which('ft_prepare_layout'))
+        meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
+    end
+
+    if isempty(which('dfdPreprocessData'))
+        run '~/matlab/git/denoiseproject/dfdAddPaths'
+    end
+
+    if isempty(which('meg_gamma_get_path'))
+        addpath(genpath('~/matlab/git/meg_utils'))
+    end   
 end
 
-
+% Which sessions do you want to analyze?
 whichSessions          = 19;
-environmentalChannels  = 158:160;
-dataChannels           = 1:157;
 
-environmentalDenoising = false;
-PCADenoising           = true;
-nBoot                  = 5;
+% Parameters for preprocessing 
+opt.dataChannels           = 1:157;
+opt.environmentalChannels  = 158:160;
+opt.triggerChannels        = 161:164;
+opt.environmentalDenoising = true;          % use 3 environm. channels to denoise?
+opt.MEGDenoise             = false;         % use MEG Denoise?
+opt.nBoot                  = 5;             % nr of bootstraps
+opt.fs                     = 1000;          % sampling rate (milliseconds)
+% Epoch start and end is hardcoded in gamma_get_parameters(sessionNum) <-- do we want this?
+% opt.epochStartEnd          = [0.050 1.049]; % start and end of epoch (seconds) 
+opt.varThreshold           = [0.05 20];     % Threshold for variance in order to define noisy data
+opt.badChannelThreshold    = 0.2;           % Threshold for proportion of epochs to be bad before eliminating whole channel
+opt.badEpochThreshold      = 0.2;           % Threshold for proportion of channels to be bad before eliminating whole epoch
+
+% General parameters for saving and printing
+opt.verbose                = true;
+opt.saveData               = true;
+opt.saveFigures            = false;
+
 
 %% Loop over sessions
 for sessionNum = whichSessions
-    %% get paths/parameters
     
-    sessionPath = meg_gamma_get_path(sessionNum);
+    
+    %% --------------------------------------------------------------------
+    %  --------------------- 1. Load data and preprocess ------------------
+    %  --------------------------------------------------------------------
+    
+    % Get session paths and parameters 
+    if opt.HPC
+         sessionPath = fullfile(rootPath,'HPC','Data');
+    else sessionPath = meg_gamma_get_path(sessionNum); end
+    
     params = gamma_get_parameters(sessionNum);
+    opt.params      = params; clear params;
+    opt.sessionPath = sessionPath; clear sessionPath;
     
-    params.nBoot =  nBoot;
+    % Preprocessing (badChannels and badEpochs to be preserved before env
+    % denoise)
+    [ts, opt] = gamma_preprocess_raw(sessionNum, opt);
     
-    %    dataPath    = fullfile(sessionPath, 'raw');
-    %    savePath    = fullfile(path_to_data, 'processed');
-    %
-    %    if ~exist(savePath, 'dir'), mkdir(savePath); end
-    %% preprocessing
+    %% --------------------------------------------------------------------
+    %  ----------------------- 2. Denoise timeseries ----------------------
+    %  --------------------------------------------------------------------
     
-    % badChannels and badEpochs to be preserved before env denoise
-    [tmp, conditionVector, params.badChannels,...
-        params.badEpochs] = gamma_preprocess_raw(sessionNum);
-    
-    %% Denoising
-    
-    % denoise using environmental channels
-    if environmentalDenoising
-        tmp               = meg_environmental_denoising(tmp,...
-                             environmentalChannels, dataChannels);
-        params.envDenoise = 1;
+    % Denoise using environmental channels if requested
+    if opt.environmentalDenoising
+        ts = meg_environmental_denoising(ts, opt);
     end
     
-    % remove badEpochs and badChannels from ts after environmental
-    % denoising
-    ts                            = tmp(:, ~params.badEpochs, :); 
-    clear tmp;
-    ts(:,:,params.badChannels)    = NaN;
-    params.conditionVector        = conditionVector(~params.badEpochs);
+    % Remove badEpochs and badChannels from ts after environmental denoising
+    ts                              = ts(:, ~opt.params.badEpochs, opt.dataChannels); 
+    ts(:,:,opt.params.badChannels)  = NaN;
+    opt.params.conditions           = opt.params.conditions(~opt.params.badEpochs);
     
     % prepare timeseries for PCA and spectral analysis by removing
-    % ITI epochs from the timeseries and conditionVector
+    % ITI epochs from the timeseries and conditionVector 
+    ITIepochs                       = opt.params.conditions == opt.params.ITI;
+    ts                              = ts(:, ~ITIepochs, :);
+    opt.params.conditions      = opt.params.conditions(opt.params.conditions ~= opt.params.ITI);
     
-    ITIepochs  = params.conditionVector == params.ITI;
-    ts         = ts(:, ~ITIepochs, :);
-    params.conditionVector = params.conditionVector(params.conditionVector ~= params.ITI);
-    
-    % denoise using Kuper's PCA
-    if PCADenoising
-        ts                = ts(:,:,~params.badChannels);        
-        ts                = gamma_denoise(ts, params);
+    % Denoise using MEG Denoise is requested
+    if opt.MEGDenoise
+        ts = ts(:,:,~opt.params.badChannels);        
+        ts = gamma_denoise(ts, opt);
 
         sz = size(ts);
         ts = reshape(ts, [], sz(3));
-        ts = to157chan(ts, ~params.badChannels, NaN);
-        ts = reshape(ts, sz(1), sz(2), []);
-        
-        params.pcaDenoise = 1;
-        
+        ts = to157chan(ts, ~opt.params.badChannels, 'nans');
+        ts = reshape(ts, sz(1), sz(2), []);     
     end
-    %% Spectral analysis, bootstraping, and fitting
-
     
-    % results is a struct with fields:
-    % spectral_data_mean, fit_bl_mn, w_pwr_mn, w_gauss_mn, ...
-    % gauss_f_mn, fit_f2_mn
-    results = gamma_spectral_analysis(ts(:,:,dataChannels), params);
+    %% --------------------------------------------------------------------
+    %  -------------------- 3. Spectral analyses --------------------------
+    %  --------------------------------------------------------------------
     
-    % save(fullfile(meg_gamma_get_path(18),'processed',sprintf('s%03d_sample_params.mat', sessionNum)), 'params');
+    % Spectral analysis, bootstraping, and fitting
+    results = gamma_spectral_analysis(ts(:,:,opt.dataChannels), opt);
     
-    
-    %% Visualization
-    % load sample spectral data for test purposes
-%     a = load(fullfile(fullfile(meg_gamma_get_path(18), 'processed'),sprintf('s%03d_summary&fits_%s.mat', 18, ...
-%         'test_spectra_for_plot'))); results = a.results; clear a;
-%     b = load(fullfile(meg_gamma_get_path(18), 'processed', sprintf('s%03d_sample_params.mat', 18))); params = b.params;
-%     
-%     
-    gamma_visualize_spectral(params, results);
+    %% --------------------------------------------------------------------
+    %  ---------------------- 4. Visualization ----------------------------
+    %  --------------------------------------------------------------------
+    if ~opt.HPC; gamma_visualize_spectral(results); end
     
 end
 
