@@ -87,8 +87,12 @@ for sessionNum = whichSessions
     
     % Get session paths and parameters 
     if opt.HPC
-         sessionPath = fullfile(rootPath,'HPC','Data');
-    else sessionPath = meg_gamma_get_path(sessionNum); end
+        projectPath = fullfile(rootPath,'HPC','Data');
+        dataPth    = sprintf('%02d_Gamma_*subj*', sessionNum);
+        d = dir(fullfile(projectPath, dataPth));
+        sessionPath = fullfile(projectPath, d.name);     
+    else sessionPath = meg_gamma_get_path(sessionNum); 
+    end
     
     params = gamma_get_parameters(sessionNum);
     opt.params      = params; clear params;
