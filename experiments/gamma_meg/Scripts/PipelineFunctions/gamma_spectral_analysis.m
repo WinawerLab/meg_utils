@@ -174,7 +174,10 @@ meanResults = struct('spectralDataMean', spectralDataMean, ...
 
 if opt.saveData 
     if opt.verbose; fprintf('[%s]: Saving data..]',mfilename); end
-    savePth = fullfile(meg_gamma_get_path(opt.params.sessionNumber), 'processed');
+    if opt.HPC
+        savePth = fullfile(opt.sessionPath, 'processed');
+    else
+    savePth = fullfile(meg_gamma_get_path(opt.params.sessionNumber), 'processed'); end
     % Save bootstrapped spectral data
     save(fullfile(savePth,sprintf('s%03d_spectralData_%s.mat', opt.params.sessionNumber, ...
         postFix)),'spectralDataBoots', '-v7.3')

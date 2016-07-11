@@ -90,7 +90,8 @@ for sessionNum = whichSessions
         projectPath = fullfile(rootPath,'HPC','Data');
         dataPth    = sprintf('%02d_Gamma_*subj*', sessionNum);
         d = dir(fullfile(projectPath, dataPth));
-        sessionPath = fullfile(projectPath, d.name);     
+        sessionPath = fullfile(projectPath, d.name);   
+        disp(sessionPath)
     else sessionPath = meg_gamma_get_path(sessionNum); 
     end
     
