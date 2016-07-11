@@ -75,7 +75,7 @@ opt.badEpochThreshold      = 0.2;           % Threshold for proportion of channe
 
 % General parameters for saving and printing
 opt.verbose                = true;
-opt.saveData               = true;
+opt.saveData               = false;
 opt.saveFigures            = false;
 
 
@@ -104,11 +104,6 @@ for sessionNum = whichSessions
     %  ----------------------- 2. Denoise timeseries ----------------------
     %  --------------------------------------------------------------------
     
-    % Denoise using environmental channels if requested
-    if opt.environmentalDenoising
-        ts = meg_environmental_denoising(ts, opt);
-    end
-    
     % Remove badEpochs and badChannels from ts after environmental denoising
     ts                              = ts(:, ~opt.params.badEpochs, opt.dataChannels); 
     ts(:,:,opt.params.badChannels)  = NaN;
@@ -118,7 +113,7 @@ for sessionNum = whichSessions
     % ITI epochs from the timeseries and conditionVector 
     ITIepochs                       = opt.params.conditions == opt.params.ITI;
     ts                              = ts(:, ~ITIepochs, :);
-    opt.params.conditions      = opt.params.conditions(opt.params.conditions ~= opt.params.ITI);
+    opt.params.conditions           = opt.params.conditions(opt.params.conditions ~= opt.params.ITI);
     
     % Denoise using MEG Denoise is requested
     if opt.MEGDenoise
@@ -136,12 +131,12 @@ for sessionNum = whichSessions
     %  --------------------------------------------------------------------
     
     % Spectral analysis, bootstraping, and fitting
-    results = gamma_spectral_analysis(ts(:,:,opt.dataChannels), opt);
+    [results, opt] = gamma_spectral_analysis(ts(:,:,opt.dataChannels), opt);
     
     %% --------------------------------------------------------------------
     %  ---------------------- 4. Visualization ----------------------------
     %  --------------------------------------------------------------------
-    if ~opt.HPC; gamma_visualize_spectral(results); end
+    if ~opt.HPC; gamma_visualize_spectral(results, opt); end
     
 end
 
