@@ -1,4 +1,4 @@
-function results = gamma_spectral_analysis(ts, opt)
+function [results, opt] = gamma_spectral_analysis(ts, opt)
 %% results = gamma_spectral_analysis(ts, opt)
 %  performs the spectral analysis, bootstrapping, and curve fitting for
 %  s_GAMMA_pipeline
@@ -32,7 +32,7 @@ numConditions = length(conditionsUnique);
 % Parameters for spectral analysis and modelfitting
 t = (1:size(ts,1))/opt.fs;
 f = (0:length(t)-1)/max(t);
-opt.fitFreq = f((f>=35 & f <= 57) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200)); % To do: get this hard coded part out of the function 
+opt.fitFreq = f((f>=35 & f <= 56) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200)); % To do: get this hard coded part out of the function 
 
 % FFT over time points
 spectralData = abs(fft(ts))/length(t)*2;
