@@ -24,6 +24,10 @@ function ts_denoised = meg_environmental_denoising(ts, opt)
 %% Make empty arrays for regressed 'clean' data
 ts_denoised = ts;
 
+if notDefined('opt.environmentalChannels'); opt.environmentalChannels = 158:160; end
+if notDefined('opt.dataChannels'); opt.dataChannels = 1:157; end
+if notDefined('opt.verbose'); opt.verbose = false; end
+
 % Start regression, keep residuals
 for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168)) <--- EK: so do we need to do anything with this?!
     projectOut  = squeeze(ts(:,epoch,opt.environmentalChannels));

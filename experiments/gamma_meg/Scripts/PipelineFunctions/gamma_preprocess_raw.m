@@ -26,14 +26,18 @@ trigger = meg_fix_triggers(ts(:,opt.triggerChannels));
 %% Partition into epochs
 [ts, conditions] = meg_make_epochs(ts, trigger, opt.params.epochStartEnd, opt.fs);
 
+% Denoise with three environmental channels
+if opt.environmentalDenoising
+    ts = meg_environmental_denoising(ts);
+end
+
 %% Find and return bad channels/epochs
-[ts(:,:,opt.dataChannels), badChannels, badEpochs] = dfdPreprocessData(ts(:,:,opt.dataChannels), ...
+[ts, badChannels, badEpochs] = dfdPreprocessData(ts(:,:,opt.dataChannels), ...
     opt.varThreshold, opt.badChannelThreshold, opt.badEpochThreshold, opt.verbose);
 
 opt.params.conditions  = conditions;
 opt.params.badChannels = badChannels;
 opt.params.badEpochs   = badEpochs;
-ts = ts(:,:,[opt.dataChannels opt.environmentalChannels]);
 
 %% Save if needed 
 if opt.saveData
