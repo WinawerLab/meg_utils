@@ -75,7 +75,7 @@ opt.badEpochThreshold      = 0.2;           % Threshold for proportion of channe
 
 % General parameters for saving and printing
 opt.verbose                = true;
-opt.saveData               = false;
+opt.saveData               = true;
 opt.saveFigures            = false;
 
 
