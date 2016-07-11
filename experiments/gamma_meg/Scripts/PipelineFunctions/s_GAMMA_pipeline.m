@@ -32,16 +32,14 @@
 %  ------------------------------------------------------------------------
 
 % Do you want to run the analysis on the HPC?
-opt.HPC = false;
+opt.HPC = true;
 
 if opt.HPC
     % Define root path
     rootPath = which(mfilename);
-    rootPath = fileparts(rootPath);   
-    % Add meg_utils
-    addpath(genpath(fullfile(fileparts(fileparts(rootPath)))));  
+    rootPath = fileparts(fileparts(fileparts(rootPath)));   
     % Add denoiseproject
-    addpath(genpath('~/denoiseproject'));    
+    addpath(genpath('/scratch/ek99/denoiseproject'));    
 else % Add toolboxes located on the desktop
     if isempty(which('ft_prepare_layout'))
         meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
