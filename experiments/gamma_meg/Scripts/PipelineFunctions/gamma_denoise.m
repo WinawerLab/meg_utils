@@ -70,7 +70,7 @@ tsDenoised = permute(tsDenoised{1}, [2 3 1]); % back to time x epochs x chan
 if opt.saveData
     thisDate = datestr(now, 'mm.dd.yy');
     fileName = sprintf('s_%02d_tsDenoised_%s.mat', opt.params.sessionNumber, thisDate);
-    save(fullfile(meg_gamma_get_path(sessionNum), 'processed', fileName),...
+    save(fullfile(opt.sessionPath, 'processed', fileName),...
         'results','tsDenoised','opt')
 end
 end
