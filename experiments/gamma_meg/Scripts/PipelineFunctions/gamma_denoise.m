@@ -69,8 +69,8 @@ tsDenoised = permute(tsDenoised{1}, [2 3 1]); % back to time x epochs x chan
 
 if opt.saveData
     thisDate = datestr(now, 'mm.dd.yy');
-    fileName = sprintf('s_%02d_tsDenoised_%s.mat', opt.params.sessionNumber, thisDate);
+    fileName = sprintf('s%02d_tsDenoised_%s.mat', opt.params.sessionNumber, thisDate);
     save(fullfile(opt.sessionPath, 'processed', fileName),...
-        'results','tsDenoised','opt')
+        'results','tsDenoised','opt','-v7.3')
 end
 end
