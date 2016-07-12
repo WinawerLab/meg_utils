@@ -8,7 +8,7 @@ function [meanResults, opt] = gamma_spectral_analysis(ts, opt)
 %      : opt - structure containing experimental parameters obtained
 % 
 % OUTPUTS
-% results (a struct which includes):
+% meanResults (a struct which includes):
 %       spectralDataMean    :    3D array containing spectral data averaged across bootstraps (time x conditions x channels) 
 %       fitBaselineMean     :    2D array containing baseline fit averaged across bootstraps (channels x selected frequencies) 
 %       broadbandPowerMean  :    2D array containing broadband power elevation fit averaged across bootstraps (channels x conditions) 

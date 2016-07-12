@@ -62,7 +62,7 @@ opt.dataChannels           = 1:157;
 opt.environmentalChannels  = 158:160;
 opt.triggerChannels        = 161:164;
 opt.environmentalDenoising = true;          % use 3 environm. channels to denoise?
-opt.MEGDenoise             = false;         % use MEG Denoise?
+opt.MEGDenoise             = true;         % use MEG Denoise?
 opt.nBoot                  = 100;             % nr of bootstraps
 opt.fs                     = 1000;          % sampling rate (milliseconds)
 % Epoch start and end is hardcoded in gamma_get_parameters(sessionNum) <-- do we want this?
