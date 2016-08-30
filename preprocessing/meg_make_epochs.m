@@ -51,6 +51,6 @@ ts   = raw_ts(inds,:);
 ts   = reshape(ts,size(inds,1),size(inds,2),size(raw_ts,2));
 ts   = permute(ts, [2 1 3]);
 
-if strcmp('which_data','meg'); conditions = trigger(onset_times); 
+if strcmp(which_data,'meg'); conditions = trigger(onset_times); 
 else conditions = []; end
 return
