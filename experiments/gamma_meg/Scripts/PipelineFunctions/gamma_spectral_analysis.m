@@ -35,7 +35,7 @@ f = (0:length(t)-1)/max(t);
 opt.fitFreq = f((f>=35 & f <= 56) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200)); % To do: get this hard coded part out of the function 
 
 % FFT over time points
-spectralData = abs(fft(ts))/length(t)*2;
+spectralData = (abs(fft(ts)).^2)/length(t)*2;
 
 % Prepare array for bootstrapping
 % (freq x conditions x channels x bootstraps)

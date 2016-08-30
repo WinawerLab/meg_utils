@@ -16,7 +16,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_session_to_visualize    = 8;%[6,7,8,9,10,11,12,14,15,16]
+which_session_to_visualize    = 15; %8;%[6,7,8,9,10,11,12,14,15,16]
 save_images                   = true;
 
 % Get the folders of the subjects in the Gamma experiment
@@ -92,7 +92,7 @@ for session_num = which_session_to_visualize
     data_before      = nanmedian(spectral_data_before.spectral_data_boots,4);
     
     % Do the same but then for model and spectra after denoising
-    model_fit_after = nanmedian(after.fit_f2,4);
+    model_fit_after = nanmedian(after.fit_f2.^2,4);
     data_after      = nanmedian(spectral_data_after.spectral_data_boots,4);
     
     
@@ -116,8 +116,8 @@ for session_num = which_session_to_visualize
     
     
     %% Plot
-    fH = figure('position', [1,600,1400,800]);
-    xt = [10:10:80 100 150 200];
+    fH = figure('position', [1,400,400,800]);
+    xt = [35 50 100 150 200];
     
     for before_or_after = 1:2
         switch before_or_after
@@ -141,8 +141,7 @@ for session_num = which_session_to_visualize
                     
         end
         
-        for chan = 1%:num_channels
-            clf;
+        for chan = 23;%:num_channels
             set(fH, 'name', sprintf('Channel %d', chan));
             for ii = 1:9
                 
@@ -151,9 +150,9 @@ for session_num = which_session_to_visualize
                 
                 %             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
                 
-                plot(f,exp(model_fit(ii,:,chan)), '-','color', color_scheme(ii,:,:), 'LineWidth',5); hold on;
+                plot(f,exp(model_fit(ii,:,chan)), '-','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
                 
-                plot(f,data(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',2);
+                plot(f,data(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',1);
                 %             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
                 
                 
@@ -161,17 +160,26 @@ for session_num = which_session_to_visualize
                 %                 before.w_gauss_mn(chan, ii) * ...
                 %                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
                 
-                plot(f,exp(model_fit(baseline_condition,:,chan)),'color',rgb_grey,'LineWidth',5);
+                plot(f,exp(model_fit(baseline_condition,:,chan)),'color',rgb_grey,'LineWidth',2);
                 
                 %             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
-                plot(f,data(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',2);
+                plot(f,data(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',1);
                 
                 
-                set(gca, 'YScale','log','XScale','log','LineWidth',4)
-                axis([xl yl])
-                set(gca,'XTick', xt,'XGrid','on')
-                set(gca,'YTick',0:5:40)
+                set(gca, 'YScale','log','XScale','log','LineWidth',1)
+                xlim([35 200])
+                set(gca,'XTick',[25 35 50 75 100 150 200])
+                set(gca,'XTickLabel',{'25','35','50','75','100','150','200'})
+%                 set(gca,'XLim', [35 200]) %200axis([xt(1) yl])
+%                 set(gca,'YLim', [10.^-1 10.^3]) %200axis([xt(1) yl])
+                set(gca,'YLim', [10.^0 10.^2.2]) % The right axes for MEG plot alone
+%                 set(gca,'YLim',[10.^-2 10.^2.25]) % The axis of ECOG
+
+                
+                set(gca,'XGrid','on')
+%                 set(gca,'YTick',10^-2:50:10^2.25)
                 set(gca,'box', 'off');        set(gcf, 'color','w')
+                makeprettyaxes(gca,9,9)
                 
                 title(...
                     sprintf('%s, Broadband: %5.3f, Gamma: %5.3f at %3.1f Hz', ...
@@ -185,7 +193,7 @@ for session_num = which_session_to_visualize
                 legend({sprintf('Modelfit %s', condition_names{ii}), sprintf('Data %s', condition_names{ii}), 'Modelfit Baseline', 'Data Baseline'},'FontSize',20,'FontWeight','bold');
                 legend('boxoff')
                 if save_images
-                    poster_path = sprintf('/Volumes/server/Projects/MEG/Gamma/SFN 2015/poster_material/spectra_panel/session%d/', session_num);
+                    poster_path = sprintf('/Users/winawerlab/Google Drive/FYP/15_Gamma_9_29_2015_subj028/MEG_AXES', session_num);
                     
                     hgexport(gcf, fullfile(poster_path,...
                         sprintf('data_modelfit_%s_chan%d_cond%d_local_regression_boot100', str, chan,ii)));
