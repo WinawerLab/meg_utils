@@ -36,7 +36,7 @@ end
 
 epoch_samples = round(epoch_time * fs); %epoch length in samples
 
-inds = bsxfun(@plus,onset_times,(epoch_samples(1):epoch_samples(2)));
+inds = bsxfun(@plus,onset_times,(epoch_samples(1):epoch_samples(2)-1));
 
 % if the onset times + number of timepoints are longer than the actual raw
 % ts, we have to discard those onset times
