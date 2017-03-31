@@ -32,6 +32,16 @@ switch which_data
         keep_inds           = inds(1:12:end);
         onsets              = zeros(size(triggers));
         onsets(keep_inds)   = triggers(keep_inds);
+        
+    case {'nyuad'}
+        inds                = find(triggers);
+        keep_inds           = inds(1:12:end);
+        onsets              = zeros(size(triggers));
+        onsets(keep_inds)   = triggers(keep_inds);
+        % Since the NYU Abu Dhabi data is acquired after the last SSMEG
+        % subject, we don't have to insert blank periods.
+        which_subject = 7;
+        
 end
 
 switch which_subject
