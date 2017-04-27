@@ -1,6 +1,6 @@
-function fH = ft_plotOnMesh(sensorData, titleTxt, figureNum, plotType, varargin)
+function fH = ft_plotOnMesh(sensorData, titleTxt, figureNum, plotType, cfg, varargin)
 %Plot a surface map of the MEG sensor data
-% fH = ft_plotOnMesh(sensor_data, [title_txt], [figure_num], [plotType])
+% fH = ft_plotOnMesh(sensor_data, [title_txt], [figure_num], [plotType], cfg)
 %
 % Inputs
 %   sensorData: 1x157 vector of sensor data (% if longer or shorter, it
@@ -22,10 +22,9 @@ function fH = ft_plotOnMesh(sensorData, titleTxt, figureNum, plotType, varargin)
 
 % Plot Type
 if notDefined('plotType'), plotType = '2d'; end
+if notDefined('cfg'), cfg = []; end
 
-% Length of sensor data and layout
-cfg = [];
-
+% Check length of sensordata 
 if length(sensorData) <= 102 % Combined NeuroMag 204 channel MEG
         data_hdr = load('neuromag360_sample_hdr_combined.mat'); data_hdr = data_hdr.hdr;
         cfg.layout = ft_prepare_layout(cfg, data_hdr); 
@@ -88,7 +87,7 @@ switch lower(plotType)
                 % paired parameter and value
                 parname = varargin{ii};
                 val     = varargin{ii+1};
-
+                                
                 % check wehther this parameter exists in the defaults
                 existingparnames = opt(1:2:end);
                 tmp = strfind(existingparnames, parname);
@@ -103,7 +102,7 @@ switch lower(plotType)
         % Deal with NaNs
         for ii = 1:length(cfg.data)
             if isnan(cfg.data(ii))
-                cfg.data(ii) = nanmedian(sensor_data);
+                cfg.data(ii) = nanmedian(sensorData);
             end
         end
         
