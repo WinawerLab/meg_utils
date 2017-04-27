@@ -16,7 +16,7 @@ data_pth                      = '*_Gamma_*subj*';
 
 % Define parameters
 fs                            = 1000;
-which_session_to_visualize    = 15; %8;%[6,7,8,9,10,11,12,14,15,16]
+which_session_to_visualize    = 8; %8;%[6,7,8,9,10,11,12,14,15,16]
 save_images                   = true;
 
 % Get the folders of the subjects in the Gamma experiment
@@ -70,6 +70,10 @@ for session_num = which_session_to_visualize
     before  = load(fullfile(load_pth, datasets(before_dataset).name));
     after   = load(fullfile(load_pth, datasets(after_dataset).name));
     
+%     after = load(fullfile(load_pth,'s015_results_100boots_denoised_08.31.16.mat'));
+%     spectral_data_after = load(fullfile(load_pth, 's015_spectralData_100boots_denoised_08.31.16.mat'));
+
+
     % Get denoised dataset in case we need to define the badChannels
     denoisedData = dir(fullfile(load_pth, sprintf('s%02d_denoisedData*',session_num)));
     denoisedData = load(fullfile(load_pth,denoisedData(1).name));
@@ -85,16 +89,18 @@ for session_num = which_session_to_visualize
     
     spectral_data_before = load(fullfile(load_pth,spectral_data_files(before_dataset).name));
     spectral_data_after  = load(fullfile(load_pth,spectral_data_files(after_dataset).name));
-    
+
     % Take the median across bootstraps for modelfit and spectra
     model_fit_before = nanmedian(before.fit_f2,4);
     %     model_fit_before = before.fit_f2;
     data_before      = nanmedian(spectral_data_before.spectral_data_boots,4);
     
     % Do the same but then for model and spectra after denoising
-    model_fit_after = nanmedian(after.fit_f2.^2,4);
+    model_fit_after = nanmedian(after.fit_f2,4);
     data_after      = nanmedian(spectral_data_after.spectral_data_boots,4);
     
+%     model_fit_after = nanmedian(after.results.modelFitAllFreq,4);
+%     data_after = nanmedian(spectral_data_after.spectralDataBoots,4);
     
     % Define time and frequencies to use
      
@@ -116,7 +122,7 @@ for session_num = which_session_to_visualize
     
     
     %% Plot
-    fH = figure('position', [1,400,400,800]);
+    fH = figure('position', [1,400,1600,800]);
     xt = [35 50 100 150 200];
     
     for before_or_after = 1:2
@@ -141,7 +147,7 @@ for session_num = which_session_to_visualize
                     
         end
         
-        for chan = 23;%:num_channels
+        for chan = 1%23;%23;%:num_channels
             set(fH, 'name', sprintf('Channel %d', chan));
             for ii = 1:9
                 
@@ -150,9 +156,9 @@ for session_num = which_session_to_visualize
                 
                 %             plot(f(f_sel),10.^model_fit_before(ii,f_sel,chan), '-o','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
                 
-                plot(f,exp(model_fit(ii,:,chan)), '-','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
+                plot(f,exp(model_fit(ii,:,chan)).^2, '-','color', color_scheme(ii,:,:), 'LineWidth',2); hold on;
                 
-                plot(f,data(:,ii,chan), 'color', color_scheme(ii,:,:), 'LineWidth',1);
+                plot(f,(data(:,ii,chan).^2), 'color', color_scheme(ii,:,:), 'LineWidth',1);
                 %             plot(f,mean(data_before(:,ii,chan),2), 'color', color_scheme(ii,:,:), 'LineWidth',2);
                 
                 
@@ -160,10 +166,10 @@ for session_num = which_session_to_visualize
                 %                 before.w_gauss_mn(chan, ii) * ...
                 %                 0.04*sqrt(2*pi)*normpdf(log(f_use4fit),before.gauss_f(chan, ii),0.04);
                 
-                plot(f,exp(model_fit(baseline_condition,:,chan)),'color',rgb_grey,'LineWidth',2);
+                plot(f,exp(model_fit(baseline_condition,:,chan)).^2,'color',rgb_grey,'LineWidth',2);
                 
                 %             plot(f(f_sel),10.^model_fit_before(10,f_sel,chan),'color',rgb_grey,'LineWidth',4);
-                plot(f,data(:,baseline_condition,chan), 'color', rgb_grey, 'LineWidth',1);
+                plot(f,(data(:,baseline_condition,chan).^2), 'color', rgb_grey, 'LineWidth',1);
                 
                 
                 set(gca, 'YScale','log','XScale','log','LineWidth',1)
@@ -172,8 +178,8 @@ for session_num = which_session_to_visualize
                 set(gca,'XTickLabel',{'25','35','50','75','100','150','200'})
 %                 set(gca,'XLim', [35 200]) %200axis([xt(1) yl])
 %                 set(gca,'YLim', [10.^-1 10.^3]) %200axis([xt(1) yl])
-                set(gca,'YLim', [10.^0 10.^2.2]) % The right axes for MEG plot alone
-%                 set(gca,'YLim',[10.^-2 10.^2.25]) % The axis of ECOG
+                set(gca,'YLim', [10.^1 10.^2.2]) % The right axes for MEG plot alone
+%                 set(gca,'YLim',[10.^0 10.^4.2]) % The axis of ECOG
 
                 
                 set(gca,'XGrid','on')
@@ -181,22 +187,22 @@ for session_num = which_session_to_visualize
                 set(gca,'box', 'off');        set(gcf, 'color','w')
                 makeprettyaxes(gca,9,9)
                 
-                title(...
-                    sprintf('%s, Broadband: %5.3f, Gamma: %5.3f at %3.1f Hz', ...
-                    condition_names{ii}, params.w_pwr_mn(chan, ii)-params.w_pwr_mn(chan, baseline_condition), ...
-                    params.w_gauss_mn(chan, ii)-params.w_gauss_mn(chan, baseline_condition),...
-                    exp(params.gauss_f(chan, ii))),...
-                    'FontSize', 20)
+%                 title(...
+%                     sprintf('%s, Broadband: %5.3f, Gamma: %5.3f at %3.1f Hz', ...
+%                     condition_names{ii}, params.w_pwr_mn(chan, ii)-params.w_pwr_mn(chan, baseline_condition), ...
+%                     params.w_gauss_mn(chan, ii)-params.w_gauss_mn(chan, baseline_condition),...
+%                     exp(params.gauss_f(chan, ii))),...
+%                     'FontSize', 20)
                 
                 xlabel('Frequency (Hz)','FontSize',20,'FontWeight','bold')
                 ylabel('Power (pico Tesla)','FontSize',20,'FontWeight','bold')
                 legend({sprintf('Modelfit %s', condition_names{ii}), sprintf('Data %s', condition_names{ii}), 'Modelfit Baseline', 'Data Baseline'},'FontSize',20,'FontWeight','bold');
                 legend('boxoff')
                 if save_images
-                    poster_path = sprintf('/Users/winawerlab/Google Drive/FYP/15_Gamma_9_29_2015_subj028/MEG_AXES', session_num);
+                    poster_path = sprintf('/Users/winawerlab/Google Drive/FYP/08_Gamma_3_16_2015_subj018/MEG_AXES/power', session_num);
                     
                     hgexport(gcf, fullfile(poster_path,...
-                        sprintf('data_modelfit_%s_chan%d_cond%d_local_regression_boot100', str, chan,ii)));
+                        sprintf('data_modelfit_%s_chan%d_cond%d_local_regression_boot100_large', str, chan,ii)));
                 end
                 %             waitforbuttonpress
             end

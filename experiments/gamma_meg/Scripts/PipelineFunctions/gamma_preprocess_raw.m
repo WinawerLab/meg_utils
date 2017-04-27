@@ -20,6 +20,11 @@ function [ts, opt] = gamma_preprocess_raw(sessionNum, opt)
 %% Load sqd file
 ts = meg_load_sqd_data(fullfile(opt.sessionPath, 'raw'), '*Gamma*');
 
+% Check dimensions ts (assuming that there are more timepoints than
+% channels in a dataset
+if size(ts,1) < size(ts,2)
+    ts = ts';
+end
 %% Extract trigger sequence
 trigger = meg_fix_triggers(ts(:,opt.triggerChannels));
 

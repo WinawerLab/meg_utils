@@ -1,24 +1,16 @@
-%% ssmeg_Analysis
+%% ssmeg_Analysis for NYU AD Data
 
 % This script can be used to call MEG functions to analyse the data in several steps
 
 %% Set analysis variables
-project_pth                   = '/Volumes/server/Projects/MEG/SSMEG/';
+project_pth                   = '/Volumes/server/Projects/MEG/NYUAD/';
 
-which_subjects                = 1;
-denoise_with_nonphys_channels = false;       % Regress out time series from 3 nuissance channels
-remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
-remove_bad_channels           = true;        % Remove channels whose median sd is outside some range
-
+which_subjects                = 2;
 produce_figures               = false;        % If you want figures in case of debugging, set to true
 save_tseries                  = true;        % Save epoched time series?
-
-denoise_via_pca               = false;        % Do you want to use PCA on a noise pool of channels to
-experiment_name               = 'Default';   % Define condition of experiment, to define triggers (Choose between Attention or Default)
-
-data_channels                 = 1:157;
-environmental_channels        = 158:160;
-trigger_channels              = 161:164;
+data_channels                 = 1:224;
+% environmental_channels        = 158:160;
+trigger_channels              = 225:231;
 
 fs                            = 1000;        % sample rate
 epoch_time                    = [0 1];       % start and end of epoch, relative to trigger, in seconds
@@ -34,8 +26,8 @@ addpath(fullfile(project_pth, 'code'));
 % Find subjects for this project
 subject_pths = dir(fullfile(project_pth, '*SSMEG_*'));
 
-% Make sure there are exactly 8 subjects and one validation dataset
-assert(length(subject_pths)==8+1)
+% Make sure there are exactly 2 subjects and no validation dataset
+assert(length(subject_pths)==2) % NYUAD has 2 SSMEG datasets
 
 %% -------------------------------------
 % ------- STRUCTURE THE RAW DATA -------
@@ -44,31 +36,18 @@ assert(length(subject_pths)==8+1)
 
 data_pth = fullfile(project_pth, subject_pths(which_subjects).name, 'raw');
 
-[ts, meg_files] = meg_load_sqd_data(data_pth, '*SSMEG*');
+% [ts, meg_files] = meg_load_con_data(data_pth, '*SSMEG*');
+[ts, meg_files] = meg_load_sqd_data(data_pth, '*CALM*');
 %% Fix triggers
+ts = ts';
+trigger = meg_fix_triggers(ts(:,trigger_channels));
 
-if which_subjects == 5
-    pd_chan = 192; % Photodiode channel
-    Fs = 1000; % Hz
-    num_runs = 6; % Per single flicker/blank period
-    num_epoch_time_pts = 1000;
-    
-    % This function is specifically made for session 8, look inside the
-    % code if you want to use it for a different session!
-    [trigger] = ssmeg_get_triggers_from_photodiode(pd_chan, Fs, num_runs, ts);
-    
-else
-      
-    trigger = meg_fix_triggers(ts(:,trigger_channels));
-    
-end
-
-onsets = ssmeg_trigger_2_onsets(trigger, which_subjects, 'meg');
-[sensorData, conditions] = meg_make_epochs(ts, onsets, epoch_time, fs);
+onsets = ssmeg_trigger_2_onsets(trigger, which_subjects, 'nyuad');
+[sensorData, conditions] = meg_make_epochs(ts(:,data_channels), onsets, epoch_time, fs);
 
 if save_tseries
-    save(sprintf('s%02d_sensorData', which_subjects), 'sensorData');
-    save(sprintf('s%02d_conditions', which_subjects), 'conditions');    
+    save(fullfile(data_pth,sprintf('s%02d_sensorData_CALM', which_subjects)), 'sensorData');
+    save(fullfile(data_pth,sprintf('s%02d_conditions_CALM', which_subjects)), 'conditions');    
 end
 
 return

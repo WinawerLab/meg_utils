@@ -32,10 +32,16 @@ numConditions = length(conditionsUnique);
 % Parameters for spectral analysis and modelfitting
 t = (1:size(ts,1))/opt.fs;
 f = (0:length(t)-1)/max(t);
+
+% For MEG NYU data (60 Hz line noise)
 opt.fitFreq = f((f>=35 & f <= 56) | (f>=63 & f <= 115) | (f>=126 & f <= 175) | (f>=186 & f <= 200)); % To do: get this hard coded part out of the function 
 
+% For MEG Abu Dhabi data (50 Hz line noise)
+% opt.fitFreq = f((f>=35 & f <= 48) | (f>=52 & f <= 98) | (f>=102 & f <= 148) | (f>=152 & f <= 200)); % To do: get this hard coded part out of the function 
+
+
 % FFT over time points
-spectralData = (abs(fft(ts)).^2)/length(t)*2;
+spectralData = (abs(fft(ts))/length(t)*2).^2;
 
 % Prepare array for bootstrapping
 % (freq x conditions x channels x bootstraps)

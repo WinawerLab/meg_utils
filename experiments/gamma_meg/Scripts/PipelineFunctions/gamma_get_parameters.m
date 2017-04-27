@@ -21,8 +21,10 @@ elseif ismember(session_num, 5:9)
     condition_group = 2;
 elseif ismember(session_num, 10:16)
     condition_group = 3;
-elseif session_num > 16 && session_num <99
+elseif ismember(session_num, 17:22) && session_num <99
     condition_group = 4;
+elseif session_num == 23 % NYU AD dataset (has triggers 2:2:28)
+    condition_group = 5;
 end
 
 
@@ -46,6 +48,11 @@ switch condition_group
         parameters.epochStartEnd        = [0.050 1.049];
         parameters.ITI                  = 14;
         parameters.baselineCondition    = 13;
+        
+    case 5
+        parameters.epochStartEnd        = [0.050 1.049];
+        parameters.ITI                  = 28;
+        parameters.baselineCondition    = 26;
 end
 
 return

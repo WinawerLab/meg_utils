@@ -27,6 +27,8 @@ opt.params.conditions(opt.params.conditions == opt.params.baselineCondition) = 0
 %% Make a design matrix
 designMtrx = conditions2design(opt.params.conditions);
 
+% in case of Abu Dhabi data:
+% designMtrx = designMtrx(:,2:2:end);
 %% -----------------------------------------------------------------------
 % -------------------------- Denoise data --------------------------------
 % ------------------------------------------------------------------------
@@ -34,8 +36,9 @@ designMtrx = conditions2design(opt.params.conditions);
 % Define denoise Parameters
 opt.pcchoose        = -10;
 opt.npcs2try        = [];
-opt.resampling      = {'xval','xval'}; % could be {'boot' 'boot'};
+opt.resampling      = {'boot','boot'}; % could be {'xval' 'xval'};
 opt.pcselmethod     = 'r2';            % could be 'snr';
+opt.npoolmethod     = {'snr','n',100};
 
 % Truncate time points in epochs since we use first 250 ms to get evoked
 % field in order to define the channels that go into the noise pool

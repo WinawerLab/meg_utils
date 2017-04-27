@@ -53,9 +53,9 @@ save_images                   = false;
 save_spectral_data            = false;
 
 %which_sessions_to_analyze    = [16];    % subject 99 for synthetic data
-which_sessions_to_analyze    = 18; % face / house / grating experiment
+which_sessions_to_analyze    = 5; % face / house / grating experiment
 
-suffix                        = 'localregression_multi_10_boots_denoised';
+suffix                        = 'localregression_multi_10_boots_denoised_power';
 
 %% Add paths
 % meg_add_fieldtrip_paths('/Volumes/server/Projects/MEG/code/fieldtrip',{'yokogawa', 'sqdproject'})
@@ -83,7 +83,7 @@ for session_num = which_sessions_to_analyze
         % --------------------------------------------------------------------
         %% Load data (SLOW)
         if use_denoised
-            denoised_data = load(fullfile(path_to_data, 'raw', sprintf('s0%d_denoisedData.mat',session_num)));
+            denoised_data = load(fullfile(path_to_data, 'processed', sprintf('s0%d_denoisedData.mat',session_num)));
             tmp = denoised_data.denoisedts{1}; 
             raw_ts = permute(tmp,[2,3,1]);
             raw_ts = meg_load_sqd_data(fullfile(path_to_data, 'raw'), '*Gamma*');
@@ -155,7 +155,7 @@ for session_num = which_sessions_to_analyze
     t = (1:size(ts,1))/fs;
     f = (0:length(t)-1)/max(t);
     
-    spectral_data = abs(fft(ts))/length(t)*2;
+    spectral_data = (abs(fft(ts)).^2)/length(t)*2;
     spectral_data_boots = zeros(size(ts,1), length(conditions_unique), length(data_channels), nboot);
     
     % compute the mean amplitude spectrum for each electrode in each condition
