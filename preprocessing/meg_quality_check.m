@@ -105,12 +105,25 @@ t           = (1:numFreq)/results.fs;
 f           = (0:length(t)-1)/max(t);
 F           = (abs(fft(data,[],2))/length(t)*2);
 
+[pks, locs] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 3E-15,'MinPeakDistance',1);
+locs = locs(locs>0.1); % eliminate frequencies close to 0
 if verbose
-    figure; plot(f,smooth(F(1,:),20));
-    title('Spectrum of data sample, smoothed 20x')
+    figure; 
+    cla; subplot(211)
+    plot(f,F(1,:)); hold on;
+    plot(f(round(locs)),F(1,round(locs)),'ro');
+    title('Spectrum of data samples from channel 1')
     set(gca,'YScale','log','XLim',[0 250]);
     xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
+    
+    subplot(212)
+    plot(f,F(25,:));
+    title('Spectrum of data samples from channel 25')
+    set(gca,'YScale','log','XLim',[0 250]);
+    xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
+    
 end
+
 
 
 %   Filters (e.g., high-pass, line noise) -- Power spectrum density (Welch), average/smooth??     find peaks?? how to determine
@@ -128,11 +141,29 @@ end
 %   which harmonics?
 %
 % Jumps, artifacts, etc
-cfg.datafile = dataPth;
+% cfg.dataset = dataPth;
+% cfg.continuous = 'yes';
+% cfg.trl = [];
 
 cfg = [];
-cfg.dataset = data;
-[cfg, artifact] = ft_artifact_jump(cfg);
+
+conditions = trigger(find(trigger));
+cfg.dataset = dataPth;
+cfg.trialdef.trig = dataAll(triggerChannels,:);
+cfg.trialdef.eventtype = 'trial';
+cfg.trialdef.pre = 0;
+cfg.trialdef.post = 1;
+cfg.trialdef.trialFunHandle = @ssmeg_ft_trial_fun;
+cfg.trialdef.conditions = conditions;
+cfg.trialdef.onsets = trigger;
+
+[trl, Events] = ssmeg_ft_trial_fun(cfg, trigger, conditions);
+
+cfg = [];
+cfg.trl = trl;
+cfg.continuous = 'no';
+
+[cfg, artifact] = ft_artifact_jump(cfg,dataPth);
 
 
 % Other weird peaks in data
