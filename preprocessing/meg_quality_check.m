@@ -1,32 +1,54 @@
-%% MEG Quality check script
+function meg_quality_check(dataPth, varargin)
+%Function to check MEG data quality
+% meg_quality_check(dataPth, varargin)
+% 
+% This is a script to check some basics of, and possible artifacts in your
+% MEG data.
+%
+% Example 1: NYU Yokogawa 160
+%  dataPth = '/Volumes/server/Projects/MEG/Gamma/Data/20_Gamma_3_22_2016_subj010/raw/R0852_Gamma_3.22.16.sqd';
+%  meg_quality_check(dataPth, 'verbose', true, 'samplesToUse', 200000);
+%
+% Example 2: NYU-AD Yokogawa 224
+%  dataPth = '/Volumes/server/Projects/MEG/NYUAD/0167_SSMEG_20170123/raw/0167_SSMEG_20170123_01.con';
+%  meg_quality_check(dataPth, 'verbose', true, 'samplesToUse', []);
 
-% This is a script to check some basics of, and possible artifacts in your MEG
-% data. 
 
-%% 0. Set paths and other settings
 
-% Some default settings
-verbose = true;
-samplesToUse = 200000;%[]; % How many samples do you want to use for the quality check, leave empty if you want whole data set
-
-% Path to dataset
-pth = '/Volumes/server/Projects/MEG/Gamma/Data/';
-session = '20_Gamma_3_22_2016_subj010';
-sqdfile = 'R0852_Gamma_3.22.16.sqd';
-
-dataPth = fullfile(pth,session,'raw',sqdfile);
-
-% Add fieldtrip to path with the ToolboxToolbox
-if ~exist('ft_read_header','file')
-    tbUse('Fieldtrip');
+% Check inputs
+if ~exist(dataPth,'var') || isempty(dataPth)
+    error('Path needed for MEG data');
 end
 
-% In case of Yokogawa dataset
-refChannels = 158:160;
-eyeChannels = 177:179;
-dataChannels = 1:157;
-triggerChannels = 161:168;
-photoDiodeChannel = 192;
+if ~exist(dataPth, 'file')
+    error('Path %s does not exist', dataPth);
+end
+
+% optional inputs
+for ii = 1:2:length(varargin)
+   param = varargin{ii};
+   val   = varargin{ii+1};
+   switch lower(param)
+       case 'verbose' 
+           verbose = val;
+       case 'samplestouse'
+           samplesToUse = val;
+   end
+    
+end
+
+% Check for field trip
+if ~exist('ft_read_header','file')
+    error('Field trip is needed on your path.')
+end
+
+% Set some defaults
+if ~exist('verbose', 'var'), verbose = true; end
+if ~exist('samplesToUse', 'var'), samplesToUse = []; end
+
+% results directory
+resultsDir = fullfile(fileparts(dataPth), 'dataQuality');
+mkdir(resultsDir);
 
 %% 1. Load data and header information
 
@@ -37,6 +59,27 @@ hdr = ft_read_header(dataPth);
 data = ft_read_data(dataPth);
 
 
+% Check where data is from
+dataFormat = ft_filetype(dataPth);
+    
+switch dataFormat
+    case 'yokogawa_ave'
+        % In case of Yokogawa dataset
+        dataChannels        = 1:157;
+        refChannels         = 158:160;
+        eyeChannels         = 177:179;
+        triggerChannels     = 161:168;
+        photoDiodeChannel   = 192;
+        
+    case 'yokogawa_con'
+        dataChannels        = 1:208;
+        refChannels         = 209:211;
+        triggerChannels     = 224:231;
+        eyeChannels         = [];
+        photoDiodeChannel   = 233;
+
+end
+
 %% 2. Get some basics
 results = [];
 results.fs        = hdr.Fs;
@@ -45,21 +88,34 @@ results.units     = hdr.chanunit{1};
 results.nchannels = size(data,1);
 results.datapth   = dataPth;
 
+logfile = fullfile(resultsDir, 'logfile.txt');
+fid = fopen(logfile, 'w');
+
 if verbose
-    fprintf('\n')
-    fprintf('Some basics.. \n')
-    fprintf('Recording frequency : %d Hz\n', results.fs)        % Recording frequency
-    fprintf('Nr of samples       : %d\n', results.nsamples)           % Recording duration
-    fprintf('Data are in units of: %s\n',results.units) % Units of data
-    fprintf('Total nr of channels: %d\n', results.nchannels)
+    fprintf(fid, '\n');
+    fprintf(fid, 'Some basics.. \n');
+    fprintf(fid, 'Recording frequency:\t%d Hz\n', results.fs);        % Recording frequency
+    fprintf(fid, 'Nr of samples:\t%d\n', results.nsamples);           % Recording duration
+    fprintf(fid, 'Data are in units of:\t%s\n',results.units); % Units of data
+    fprintf(fid, '\n\n-----Channel Information----\n');
+    fprintf(fid, 'Total nr of channels:\t%d\n', results.nchannels);
+    fprintf(fid, 'Data channels:\t%d:%d\n',          min(dataChannels), max(dataChannels));
+    fprintf(fid, 'Reference channels:\t%d:%d\n',     min(refChannels), max(refChannels));
+    fprintf(fid, 'Trigger channels:\t%d:%d\n',       min(triggerChannels), max(triggerChannels));
+    fprintf(fid, 'Eye channels:\t%d:%d\n',           min(eyeChannels), max(eyeChannels));
+    fprintf(fid, 'Photodiode channel:\t%d\n',        photoDiodeChannel);
+
+    
 end
+fclose(fid);
 
 % Take a sample, or not
-if ~isempty(samplesToUse>1)
-    dataAll = data;
-    data = data(:,1:samplesToUse);
-    results.sampleSize = samplesToUse;
-end
+if isempty(samplesToUse), samplesToUse = size(data, 2); end
+samplesToUse = min(samplesToUse, size(data,2));
+
+sampleData = data(:,1:samplesToUse);
+results.sampleSize = samplesToUse;
+
 
 %% 3. Plot timeseries of data
 
@@ -173,9 +229,9 @@ cfg.continuous = 'no';
 %
 % Save out images of power spectrum and spectrogram of every channel
 %% Look at empty room data
-pth = '/Volumes/server/Projects/MEG/Gamma_BR/emptyRoomData/Empty_Room_Gamma Settings_6.2.2016_1135am.sqd';
-hdr = ft_read_header(pth);
-data = ft_read_data(pth);
+dataPth = '/Volumes/server/Projects/MEG/Gamma_BR/emptyRoomData/Empty_Room_Gamma Settings_6.2.2016_1135am.sqd';
+hdr = ft_read_header(dataPth);
+data = ft_read_data(dataPth);
 
 
 
