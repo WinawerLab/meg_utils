@@ -16,7 +16,7 @@ function meg_quality_check(dataPth, varargin)
 
 
 % Check inputs
-if ~exist(dataPth,'var') || isempty(dataPth)
+if ~exist('dataPth','var') || isempty(dataPth)
     error('Path needed for MEG data');
 end
 
@@ -50,7 +50,7 @@ if ~exist('samplesToUse', 'var'), samplesToUse = []; end
 resultsDir = fullfile(fileparts(dataPth), 'dataQuality');
 mkdir(resultsDir);
 
-%% 1. Load data and header information
+%% Load data and header information
 
 % Load header
 hdr = ft_read_header(dataPth);
@@ -80,7 +80,8 @@ switch dataFormat
 
 end
 
-%% 2. Get some basics
+%% Get some basics and write them to log file
+
 results = [];
 results.fs        = hdr.Fs;
 results.nsamples  = hdr.nSamples;
@@ -91,69 +92,110 @@ results.datapth   = dataPth;
 logfile = fullfile(resultsDir, 'logfile.txt');
 fid = fopen(logfile, 'w');
 
-if verbose
-    fprintf(fid, '\n');
-    fprintf(fid, 'Some basics.. \n');
-    fprintf(fid, 'Recording frequency:\t%d Hz\n', results.fs);        % Recording frequency
-    fprintf(fid, 'Nr of samples:\t%d\n', results.nsamples);           % Recording duration
-    fprintf(fid, 'Data are in units of:\t%s\n',results.units); % Units of data
-    fprintf(fid, '\n\n-----Channel Information----\n');
-    fprintf(fid, 'Total nr of channels:\t%d\n', results.nchannels);
-    fprintf(fid, 'Data channels:\t%d:%d\n',          min(dataChannels), max(dataChannels));
-    fprintf(fid, 'Reference channels:\t%d:%d\n',     min(refChannels), max(refChannels));
-    fprintf(fid, 'Trigger channels:\t%d:%d\n',       min(triggerChannels), max(triggerChannels));
-    fprintf(fid, 'Eye channels:\t%d:%d\n',           min(eyeChannels), max(eyeChannels));
-    fprintf(fid, 'Photodiode channel:\t%d\n',        photoDiodeChannel);
+fprintf(fid, '\n');
+fprintf(fid, 'Some basics.. \n');
+fprintf(fid, 'Recording frequency:\t%d Hz\n', results.fs);        % Recording frequency
+fprintf(fid, 'Nr of samples:\t%d\n', results.nsamples);           % Recording duration
+fprintf(fid, 'Data are in units of:\t%s\n',results.units); % Units of data
+fprintf(fid, '\n\n-----Channel Information----\n');
+fprintf(fid, 'Total nr of channels:\t%d\n', results.nchannels);
+fprintf(fid, 'Data channels:\t%d:%d\n',          min(dataChannels), max(dataChannels));
+fprintf(fid, 'Reference channels:\t%d:%d\n',     min(refChannels), max(refChannels));
+fprintf(fid, 'Trigger channels:\t%d:%d\n',       min(triggerChannels), max(triggerChannels));
+fprintf(fid, 'Eye channels:\t%d:%d\n',           min(eyeChannels), max(eyeChannels));
+fprintf(fid, 'Photodiode channel:\t%d\n',        photoDiodeChannel);
 
-    
+
+%% Derived parameters
+
+% convert units to picotesla
+switch lower(results.units)
+    case 't',        toPT = 1E12;
+    case {'nt' 'n'}, toPT = 1E3;
+    case {'pt' 'p'}, toPT = 1;
+    case {'ft' 'f'}, toPT = 1E-3;
+    otherwise, error('Unrecognized unit %s', results.units);
 end
+       
+
+% Select the range of the dataset for ananlysis
+if isempty(samplesToUse), samplesToUse = size(data, 2); end
+samplesToUse = 1:min(samplesToUse, size(data,2));
+
+sampleData = data(:,samplesToUse);
+results.sampleSize = length(samplesToUse);
+
+%% Plot sample timeseries of data
+t = (1:length(samplesToUse)) / results.fs;
+
+% Show sample timeseries channels
+fH =  megNewGraphWin([],'tall'); 
+set(fH, 'Name', 'Sample Time Series'); 
+
+subplot(5,1,1); hold all; title('Data Channels')
+plot(t, sampleData(dataChannels,:)*toPT);
+ylabel('Magnetic Field (pT)');
+
+subplot(5,1,2); hold all; title('Environmental reference channels')
+plot(t, sampleData(refChannels,:)*toPT);
+ylabel('Magnetic Field (pT)');
+
+subplot(5,1,3);hold all; title('Eyetracking channels')
+plot(t, sampleData(eyeChannels,:));
+ylabel('Position (mm??)');
+
+subplot(5,1,4); hold all; title('Trigger channels')
+plot(t, sampleData(triggerChannels,:));
+
+subplot(5,1,5); hold all; title('Photodiode channel')
+plot(t, sampleData(photoDiodeChannel,:));
+xlabel('Time (seconds)');
+
+hgexport(fH, fullfile(resultsDir, 'SampleTimeSeries.eps'));
+
+close(fH)
+
+%% Triggers 
+
+% We use several trigger channels, each of which is binary, and the binary
+% values are then converted to base 10. Before converting to base 10, the
+% function checks for slight timing errors, for example if two trigger
+% channels have a signal one sample apart, they are assumed to be
+% synchronous. 
+
+% the variable trigger is a time series of trigger values, equal in length
+% to the MEG data set
+trigger    = meg_fix_triggers(data(triggerChannels,:)');
+
+% unique base 10 trigger values
+results.trigger.vals  =  unique(trigger(trigger~=0));
+
+for trig = results.trigger.vals'
+    results.trigger.count(trig==results.trigger.vals) = sum(trigger==trig);
+end
+
+% total number of triggers detected 
+results.trigger.total = sum(results.trigger.count);
+
+
+fH = megNewGraphWin([], [], 'Name', 'Triggers'); 
+histogram(trigger(trigger~=0)); xlabel('trigger values'); ylabel('frequency')
+hgexport(fH, fullfile(resultsDir, 'TriggerHistogram.eps'));
+close(fH);
+
+fprintf(fid, '\n\nTRIGGERS\n');
+fprintf(fid, 'TriggerVal\tCount\n');
+for ii = 1:length(results.trigger.vals)
+    fprintf(fid, '%d\t%d\n', results.trigger.vals(ii), results.trigger.count(ii));
+end
+fprintf(fid, 'Total amount of triggers found: %d\n', results.trigger.total);
+
+
 fclose(fid);
 
-% Take a sample, or not
-if isempty(samplesToUse), samplesToUse = size(data, 2); end
-samplesToUse = min(samplesToUse, size(data,2));
-
-sampleData = data(:,1:samplesToUse);
-results.sampleSize = samplesToUse;
-
-
-%% 3. Plot timeseries of data
-
-if verbose
-    % Show sample timeseries channels
-    figure;
-    subplot(5,1,1); hold all; title('Data Channels')
-    for ii = dataChannels; plot(data(ii,:)); end
-    
-    subplot(5,1,2); hold all; title('Environmental reference channels')
-    for ii = refChannels; plot(data(ii,:)); end
-    
-    subplot(5,1,3);hold all; title('Eyetracking channels')
-    for ii = eyeChannels; plot(data(ii,:)); end
-    
-    subplot(5,1,4); hold all; title('Trigger channels')
-    for ii = triggerChannels; plot(data(ii,:)); end
-    
-    subplot(5,1,5); hold all; title('Photodiode channel')
-    for ii = photoDiodeChannel; plot(data(ii,:)); end
-end
-
-% Triggers send?
-trigger    = meg_fix_triggers(dataAll(triggerChannels,:)');
-results.triggerVals  =  unique(trigger(trigger~=0));
-results.triggerTotal = sum(find(trigger(trigger~=0)));
-
-for trig = results.triggerVals'
-    results.triggerCount(trig) = length(find(trigger==trig));
-end
-
-if verbose
-    figure; histogram(trigger(trigger~=0)); xlabel('trigger values'); ylabel('frequency')
-    fprintf('Following triggers found: %d\n', results.triggerVals)
-    fprintf('Amount per trigger: %d \n', results.triggerCount)
-    fprintf('Total amount of triggers found: %d\n', results.triggerTotal)
-end
-
+%% CONTINUE HERE!!!
+% CONTINUE HERE!!!
+%% CONTINUE HERE!!!
 
 %% 4. Plot spectrum
 numFreq     = size(data, 2);
