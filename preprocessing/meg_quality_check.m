@@ -129,7 +129,8 @@ results.sampleSize = length(samplesToUse);
 t = (1:length(samplesToUse)) / results.fs;
 
 % Show sample timeseries channels
-fH =  megNewGraphWin([],'tall'); 
+% fH =  megNewGraphWin([],'tall'); 
+fH = figure;
 set(fH, 'Name', 'Sample Time Series'); 
 
 subplot(5,1,1); hold all; title('Data Channels')
@@ -178,7 +179,8 @@ end
 results.trigger.total = sum(results.trigger.count);
 
 
-fH = megNewGraphWin([], [], 'Name', 'Triggers'); 
+% fH = megNewGraphWin([], [], 'Name', 'Triggers'); 
+fH = figure;
 histogram(trigger(trigger~=0)); xlabel('trigger values'); ylabel('frequency')
 hgexport(fH, fullfile(resultsDir, 'TriggerHistogram.eps'));
 close(fH);
@@ -201,15 +203,16 @@ fclose(fid);
 numFreq     = size(data, 2);
 t           = (1:numFreq)/results.fs;
 f           = (0:length(t)-1)/max(t);
-F           = (abs(fft(data,[],2))/length(t)*2);
+F           = abs(fft(data,[],2))/length(t)*2;
 
-[pks, locs] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 3E-15,'MinPeakDistance',1);
+[pks, locs] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 3E-16,'MinPeakDistance',1);
 locs = locs(locs>0.1); % eliminate frequencies close to 0
+pks = pks(locs>0.1);
 if verbose
     figure; 
     cla; subplot(211)
     plot(f,F(1,:)); hold on;
-    plot(f(round(locs)),F(1,round(locs)),'ro');
+    plot(locs,pks,'ro');
     title('Spectrum of data samples from channel 1')
     set(gca,'YScale','log','XLim',[0 250]);
     xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')

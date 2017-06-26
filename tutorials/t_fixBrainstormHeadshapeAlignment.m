@@ -1,13 +1,13 @@
 %% t_fixBrainstormHeadshapeAlignment
 
 % This tutorial is under construction, but started with the intention to
-% show how to fix misalignment of the digitized headshape and the spheres 
+% show how to fix misalignment of the digitized headshape and the spheres
 % made by Brainstorm (extracted from a T1 scan).
 
 % If you have the issue that the headshape xyz points are reflected, you
 % can run this script first and then keep the new R matrix and T vector in
 % the workspace memory. Then put a stop at in_fopen_kit.m. line 188. This is
-% just after Brainstorm has created R and T. 
+% just after Brainstorm has created R and T.
 
 % Next, run brainstorm and import MEG data. When Matlab stops at the break
 % point in f_open_kit.m, I use Matlab?s evalin function to copy the R and T
@@ -19,17 +19,16 @@
 
 
 % % Example with: 10_SSMEG_08_12_2014_wl_subj004
-
-subjFolder = '/Volumes/server/Projects/MEG/SSMEG/10_SSMEG_08_12_2014_wl_subj004/raw/';
-
+subjFolder = '/Volumes/server-1/Projects/MEG/SSMEG/10_SSMEG_08_12_2014_wl_subj004/raw/';
 markerSQDFile   = fullfile(subjFolder, 'R0774_Marker1_8.12.14.sqd');
 HSTxtFile       = fullfile(subjFolder, 'R0774_8.12.14_HS.txt');
 PointsTxtFile   = fullfile(subjFolder, 'R0774_8.12.14_Points.txt');
 
+
 %% Get points from the three files
 headShapeLabels = {'Nasion','Left Tragus', 'Right Tragus', 'Left PA', 'Right PA', ...
-                    'Central frontal', 'Left frontal', 'Right frontal'};
-                
+    'Central frontal', 'Left frontal', 'Right frontal'};
+
 labels = {'LPA', 'RPA', 'CPF', 'LPF', 'RPF'}; % Obtained by Brainstorm after loading in the SQD Marker1 file
 
 % Open Points textfile
@@ -39,7 +38,7 @@ txtCell = textscan(fid, '%f%f%f', 'Delimiter', '\n', 'CommentStyle', '%');
 fclose(fid);
 points_xyz = [txtCell{1}, txtCell{2}, txtCell{3}]' ./ 1000;
 points_xyz = points_xyz';
-points_xyz = points_xyz(4:end,:); 
+points_xyz = points_xyz(4:end,:);
 
 % Open Head Sweeps txt file
 fid = fopen(HSTxtFile, 'r');
@@ -70,7 +69,7 @@ n = n'./100;
 % points_xyz = points_xyz';
 
 % Plot the head points:
-figure; 
+figure;
 plot3(points_xyz(:,1) ,points_xyz(:,2), points_xyz(:,3),...
     'R.','MarkerSize',24)
 hold on
@@ -121,7 +120,7 @@ wl_subj_004_markers_hndl_02 = [meg_xyz' ; hndl_02];
 % Brainstorm computes, the alignment has a much better result:
 [R_02, T_02] = rot3dfit(wl_subj_004_points_hndl, wl_subj_004_markers_hndl_02);
 
-% These are te new R and T matrices 
+% These are te new R and T matrices
 R = R_02;
 T = T_02;
 
@@ -149,7 +148,9 @@ text(points_xyz(:,1),...
     points_xyz(:,3),...
     names)
 
-figure; 
+
+%% Compare Markers handel 1 and 2
+figure;
 plot3(wl_subj_004_markers_hndl_02(left_idx,1), ...
     wl_subj_004_markers_hndl_02(left_idx,2), ...
     wl_subj_004_markers_hndl_02(left_idx,3),...
@@ -169,35 +170,68 @@ plot3(wl_subj_004_markers_hndl_02(central_idx,1), ...
     'MarkerFaceColor','k')
 
 
+plot3(wl_subj_004_markers_hndl_01(left_idx,1), ...
+    wl_subj_004_markers_hndl_01(left_idx,2), ...
+    wl_subj_004_markers_hndl_01(left_idx,3),...
+    'r.','MarkerSize', 12,...
+    'MarkerFaceColor','r')
+
+plot3(wl_subj_004_markers_hndl_01(right_idx,1), ...
+    wl_subj_004_markers_hndl_01(right_idx,2), ...
+    wl_subj_004_markers_hndl_01(right_idx,3),...
+    'r.','MarkerSize', 12,...
+    'MarkerFaceColor','r')
+
+plot3(wl_subj_004_markers_hndl_01(central_idx,1), ...
+    wl_subj_004_markers_hndl_01(central_idx,2), ...
+    wl_subj_004_markers_hndl_01(central_idx,3),...
+    'r.','MarkerSize', 12,...
+    'MarkerFaceColor','r')
+
+
+figure; hold on;
+plot3(hs_xyz(1,:), ...
+    hs_xyz(2,:), ...
+    hs_xyz(3,:), 'k.','MarkerSize', 12)
+
+
+
+
+[R, T; 0 0 0 1]
+
+
+
+
+
 
 function [n,V,p] = affine_fit(X)
-    %Computes the plane that fits best (lest square of the normal distance
-    %to the plane) a set of sample points.
-    %INPUTS:
-    %
-    %X: a N by 3 matrix where each line is a sample point
-    %
-    %OUTPUTS:
-    %
-    %n : a unit (column) vector normal to the plane
-    %V : a 3 by 2 matrix. The columns of V form an orthonormal basis of the
-    %plane
-    %p : a point belonging to the plane
-    %
-    %NB: this code actually works in any dimension (2,3,4,...)
-    %Author: Adrien Leygue
-    %Date: August 30 2013
-    
-    %the mean of the samples belongs to the plane
-    p = mean(X,1);
-    
-    %The samples are reduced:
-    R = bsxfun(@minus,X,p);
-    %Computation of the principal directions if the samples cloud
-    [V,D] = eig(R'*R);
-    %Extract the output from the eigenvectors
-    n = V(:,1);
-    V = V(:,2:end);
+%Computes the plane that fits best (lest square of the normal distance
+%to the plane) a set of sample points.
+%INPUTS:
+%
+%X: a N by 3 matrix where each line is a sample point
+%
+%OUTPUTS:
+%
+%n : a unit (column) vector normal to the plane
+%V : a 3 by 2 matrix. The columns of V form an orthonormal basis of the
+%plane
+%p : a point belonging to the plane
+%
+%NB: this code actually works in any dimension (2,3,4,...)
+%Author: Adrien Leygue
+%Date: August 30 2013
+
+%the mean of the samples belongs to the plane
+p = mean(X,1);
+
+%The samples are reduced:
+R = bsxfun(@minus,X,p);
+%Computation of the principal directions if the samples cloud
+[V,D] = eig(R'*R);
+%Extract the output from the eigenvectors
+n = V(:,1);
+V = V(:,2:end);
 end
 
 
@@ -258,5 +292,5 @@ Yf = X*R + ones(size(X,1),1)*T;
 % calculate the error
 
 dY = Y - Yf;
-Err = norm(dY,'fro'); % must use Frobenius norm 
+Err = norm(dY,'fro'); % must use Frobenius norm
 end
