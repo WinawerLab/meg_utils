@@ -1,4 +1,5 @@
 function meg_quality_check(dataPth, varargin)
+
 %Function to check MEG data quality
 % meg_quality_check(dataPth, varargin)
 % 
@@ -193,7 +194,6 @@ end
 fprintf(fid, 'Total amount of triggers found: %d\n', results.trigger.total);
 
 
-fclose(fid);
 
 %% CONTINUE HERE!!!
 % CONTINUE HERE!!!
@@ -205,28 +205,35 @@ t           = (1:numFreq)/results.fs;
 f           = (0:length(t)-1)/max(t);
 F           = abs(fft(data,[],2))/length(t)*2;
 
-[pks, locs] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 3E-16,'MinPeakDistance',1);
-locs = locs(locs>0.1); % eliminate frequencies close to 0
-pks = pks(locs>0.1);
-if verbose
-    figure; 
-    cla; subplot(211)
-    plot(f,F(1,:)); hold on;
-    plot(locs,pks,'ro');
-    title('Spectrum of data samples from channel 1')
-    set(gca,'YScale','log','XLim',[0 250]);
-    xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
-    
-    subplot(212)
-    plot(f,F(25,:));
-    title('Spectrum of data samples from channel 25')
-    set(gca,'YScale','log','XLim',[0 250]);
-    xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
-    
-end
+[pks1, locs1] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 8E-16,'MinPeakDistance',1);
+locs1 = locs1(locs1>1); % eliminate frequencies close to 0
+pks1 = pks1(locs1>1);
 
+fH = figure;
+cla; subplot(211)
+plot(f,F(1,:)); hold on;
+plot(locs1,pks1,'ro');
+title('Spectrum of data samples from channel 1')
+set(gca,'YScale','log','XLim',[0 250]);
+xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
 
+[pks25, locs25] = findpeaks(smooth(F(1,:),20),f,'MinPeakProminence', 8E-16,'MinPeakDistance',1);
+locs25 = locs25(locs25>1); % eliminate frequencies close to 0
+pks25 = pks25(locs25>1);
 
+subplot(212)
+plot(f,F(25,:)); hold on;
+plot(locs25,pks25,'ro');
+title('Spectrum of data samples from channel 25')
+set(gca,'YScale','log','XLim',[0 250]);
+xlabel('Frequency [Hz]'); ylabel('Amplitude (pT)')
+hgexport(fH, fullfile(resultsDir, 'SpectrumChannel1_25.eps'));
+
+results.peak_locs = unique([locs1, locs25]);
+
+fprintf(fid, 'Following sharp peaks found in spectrum, in Hz: %d\n', results.peak_locs);
+
+% To DO
 %   Filters (e.g., high-pass, line noise) -- Power spectrum density (Welch), average/smooth??     find peaks?? how to determine
 %   a high-pass filter
 
@@ -240,31 +247,6 @@ end
 %   the power (relative to what??)
 %   the distribution across channels and time
 %   which harmonics?
-%
-% Jumps, artifacts, etc
-% cfg.dataset = dataPth;
-% cfg.continuous = 'yes';
-% cfg.trl = [];
-
-cfg = [];
-
-conditions = trigger(find(trigger));
-cfg.dataset = dataPth;
-cfg.trialdef.trig = dataAll(triggerChannels,:);
-cfg.trialdef.eventtype = 'trial';
-cfg.trialdef.pre = 0;
-cfg.trialdef.post = 1;
-cfg.trialdef.trialFunHandle = @ssmeg_ft_trial_fun;
-cfg.trialdef.conditions = conditions;
-cfg.trialdef.onsets = trigger;
-
-[trl, Events] = ssmeg_ft_trial_fun(cfg, trigger, conditions);
-
-cfg = [];
-cfg.trl = trl;
-cfg.continuous = 'no';
-
-[cfg, artifact] = ft_artifact_jump(cfg,dataPth);
 
 
 % Other weird peaks in data
@@ -273,6 +255,66 @@ cfg.continuous = 'no';
 %   which, when, how many?
 %
 % Save out images of power spectrum and spectrogram of every channel
+%
+%% Define 1 second trials in FT struct in order to get SQD jumps
+cfg = [];
+
+cfg.dataset             = fullfile(dataPth);
+cfg.trialdef.trig       = triggerChannels;
+cfg.trialdef.eventtype  = 'trial';
+cfg.trialdef.pre        = 0;
+cfg.trialdef.post       = 1;
+cfg.trialdef.trialFunHandle = @ssmeg_ft_trial_fun;
+
+[conditions, onsets] = find(trigger);
+
+cfg.trialdef.conditions    = conditions;
+cfg.trialdef.onsets       = onsets;
+
+[trl, Events] = ssmeg_ft_trial_fun(cfg, onsets, conditions);
+cfg.trl       = trl;
+cfg.event     = Events;
+
+%% Get trials with SQD jumps
+cfg                     = [];
+cfg.trl                 = trl;
+cfg.continuous          = 'yes';
+cfg.datafile            = dataPth;
+cfg.headerfile          = dataPth;
+data_hdr                = load('hdr'); data_hdr = data_hdr.hdr;
+cfg.layout              = ft_prepare_layout(cfg, data_hdr);
+
+% Check for MEG channels, define cutoff and add no padding
+cfg.artfctdef.zvalue.channel    = 'MEG';
+cfg.artfctdef.zvalue.cutoff     = 20;
+cfg.artfctdef.zvalue.trlpadding = 0;
+cfg.artfctdef.zvalue.artpadding = 0;
+cfg.artfctdef.zvalue.fltpadding = 0;
+
+% algorithmic parameters
+cfg.artfctdef.zvalue.cumulative    = 'yes';
+cfg.artfctdef.zvalue.medianfilter  = 'yes';
+cfg.artfctdef.zvalue.medianfiltord = 9;
+cfg.artfctdef.zvalue.absdiff       = 'yes';
+
+% make the process interactive or not
+cfg.artfctdef.zvalue.interactive = 'no';
+
+% Takes time
+[cfg, artifact_jump] = ft_artifact_zvalue(cfg);
+
+% Report artifact jumps
+fprintf(fid, 'Following artifact (squid) jumps found using 1 sec epochs: %d\n, using a zvalue threshold of %d', artifact_jump, cfg.artfctdef.zvalue.cutoff);
+
+
+
+fclose(fid);
+
+
+
+
+
+
 %% Look at empty room data
 dataPth = '/Volumes/server/Projects/MEG/Gamma_BR/emptyRoomData/Empty_Room_Gamma Settings_6.2.2016_1135am.sqd';
 hdr = ft_read_header(dataPth);
