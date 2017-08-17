@@ -30,6 +30,10 @@ end
 
 % Concatenate timeseries if there are more blocks of MEG data
 % TODO: Make this a general statement
-ts = vertcat(ts{:});
+if size(ts,1) < size(ts,2)
+    ts = cat(2,ts{:}); 
+else
+    ts = vertcat(ts{:});
+end
 
 return
