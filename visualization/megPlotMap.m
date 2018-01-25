@@ -14,6 +14,7 @@ renderer = 'zbuffer';
 % If more than 157, it is the uncombined Neuromag dataset, or less it is
 % the combined Neuromag
 if isempty(cfg)
+
     
     if length(sensorData) <= 102 % Combined NeuroMag 204 channel MEG
 %         data_hdr = load('neuromag360_sample_hdr_combined.mat'); data_hdr = data_hdr.hdr;
@@ -23,8 +24,8 @@ if isempty(cfg)
         data_hdr = load('yokogawa_con_example_hdr.mat'); data_hdr = data_hdr.hdr;
         cfg.layout = ft_prepare_layout(cfg, data_hdr); % Create our own layout with Fieltrip function
     elseif length(sensorData) <= 157 % Uncombined/standard Yokogawa 157 channel MEG
-        data_hdr = load('meg160_example_hdr.mat'); data_hdr = data_hdr.hdr;
-        cfg.layout = ft_prepare_layout(cfg, data_hdr); % Create our own layout with Fieltrip function
+         data_hdr = load('meg160_example_hdr.mat'); data_hdr = data_hdr.hdr;
+         cfg.layout = ft_prepare_layout(cfg, data_hdr); % Create our own layout with Fieltrip function
     elseif length(sensorData) <= 204 % Uncombined NeuroMag 204 planar channel MEG
         cfg.layout = 'neuromag306planar';
         cfg.layout = ft_prepare_layout(cfg);
@@ -75,12 +76,13 @@ chanY  = cfg.layout.pos(1:length(sensorData),2);
 opt = {'interpmethod','v4',... How to interpolate the data?
     'interplim','mask',... Mask the data such that it doesn't exceed the outline
     'gridscale',170,... How fine do you want the grid?
-    'outline',cfg.layout.outline,... Create the lines of the head, nose and ears
+    'outline', cfg.layout.outline,... Create the lines of the head, nose and ears
     'shading','flat', ... How to interpolate the in the outline
-    'mask',cfg.layout.mask,...
-    'datmask', [], ...
-    'default_interpmethod', 'v4'};
+    'mask', cfg.layout.mask,...
+    'datmask', []}; %, ...
+    %'default_interpmethod', 'v4'};
 
+tmp_lay = [];    
 % check for input options (in paired parameter name / value)
 if exist('varargin', 'var')
     for ii = 1:2:length(varargin)
@@ -94,27 +96,45 @@ if exist('varargin', 'var')
         idx = find(cellfun(@(x) ~isempty(x), tmp));
         
         % if so, replace it; if not add it to the end of opt
-        if ~isempty(idx), opt{idx+1} = val;
-        else, opt{end+1} = parname; opt{end+1} = val; end
-        
-        
+        if ~isempty(idx), opt{idx+1} = val; 
+        else  % if any of the highlight arguments, save as ft_plot_lay argument
+            if strcmp(parname,'highlightchannel') 
+                tmp_lay{end+1} = 'chanindx';
+                tmp_lay{end+1} = val;
+            elseif strcmp(parname,'highlightsymbol')
+                tmp_lay{end+1} = 'pointsymbol';
+                tmp_lay{end+1} = val;
+            elseif strcmp(parname,'highlightsize')
+                tmp_lay{end+1} = 'pointsize';
+                tmp_lay{end+1} = val;
+            else % add to the end of topo opt
+                opt{end+1} = parname; opt{end+1} = val;
+            end
+        end
     end
 end
+
 %% Do the plotting
 ft_plot_topo(chanX,chanY,cfg.data, opt{:});
 
+if ~any(strcmp(tmp_lay,'pointsymbol'))
+    tmp_lay{end+1} = 'pointsymbol'; tmp_lay{end+1} = '.';
+end
+
+if ~any(strcmp(tmp_lay,'pointsize'))
+    tmp_lay{end+1} = 'pointsize'; tmp_lay{end+1} = 8;
+end
+
 % Make plot pretty
-ft_plot_lay(cfg.layout,...
+ft_plot_lay(cfg.layout,tmp_lay{:}, ...
     'box','no',...
     'label','no',...
-    'point','yes', ...
-    'pointsymbol','.',...
-    'pointcolor','k',...
-    'pointsize',8, ...
+    'point','yes', ...     'pointsymbol','.',...
+    'pointcolor','k',...     'pointsize',8, ...
     'colorbar', 'yes', ...
-    'style','straight', ...
-    'maplimits', 'maxmin')
-
+    'style','straight_imsat', ...
+    'maplimits', 'maxmin', ...
+    'verbose', 'no');
 
 colormap(cm);
 if ~notDefined('clims'), set(gca, 'CLim', clims); end
