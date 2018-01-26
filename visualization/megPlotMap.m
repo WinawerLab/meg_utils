@@ -97,16 +97,9 @@ if exist('varargin', 'var')
         
         % if so, replace it; if not add it to the end of opt
         if ~isempty(idx), opt{idx+1} = val; 
-        else  % if any of the highlight arguments, save as ft_plot_lay argument
-            if strcmp(parname,'highlightchannel') 
-                tmp_lay{end+1} = 'chanindx';
-                tmp_lay{end+1} = val;
-            elseif strcmp(parname,'highlightsymbol')
-                tmp_lay{end+1} = 'pointsymbol';
-                tmp_lay{end+1} = val;
-            elseif strcmp(parname,'highlightsize')
-                tmp_lay{end+1} = 'pointsize';
-                tmp_lay{end+1} = val;
+        else  % if any of the highlight arguments, save in tmp_lay as a ft_plot_lay argument
+            if strcmp(parname,'chanindx') || strcmp(parname,'pointsymbol') || strcmp(parname,'pointsize')
+                tmp_lay{end+1} = parname; tmp_lay{end+1} = val;
             else % add to the end of topo opt
                 opt{end+1} = parname; opt{end+1} = val;
             end
@@ -117,6 +110,7 @@ end
 %% Do the plotting
 ft_plot_topo(chanX,chanY,cfg.data, opt{:});
 
+% If not defined as an input argument, then define default
 if ~any(strcmp(tmp_lay,'pointsymbol'))
     tmp_lay{end+1} = 'pointsymbol'; tmp_lay{end+1} = '.';
 end
@@ -129,8 +123,8 @@ end
 ft_plot_lay(cfg.layout,tmp_lay{:}, ...
     'box','no',...
     'label','no',...
-    'point','yes', ...     'pointsymbol','.',...
-    'pointcolor','k',...     'pointsize',8, ...
+    'point','yes', ...     
+    'pointcolor','k',...     
     'colorbar', 'yes', ...
     'style','straight_imsat', ...
     'maplimits', 'maxmin', ...
