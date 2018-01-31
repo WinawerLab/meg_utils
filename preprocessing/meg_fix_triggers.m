@@ -23,7 +23,7 @@ function trigger = meg_fix_triggers(ts)
 md = median(ts(:));
 ts(ts > 5*md) = NaN;
 
-
+ 
 % rescale to [0 1]
 ts = ts - min(ts(:));
 ts = ts / max(ts(:));

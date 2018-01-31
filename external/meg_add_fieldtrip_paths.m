@@ -40,6 +40,7 @@ if exist('ft_subdirs', 'var')
         switch ft_subdirs
             case 'yokogawa_defaults'
                 addpath(fullfile(ft_path, 'external', 'yokogawa'));
+                addpath(fullfile(ft_path, 'external', 'eeglab'));
                 addpath(fullfile(ft_path, 'external', 'sqdproject'));
                 addpath(fullfile(ft_path, 'fieldtrip_private'));
                 addpath(fullfile(ft_path, 'compat'));            
@@ -57,5 +58,6 @@ end
 % Run the ft_defaults which will load the necessary paths:
 ft_defaults
 
+addpath(fullfile(fileparts(which(mfilename)), 'field_trip'));
 return
 

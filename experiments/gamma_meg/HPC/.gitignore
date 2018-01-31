@@ -1,0 +1,6 @@
+# gitignore
+
+._*
+*~
+/Data/*
+/sqdproject/*

@@ -1,14 +1,10 @@
-function ts_denoised = meg_environmental_denoising(ts,...
-    environmental_channels, data_channels, ...
-    produce_figures, save_data, verbose)
-
-%% Description of function
-
-% This function uses the timeseries of the three MEG noise channels
-% (sitting on top of the other 157, so they get environmental/external
-% noise). The timeseries will be used in a linear regression, where the
-% residuals will be used as the new 'denoised' data. It will make some
-% before and after denoising plots.
+function ts_denoised = meg_environmental_denoising(ts, opt)
+% This function uses the timeseries of the three MEG non-physiological
+% channels to denoise the physiological channels. 
+%  
+% ts_denoised = meg_environmental_denoising(ts,...
+%     environmental_channels, data_channels, ...
+%     [produce_figures=0], [save_data=0], [verbose=0])
 %
 % INPUTS:
 %  ts                        MEG timeseries (number of timepoints by number 
@@ -19,79 +15,43 @@ function ts_denoised = meg_environmental_denoising(ts,...
 %  data_channels             vector of channel numbers to denoise
 %  produce_figures           boolean. If true, make some plots to compare
 %                               pre and post denoising
+%  verbose
 %
 % OUTPUTS:
-%  ts                        denoised time series
-
-%% Deal with inputs
-if ~exist('produce_figures', 'var') || isempty(produce_figures), 
-    produce_figures = 0; 
-end
-if ~exist('save_data', 'var') || isempty(save_data),       
-    save_data = 0;       
-end
-if ~exist('verbose', 'var') || isempty(verbose)
-    verbose = 0;
-end
-
-%% Define timeseries of conditions
+%  ts_denoised               denoised time series
 
 
 %% Make empty arrays for regressed 'clean' data
 ts_denoised = ts;
 
+if notDefined('opt.environmentalChannels'); opt.environmentalChannels = 158:160; end
+if notDefined('opt.dataChannels'); opt.dataChannels = 1:157; end
+if notDefined('opt.verbose'); opt.verbose = false; end
+
 % Start regression, keep residuals
-warning off stats:regress:RankDefDesignMat
-
-for channel = data_channels; 
-    if verbose
-        fprintf('[%s]: Channel %d\n', mfilename, channel);
-    end
-    for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168))
-        
-        %%% ON PERIODS %%%
-        
-        % Full
-        [~,~,R] = regress(ts(:,epoch,channel),[squeeze(ts(:,epoch,environmental_channels)) ones(size(ts,1),1) ]);
-        ts_denoised(:,epoch,channel) = R;
-        
-        clear R
-        
-    end
-end
-warning on stats:regress:RankDefDesignMat
-
-%% Save denoised data
-if save_data
-    fprintf('[%s]: Save data matrix to folder..', mfilename);
-    
-    save denoised_with_nuissance_data.mat ts
-    
-    fprintf('[%s]: Done! Data matrix saved to folder..', mfilename);
+for epoch = 1:size(ts,2); % Epoch size is the same for every condition (i.e. 180 except for session 3 (=168)) <--- EK: so do we need to do anything with this?!
+    projectOut  = squeeze(ts(:,epoch,opt.environmentalChannels));
+    projectFrom = squeeze(ts(:,epoch,opt.dataChannels));
+    projectionWeights  = projectOut \ projectFrom;
+    ts_denoised(:,epoch,opt.dataChannels) = projectFrom - projectOut*projectionWeights;
 end
 
 %% For debugging: Make figures of all the raw epochs 
-if produce_figures
-
-    % And for two visual channels
-    chan_1 = 1;
-    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
+if opt.verbose
+    % And for two visual channels (channel 1 and 14)
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,1),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,1),2)),'b')
     xlabel('Time (ms)')
-    ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
+    ylabel('Amplitude (pTesla)')
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', 1))
     legend('Denoised','Raw')
 
-
-    chan_1 = 14;
-    figure; plot(squeeze(mean(ts_denoised(:,:,chan_1),2)),'r'); hold on;
-    plot(squeeze(mean(ts(:,:,chan_1),2)),'b')
+    figure; plot(squeeze(nanmean(ts_denoised(:,:,14),2)),'r'); hold on;
+    plot(squeeze(nanmean(ts(:,:,14),2)),'b')
     xlabel('Time (ms)')
-    ylabel('Amplitude (Picotesla)')
-    title(sprintf('Before and after denoising - Timeseries of channel nr %d', chan_1))
+    ylabel('Amplitude (pTesla)')
+    title(sprintf('Before and after denoising - Timeseries of channel nr %d', 14))
     legend('Denoised','Raw')
-
-
 end
 
 

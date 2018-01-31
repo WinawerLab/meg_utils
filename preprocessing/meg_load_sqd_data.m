@@ -21,13 +21,19 @@ meg_files = dir(fullfile(data_pth, sprintf('%s.sqd', fname_str)));
 num_files = numel(meg_files);
 
 % Load the MEG data for all possible blocks
-tmp = cell(1, num_files);
+ts = cell(1, num_files);
 for ii = 1:num_files
-    tmp{ii} = sqdread(fullfile(data_pth, meg_files(ii).name));
+%     ts{ii} = sqdread(fullfile(data_pth, meg_files(ii).name));
+    ts{ii} = ft_read_data(fullfile(data_pth, meg_files(ii).name));
+
 end
 
 % Concatenate timeseries if there are more blocks of MEG data
 % TODO: Make this a general statement
-ts = vertcat(tmp{:});
+if size(ts,1) < size(ts,2)
+    ts = cat(2,ts{:}); 
+else
+    ts = vertcat(ts{:});
+end
 
 return
