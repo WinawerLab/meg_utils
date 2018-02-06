@@ -3,10 +3,10 @@ function [fs_lh_overlay fs_rh_overlay] = tess_bst2fs(bst_subject, fs_subject, bs
 % Converts the given Brainstorm subject cortical surface overlay into a pair of [LH RH] FreeSurfer
 % subject cortical surface overlays.
 % 
-% The overlays are all 1D vectors consisting of a measurement or datum per vertex in the respective
-% hemisphere; i.e., bst_overlay must have the same number of values as there are vertices in the
-% bst_subject's down-sampled mesh surface. The resulting FreeSurfer overlays will have the same
-% number of values as there are vertices in the respective hemisphere.
+% The overlays are all 1D vectors or 2D matrices consisting of a measurement or datum per vertex in
+% the respective hemisphere; i.e., bst_overlay must have the same number of rows as there are
+% vertices in the bst_subject's down-sampled mesh surface. The resulting FreeSurfer overlays will
+% have the same number of rows as there are vertices in the respective hemisphere.
 %
 % Notes:
 %  - The FreeSurfer subject must be an absolute path to the subject's FreeSurfer directory or a
@@ -96,7 +96,7 @@ bst_vertices = pial_surf.Vertices;
 
 % Next step: find the mapping between BrainStorm vertices and FreeSurfer vertices
 idcs = dsearchn(bst_vertices, fs_vertices);
-fs_overlay = bst_overlay(idcs);
-fs_lh_overlay = fs_overlay(1:size(lvertices, 1));
-fs_rh_overlay = fs_overlay((size(lvertices, 1) + 1):end);
+fs_overlay = bst_overlay(idcs,:);
+fs_lh_overlay = fs_overlay(1:size(lvertices, 1),:);
+fs_rh_overlay = fs_overlay((size(lvertices, 1) + 1):end,:);
 % That's all!

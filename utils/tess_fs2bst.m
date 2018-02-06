@@ -1,12 +1,13 @@
 function bst_overlay = tess_fs2bst(bst_subject, fs_subject, fs_lh_overlay, fs_rh_overlay, varargin)
 % bst_overlay = tess_fsb2bst(bst_subject, fs_subject, fs_lh_overlay, fs_rh_overlay)
 % Converts the given FreeSurfer subject left and right hemisphere cortical surface overlays into a
-% BrainStorm overlay for the white surface of the given BrainStorm subject with the fewest vertices
+% BrainStorm overlay for the pial surface of the given BrainStorm subject with the fewest vertices.
 % 
-% The overlays are all 1D vectors consisting of a measurement or datum per vertex in the respective
-% hemisphere; i.e., fs_lh_overlay must have the same number of values as there are vertices in the
-% fs_subject's left hemisphere surface. The result, bst_overlay, will have the same number of values
-% as there are in the down-sampled white white surface of bst_subject.
+% The overlays are all 1D vectors or 2D matrices consisting of a measurement or datum per vertex in
+% the respective hemisphere; i.e., fs_lh_overlay must have the same number of rows as there are
+% vertices in the fs_subject's left hemisphere surface. The result, bst_overlay, will have the same
+% number of rows as there are vertices in the down-sampled pial surface of bst_subject. The left and
+% right hemisphere overlays must have the same number of columns.
 %
 % Notes:
 %  - The FreeSurfer subject must be an absolute path to the subject's FreeSurfer directory or a
@@ -104,5 +105,5 @@ bst_vertices = pial_surf.Vertices;
 
 % Next step: find the mapping between BrainStorm vertices and FreeSurfer vertices
 idcs = dsearchn(fs_vertices, bst_vertices);
-fs_overlay = [fs_lh_overlay(:); fs_rh_overlay(:)];
-bst_overlay = fs_overlay(idcs)';
+fs_overlay = [fs_lh_overlay; fs_rh_overlay];
+bst_overlay = fs_overlay(idcs,:);
