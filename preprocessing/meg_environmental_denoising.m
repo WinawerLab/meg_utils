@@ -2,23 +2,27 @@ function ts_denoised = meg_environmental_denoising(ts, opt)
 % This function uses the timeseries of the three MEG non-physiological
 % channels to denoise the physiological channels. 
 %  
-% ts_denoised = meg_environmental_denoising(ts,...
-%     environmental_channels, data_channels, ...
-%     [produce_figures=0], [save_data=0], [verbose=0])
+% ts_denoised = meg_environmental_denoising(ts, opts)
 %
 % INPUTS:
 %  ts                        MEG timeseries (number of timepoints by number 
-%                                of epochs  by number of channels)
-%  environmental_channels    vector of channel numbers that are
+%                            of epochs  by number of channels)
+%  opts                      Structure of optional arguments:
+%   * environmentalChannels   * Vector of channel numbers that are
 %                               nonphysiological. These will be used to
 %                               regress out noise from all other channels.
-%  data_channels             vector of channel numbers to denoise
-%  produce_figures           boolean. If true, make some plots to compare
-%                               pre and post denoising
-%  verbose
-%
+%   * dataChannels            * Vector of channel numbers to denoise.
+%   * verbose                 * Boolean. If true, make some plots to compare
+%                               pre and post denoising.
 % OUTPUTS:
 %  ts_denoised               denoised time series
+%
+% EXAMPLE:
+%  >>> opts = [];
+%  >>> opts.environmentalChannels = 1:157;
+%  >>> opts.dataChannels = 158:160;
+%  >>> opts.verbose = true;
+%  >>> denoised_ts = meg_environmental_denoising(ts, opts);
 
 
 %% Make empty arrays for regressed 'clean' data
