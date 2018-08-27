@@ -18,12 +18,21 @@
 
 
 
-% % Example with: 10_SSMEG_08_12_2014_wl_subj004
-subjFolder = '/Volumes/server-1/Projects/MEG/SSMEG/10_SSMEG_08_12_2014_wl_subj004/raw/';
-markerSQDFile   = fullfile(subjFolder, 'R0774_Marker1_8.12.14.sqd');
-HSTxtFile       = fullfile(subjFolder, 'R0774_8.12.14_HS.txt');
-PointsTxtFile   = fullfile(subjFolder, 'R0774_8.12.14_Points.txt');
+%  Example with: 10_SSMEG_08_12_2014_wl_subj004
+% subjFolder = '/Volumes/server-1/Projects/MEG/SSMEG/10_SSMEG_08_12_2014_wl_subj004/raw/';
+% markerSQDFile   = fullfile(subjFolder, 'R0774_Marker1_8.12.14.sqd');
+% HSTxtFile       = fullfile(subjFolder, 'R0774_8.12.14_HS.txt');
+% PointsTxtFile   = fullfile(subjFolder, 'R0774_8.12.14_Points.txt');
 
+subjFolder = '/Volumes/server/Projects/MEG/SSMEG/fullOnly/03_SSMEG_R1374_03.14.2018/raw/';
+markerSQDFile   = fullfile(subjFolder, 'R1374_Marker1_03.14.2018.sqd');
+HSTxtFile       = fullfile(subjFolder, 'R1374_03.14.18_HS.txt');
+PointsTxtFile   = fullfile(subjFolder, 'R1374_03.14.18_Points.txt');
+
+% subjFolder      = '/Volumes/server/Projects/MEG/Retinotopy/Data/MEG/wl_subj040/wl_subj040_20170406/Raw/';
+% markerSQDFile   = fullfile(subjFolder, 'R1151_Marker1_04.06.17.sqd');
+% HSTxtFile       = fullfile(subjFolder, 'R1151_4.6.2017_HS.txt');
+% PointsTxtFile   = fullfile(subjFolder, 'R1151_4.6.2017_Points.txt');
 
 %% Get points from the three files
 headShapeLabels = {'Nasion','Left Tragus', 'Right Tragus', 'Left PA', 'Right PA', ...
@@ -51,6 +60,7 @@ hs_xyz = hs_xyz(:,1:step_size:end);
 
 % Open Marker SQD file
 header.coreg = getYkgwHdrCoregist(markerSQDFile);
+header.sensors = getYkgwHdrChannel(markerSQDFile);
 meg_xyz = cat(1, header.coreg.hpi.meg_pos)';
 
 %% Transform
@@ -99,7 +109,8 @@ end
 
 % Add this point to the head points:
 hndl = p + n; %(1x3)
-wl_subj_004_points_hndl = [points_xyz;  hndl];
+wl_subj_points_hndl = [points_xyz;  hndl];
+
 
 % Do the same thing for the MEG marker points:
 [n2, v2, p2] = affine_fit(meg_xyz');
@@ -109,21 +120,81 @@ n2 = n2./100;
 hndl_01 = p2 + -n2';
 hndl_02 = p2 + n2';
 
-wl_subj_004_markers_hndl_01 = [meg_xyz' ; hndl_01];
-wl_subj_004_markers_hndl_02 = [meg_xyz' ; hndl_02];
+wl_subj_markers_hndl_01 = [meg_xyz' ; hndl_01];
+wl_subj_markers_hndl_02 = [meg_xyz' ; hndl_02];
 
 % Recompute the transformation:
 % This one is almost the same as the initial transformation:
-[R_01, T_01] = rot3dfit(wl_subj_004_points_hndl, wl_subj_004_markers_hndl_01);
+[R_01, T_01] = rot3dfit(wl_subj_points_hndl, wl_subj_markers_hndl_01);
 
 % This one is not, and when one replaces it with the transformation matrix
 % Brainstorm computes, the alignment has a much better result:
-[R_02, T_02] = rot3dfit(wl_subj_004_points_hndl, wl_subj_004_markers_hndl_02);
+[R_02, T_02] = rot3dfit(wl_subj_points_hndl, wl_subj_markers_hndl_02);
 
-% These are te new R and T matrices
+
+% MEG Sensors:
+meg_sensors = [];
+for ii = 1:157
+    meg_sensors(ii,:) = [header.sensors.channel(ii).data.x,header.sensors.channel(ii).data.y, header.sensors.channel(ii).data.z];
+end
+
+
+%% Apply rotations
+
+% These are the old R and T matrices
+R = R_01;
+T = T_01;
+
+% 1. Apply new rotation and transformation
+reorient_hs_xyz = R' * hs_xyz  + T'.*ones(3,size(hs_xyz,2));
+reorient_points_xyz = R' * points_xyz' + T'.*ones(3, size(points_xyz',2));
+reorient_meg_sensors = meg_sensors';
+
+
+% 2. Visualize
+figure(1); clf; hold all;
+
+% Plot the MEG markers
+subplot(211); hold on; title('Reoriented headshape and points using extra point 1')
+plot3(reorient_points_xyz(1,:) ,reorient_points_xyz(2,:), reorient_points_xyz(3,:),...
+    'R.','MarkerSize',24)
+
+% Plot the head shape:
+plot3(reorient_hs_xyz(1,:),reorient_hs_xyz(2,:), reorient_hs_xyz(3,:), 'k.');
+
+% Plot the sensor's of the meg
+plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'g.');
+
+xlabel('x')
+ylabel('y')
+zlabel('z')
+
+
+%% For comparison: the new R and T matrices 
 R = R_02;
 T = T_02;
 
+% 1. Apply new rotation and transformation
+reorient_hs_xyz = R * hs_xyz + T'.*ones(3,size(hs_xyz,2));
+reorient_points_xyz = R * points_xyz' + T'.*ones(3, size(points_xyz',2));
+reorient_meg_sensors = meg_sensors';
+
+% 2. Visualize
+subplot(212); hold all; title('Reoriented headshape and points using extra point 2')
+
+% Plot the MEG markers
+plot3(reorient_points_xyz(1,:) ,reorient_points_xyz(2,:), reorient_points_xyz(3,:),...
+    'R.','MarkerSize',24)
+
+% Plot the head shape:
+plot3(reorient_hs_xyz(1,:),reorient_hs_xyz(2,:), reorient_hs_xyz(3,:), 'k.');
+
+% Plot the sensor's of the meg
+plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'g.');
+
+xlabel('x')
+ylabel('y')
+zlabel('z')
 
 return
 
