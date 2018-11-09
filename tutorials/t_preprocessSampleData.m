@@ -2,10 +2,12 @@
 
 
 % This is a tutorial to describe general preprocessing steps starting from
-% raw MEG data.
+% raw MEG data. Data can be downloaded from OSF website: 
+%          
+%       https://osf.io/rtseb/?action=download
 
 % Overview:
-%   0. Download data from OSF
+%   0. Download data from OSF 
 %   1. Load data in with Fieldtrip
 %   2. Get triggers
 %   3. Epoch Data
@@ -20,27 +22,19 @@
 
 %   * (optional) megdenoise (https://github.com/elinekupers/denoiseproject)
 
-%% 0. Download data from OSF
-
-% Site to retrieve the data
-dirProject = 'https://osf.io';
-urlStr     = 'rtseb';
-
-% Folder to save data
-writePth    = '~/Downloads/';
-readPth    = fullfile(dirProject, urlStr, '?action=download');
-
-% Download data
-websave(writePth,readPth);
+%% 0. Move downloaded data to folder and unzip
 
 % Move and unzip folder
 dataPth    = '~/Documents/';
-mv(fullfile(writePth, 'MEGSampleData.zip'), dataPth)
-unzip(fullfile(dataPth, 'MEGSampleData.zip'));
+movefile(fullfile('~/Downloads/MEGSampleData.zip'), dataPth)
+
+% Go folder and unzip file
+cd(dataPth); if ~exist('MEGSampleData','dir'); mkdir('MEGSampleData'); end
+unzip(fullfile(dataPth, 'MEGSampleData.zip'), 'MEGSampleData');
 
 %% 1. Load data in with Fieldtrip
 
-dataPth = fullfile(writePth, 'SSMEG');
+dataPth = fullfile(dataPth, 'MEGSampleData');
 [ts, megFiles] = meg_load_sqd_data(dataPth, '*SSMEG*'); % ts: time x channels
 
 
