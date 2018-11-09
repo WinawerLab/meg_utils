@@ -10,7 +10,7 @@
 % just after Brainstorm has created R and T.
 
 % Next, run brainstorm and import MEG data. When Matlab stops at the break
-% point in f_open_kit.m, I use Matlab?s evalin function to copy the R and T
+% point in_fopen_kit.m, I use Matlab?s evalin function to copy the R and T
 % (i.e. R = evalin('base','R') variables from the base workspace to the
 % in_fopen_kit?s workspace. Make sure they are in the correct orientation
 % and I also checked whether one of the R matrices computed by my code is
@@ -24,10 +24,15 @@
 % HSTxtFile       = fullfile(subjFolder, 'R0774_8.12.14_HS.txt');
 % PointsTxtFile   = fullfile(subjFolder, 'R0774_8.12.14_Points.txt');
 
-subjFolder = '/Volumes/server/Projects/MEG/SSMEG/fullOnly/03_SSMEG_R1374_03.14.2018/raw/';
-markerSQDFile   = fullfile(subjFolder, 'R1374_Marker1_03.14.2018.sqd');
-HSTxtFile       = fullfile(subjFolder, 'R1374_03.14.18_HS.txt');
-PointsTxtFile   = fullfile(subjFolder, 'R1374_03.14.18_Points.txt');
+% subjFolder = '/Volumes/server/Projects/MEG/SSMEG/fullOnly/03_SSMEG_R1374_03.14.2018/raw/';
+% markerSQDFile   = fullfile(subjFolder, 'R1374_Marker1_03.14.2018.sqd');
+% HSTxtFile       = fullfile(subjFolder, 'R1374_03.14.18_HS.txt');
+% PointsTxtFile   = fullfile(subjFolder, 'R1374_03.14.18_Points.txt');
+
+subjFolder = '/Volumes/server/Projects/MEG/SSMEG/fullOnly/04_SSMEG_R1021_08.30.2018/raw/';
+markerSQDFile   = fullfile(subjFolder, 'R1021_SSMEG2_run1-8.sqd');
+HSTxtFile       = fullfile(subjFolder, 'R1021_8.30.18_HS.txt');
+PointsTxtFile   = fullfile(subjFolder, 'R1021_8.30.18_Points.txt');
 
 % subjFolder      = '/Volumes/server/Projects/MEG/Retinotopy/Data/MEG/wl_subj040/wl_subj040_20170406/Raw/';
 % markerSQDFile   = fullfile(subjFolder, 'R1151_Marker1_04.06.17.sqd');
@@ -63,11 +68,42 @@ header.coreg = getYkgwHdrCoregist(markerSQDFile);
 header.sensors = getYkgwHdrChannel(markerSQDFile);
 meg_xyz = cat(1, header.coreg.hpi.meg_pos)';
 
-%% Transform
+% Get XYZ position of MEG Sensors:
+meg_sensors = [];
+for ii = 1:157
+    meg_sensors(ii,:) = [header.sensors.channel(ii).data.x,header.sensors.channel(ii).data.y, header.sensors.channel(ii).data.z];
+end
+
+%% Original rotation + Visualize
 
 % Compute the transformation matrix for data set:
 [R_wl, T_wl] = rot3dfit(points_xyz, meg_xyz');
 Tmat_wl = [R_wl', T_wl'; 0 0 0 1];
+
+% Visualize original rotation/translation
+% 1. Apply new rotation and transformation
+reorient_hs_xyz = R_wl * hs_xyz + T_wl'.*ones(3,size(hs_xyz,2));
+reorient_points_xyz = R_wl * points_xyz' + T_wl'.*ones(3, size(points_xyz',2));
+reorient_meg_sensors = meg_sensors';
+
+% 2. Visualize
+figure(1); clf; hold all; title('Reoriented headshape and points using extra point 2')
+
+% Plot the MEG markers
+plot3(reorient_points_xyz(1,:) ,reorient_points_xyz(2,:), reorient_points_xyz(3,:),...
+    'R.','MarkerSize',24)
+
+% Plot the head shape:
+plot3(reorient_hs_xyz(1,:),reorient_hs_xyz(2,:), reorient_hs_xyz(3,:), 'k.');
+
+% Plot the sensor's of the meg
+plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'gd', 'MarkerSize',20);
+
+xlabel('x')
+ylabel('y')
+zlabel('z')
+
+%% Find plane and add extra point
 
 % Use affine fit to find the normal of the plane through the head points (p and n are 1x3):
 [n, v, p] = affine_fit(points_xyz);
@@ -132,14 +168,10 @@ wl_subj_markers_hndl_02 = [meg_xyz' ; hndl_02];
 [R_02, T_02] = rot3dfit(wl_subj_points_hndl, wl_subj_markers_hndl_02);
 
 
-% MEG Sensors:
-meg_sensors = [];
-for ii = 1:157
-    meg_sensors(ii,:) = [header.sensors.channel(ii).data.x,header.sensors.channel(ii).data.y, header.sensors.channel(ii).data.z];
-end
 
 
-%% Apply rotations
+
+%% Apply rotations + visualize
 
 % These are the old R and T matrices
 R = R_01;
@@ -163,7 +195,7 @@ plot3(reorient_points_xyz(1,:) ,reorient_points_xyz(2,:), reorient_points_xyz(3,
 plot3(reorient_hs_xyz(1,:),reorient_hs_xyz(2,:), reorient_hs_xyz(3,:), 'k.');
 
 % Plot the sensor's of the meg
-plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'g.');
+plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'gd', 'MarkerSize',20);
 
 xlabel('x')
 ylabel('y')
@@ -190,7 +222,7 @@ plot3(reorient_points_xyz(1,:) ,reorient_points_xyz(2,:), reorient_points_xyz(3,
 plot3(reorient_hs_xyz(1,:),reorient_hs_xyz(2,:), reorient_hs_xyz(3,:), 'k.');
 
 % Plot the sensor's of the meg
-plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'g.');
+plot3(reorient_meg_sensors(1,:),reorient_meg_sensors(2,:),reorient_meg_sensors(3,:), 'gd', 'MarkerSize',20);
 
 xlabel('x')
 ylabel('y')
