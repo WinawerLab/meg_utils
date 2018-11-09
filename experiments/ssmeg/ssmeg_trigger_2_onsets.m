@@ -4,6 +4,7 @@ function onsets = ssmeg_trigger_2_onsets(triggers, which_subject,which_data)
 % For the ssmeg experiment, there were twelve triggers sent per second, and
 % we epoch in one second bins
 if notDefined('which_data'); which_data = 'meg'; end
+if notDefined('which_subject'); which_subject = 7; end
 
 switch which_data
     case 'eye'
