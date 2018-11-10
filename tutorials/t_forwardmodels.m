@@ -37,7 +37,7 @@ fsDB            = '/Volumes/server/Freesurfer_subjects/';
 
 
 % Protocol name in Brainstorm database
-protocolName     = 'SampleData';
+protocolName     = 'MEGSampleData';
 
 % Subject name in Brainstorm project
 subjectBS         = 'wlsubj004';
@@ -80,6 +80,12 @@ end
 bsDirAngle = dir(fullfile(bsDB, protocolName, subjectBS, 'anat', '*template*angle.mat'));
 
 if size(bsDirAngle,1) == 0
+    % Add matlab compatible freesurfer code
+    if ~exist('MRIRead')
+        addpath(genpath('/Applications/freesurfer/matlab'));
+        addpath(genpath('/Applications/freesurfer/fsfast/toolbox'));
+    end
+    
     % Get templates from FS, and create downsampled BS templates
     interp_retinotopy(bsDB, fsDB, subjectFS, subjectBS, protocolName)
 end
