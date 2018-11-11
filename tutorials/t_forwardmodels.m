@@ -105,10 +105,10 @@ template = getTemplate(anatDir, 'V1', 11);
 
 % Simulate coherent and incoherent source time series and compute
 % predictions from forward model (w)
-nrTimePoints   = 1000; % ms (1000 Hz sample rate)
-nrEpochs       = 1;    % 
+nrTimePoints   = 10; % ms (1000 Hz sample rate)
+nrEpochs       = 100;    % 
 freq           = 1;    % frequency of simulated vertex sine wave
-predictions    = getForwardModelPredictions(G_constrained, template.V1StimEccen, freq, nrTimePoints, nrEpochs);
+predictions    = getForwardModelPredictions(G_constrained, template.V1StimEccen', freq, nrTimePoints, nrEpochs);
 
 %% 7. Plot the mean predicted fourier amplitudes and brainstorm mesh
 
@@ -117,16 +117,18 @@ amps.c = abs(fft(predictions.c,[],2));
 amps.i = abs(fft(predictions.i,[],2));
 
 % Take the mean across epochs
-w.V1c = mean(amps.c(:,2,:),3);
-w.V1i = mean(amps.i(:,2,:),3);
+w.V1c = mean(amps.c(:,freq+1,:),3);
+w.V1i = mean(amps.i(:,freq+1,:),3);
 
-% Visualize brainstorm mesh
-colors = jet(3);
+%% Visualize brainstorm mesh
+colors = zeros(size(template.V1StimEccen,1),1);
+colors(template.V1StimEccen==0) = -0.5;
+colors(template.V1StimEccen>0) = 1;
 visualizeBrainstormMesh(anatDir, colors)
 
-% Visualize predictions from forward model
+%% Visualize predictions from forward model
 figure(98); clf;
 subplot(121)
-megPlotMap(w.V1c,[],[],'bipolar')
+megPlotMap(w.V1c(1:157),[-max(w.V1c) max(w.V1c)],[],'bipolar', 'Coherent forward prediction')
 subplot(122)
-megPlotMap(w.V1i,[],[],'bipolar')
+megPlotMap(w.V1i(1:157),[-0.01 0.01],[],'bipolar', 'Inhcoherent forward prediction')
