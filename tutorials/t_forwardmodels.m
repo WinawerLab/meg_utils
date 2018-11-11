@@ -28,6 +28,9 @@
 
 % see also: t_preprocessSampleData.m
 
+%% 0. Open brainstorm
+
+brainstorm
 
 %% 1. Set up paths, project and subject
 
@@ -77,7 +80,7 @@ end
 
 %% 3. Downsample V1-V3 templates  to Brainstorm mesh
 
-bsDirAngle = dir(fullfile(bsDB, protocolName, subjectBS, 'anat', '*template*angle.mat'));
+bsDirAngle = dir(fullfile(bsDB, protocolName, 'anat', subjectBS, '*overlay.mat'));
 
 if size(bsDirAngle,1) == 0
     % Add matlab compatible freesurfer code
@@ -90,23 +93,29 @@ if size(bsDirAngle,1) == 0
     interp_retinotopy(bsDB, fsDB, subjectFS, subjectBS, protocolName)
 end
     
-
 %% 4. Load gain matrix 
 
 % Define vector that can truncate number of sensors 
-G_constrained = getGainMatrix(dataDir);
+keepSensors  = logical([ones(157,1); zeros(192-157,1)]); 
+G_constrained = getGainMatrix(dataDir, keepSensors);
 
 %% 5. Get V1 template
 
 % Get V1 template limited to 11 degrees eccentricity. 
 template = getTemplate(anatDir, 'V1', 11);
 
+% Visualize brainstorm mesh
+colors = zeros(size(template.V1StimEccen,1),1);
+colors(template.V1StimEccen==0) = -0.5;
+colors(template.V1StimEccen>0) = 1;
+visualizeBrainstormMesh(anatDir, colors)
+
 %% 6. Create a prediction from V1 vertices to MEG sensors
 
 % Simulate coherent and incoherent source time series and compute
 % predictions from forward model (w)
-nrTimePoints   = 10; % ms (1000 Hz sample rate)
-nrEpochs       = 100;    % 
+nrTimePoints   = 10;   % ms (1000 Hz sample rate)
+nrEpochs       = 100;  % nr of Epochs simulated
 freq           = 1;    % frequency of simulated vertex sine wave
 predictions    = getForwardModelPredictions(G_constrained, template.V1StimEccen', freq, nrTimePoints, nrEpochs);
 
@@ -120,15 +129,10 @@ amps.i = abs(fft(predictions.i,[],2));
 w.V1c = mean(amps.c(:,freq+1,:),3);
 w.V1i = mean(amps.i(:,freq+1,:),3);
 
-%% Visualize brainstorm mesh
-colors = zeros(size(template.V1StimEccen,1),1);
-colors(template.V1StimEccen==0) = -0.5;
-colors(template.V1StimEccen>0) = 1;
-visualizeBrainstormMesh(anatDir, colors)
 
 %% Visualize predictions from forward model
 figure(98); clf;
 subplot(121)
-megPlotMap(w.V1c(1:157),[-max(w.V1c) max(w.V1c)],[],'bipolar', 'Coherent forward prediction')
+megPlotMap(w.V1c(1:157),[-1, 1].*max(w.V1c),[],'bipolar', 'Coherent forward prediction')
 subplot(122)
-megPlotMap(w.V1i(1:157),[-0.01 0.01],[],'bipolar', 'Inhcoherent forward prediction')
+megPlotMap(w.V1i(1:157),[-1, 1].*max(w.V1i),[],'bipolar', 'Inhcoherent forward prediction')
