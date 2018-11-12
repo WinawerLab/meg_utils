@@ -3,7 +3,7 @@
 % This is a tutorial to describe general steps to use MEG forward models
 % and predict responses from vertices on the surface to sensors
 %          
-%      https://osf.io/rtseb/?action=download
+%      https://osf.io/jxeqm/download
 
 % Completed before running this tutorial:
 %   0.1 Download data from OSF, move to data folder and unzip
@@ -12,7 +12,7 @@
 %       (Fiducials can be found in downloaded folder)
 
 % Overview:
-%   1. Set up paths, project and subject
+%   1. Set up paths, brainstorm protocol and subject
 %   2. Run benson docker if V1-V3 templates don't exist
 %   3. Downsample V1-V3 templates  to Brainstorm mesh
 %   4. Load gain matrix 

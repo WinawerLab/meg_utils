@@ -3,7 +3,7 @@
 % This is a tutorial to describe general preprocessing steps starting from
 % raw MEG data. Data can be downloaded from OSF website: 
 %          
-%       https://osf.io/rtseb/?action=download
+%       https://osf.io/jxeqm/download
 
 % Overview:
 %   0. Download data from OSF, move to data folder and unzip
@@ -85,7 +85,34 @@ if saveData
     save(fullfile(dataPth, 'processed', 'conditions.mat'), 'conditions')
 end
 
-%% 4. (Optional) Denoise data
+%% 4.1 (Optional) Denoise data with marking / removing bad channels and epochs
+
+% This function marks bad epochs and bad channels within the entire epoched
+% experiment. It will output bad epochs and badchannels as logical vectors.
+% In addition, this functoin will interpolate over single bad epochs using 
+% neighbouring channels, in case the epochs don't fall into a general bad 
+% epoch removed along all channels.
+
+sensorDataIn        = sensorData;
+varThreshold        = [0.05 20]; % [min max] of variance threshold within epoch
+badChannelThreshold = 0.2; % fraction of epochs in any given channel before labeled 'bad' 
+badEpochThreshold   = 0.2; % fraction of channels in any given epoch before labeled 'bad' 
+
+[sensorData, badChannels, badEpochs] = nppPreprocessData(sensorDataIn, varThreshold, ...
+    badChannelThreshold, badEpochThreshold, verbose);
+
+%% 4.2 (Optional) Denoise with three channels pointing away from dewar
+
+% This function will use the three channels sitting in the MEG dewar,
+% facing away from the head. It will use the entire time series of these
+% three channels and regress out these noise sources.
+
+opt.environmentalChannels   = 158:160;
+opt.dataChannels            = 1:157;
+opt.verbose                 = verbose;
+tsDenoisedEnvironmentalChan = meg_environmental_denoising(ts, opt);
+
+%% 4.3 (Optional) Denoise data
 
 % Define frequencies of interest
 f                  = 0:150;   % limit frequencies to [0 150] Hz
@@ -107,7 +134,7 @@ lf_drop            = f(f<60);
 keepFrequencies    = @(x) x(abIndex);
 bbFrequencies      = f(abIndex);
 
-% Get other function inputs:
+% Get other function inputs: design, evoked and evaluaed signal functions
 
 % Reset conditions to have values 1-3
 conditions(conditions==3)=0;
