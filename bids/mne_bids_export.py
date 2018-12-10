@@ -1,5 +1,5 @@
 # Some standard libraries:
-import os, sys, six, h5py, time, warnings, pandas
+import os, sys, six, h5py, time, warnings, shutil, pandas
 import numpy       as np
 import scipy       as sp
 
@@ -16,7 +16,7 @@ def mne_read_raw_kit(sqd_files, mrk_files, elp_file, hsp_file,
       not pre-loaded. If a string is passed instead of a list for the filename, then
       only the single Raw object is returned.
     '''
-    if not pimms.is_vector(sqd_files):
+    if not isinstance(sqd_files, (list, tuple)):
         tmp = mne_read_raw_kit([sqd_files], mrk_files, elp_file, hsp_file,
                                stim=stim, stim_code=stim_code, slope=slope,
                                preload=preload, verbose=verbose)
@@ -71,11 +71,11 @@ The meta-path must contain all the *.tsv (events) and *.mat (stimuli) files.
 The bids-path must be the output directory to which the BIDS data should be saved.
 '''
 
-if len(sys.argv) != 5:
+if len(sys.argv) < 5:
     sys.stderr.write(syntax_msg)
     sys.exit(1)
-
-(sub, ses, raws_path, meta_path, bids_path) = sys.argv
+    
+(sub, ses, raws_path, meta_path, bids_path) = sys.argv[-5:]
 
 if not os.path.isdir(raws_path):
     sys.stderr.write('Could not find raw directory: %s' % raws_path)
@@ -125,7 +125,7 @@ for ii in range(len(raws)):
     # we need to make the stimulus directory also...
 
     if not os.path.isdir(stim_dir): os.makedirs(stim_dir)
-    mdata_in = os.path.join(mata_path, bname + '.mat')
+    mdata_in = os.path.join(meta_path, bname + '.mat')
     mdata_out = os.path.join(stim_dir, bname + '.mat')
     shutil.copyfile(mdata_in, mdata_out)
 
