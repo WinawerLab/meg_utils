@@ -127,6 +127,7 @@ for ii in range(len(raws)):
     edata = pandas.read_csv(edata_in, sep='\t')
     ts = triggers(raws[ii])
     wh = np.where(ts > 0)[0]
+    edata['onset'] = wh / 1000.0
     edata.to_csv(edata_out, sep='\t', index=False)
 
     # we need to make the stimulus directory also...

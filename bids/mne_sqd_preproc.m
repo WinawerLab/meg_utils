@@ -132,14 +132,13 @@ for pp = 1:size(all_perms, 1)
             end
             % okay, we have a file block
             sqdblock = sqd(twh(1):twh(nmts),:);
-            sqdblock(trigchs, 1)   = 0;
-            sqdblock(trigchs, end) = 0;
+            sqdblock(1,   trigchs) = 0;
+            sqdblock(end, trigchs) = 0;
             oflnm = matfiles(mti).basename;
             oflnm = [oflnm(1:end-3) 'sqd'];
             oflnm = fullfile(out_path, oflnm);
-            i0 = twh(1);
-            i1 = twh(nmts);
-            if sqdwrite(flnm, oflnm, sqd(i0:i1,:)) == -1
+            sqdw = sqdwrite(flnm, oflnm, sqdblock);
+            if sqdw == -1
                 error(sprintf('Complete failure to write file %s', oflnm));
             else
                 flno = flno + 1;
