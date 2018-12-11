@@ -132,6 +132,8 @@ for pp = 1:size(all_perms, 1)
             end
             % okay, we have a file block
             sqdblock = sqd(twh(1):twh(nmts),:);
+            sqdblock(trigchs, 1)   = 0;
+            sqdblock(trigchs, end) = 0;
             oflnm = matfiles(mti).basename;
             oflnm = [oflnm(1:end-3) 'sqd'];
             oflnm = fullfile(out_path, oflnm);
@@ -196,7 +198,7 @@ function [trigger,trigno,trigwh] = fix_triggers(ts)
    assert(sum(triggers_that_are_too_close) == 0);
    % return
    trigwh  = any_trigger_inds;
-   trigger = ts;
+   trigger = ts * 5 * md;
    trigno  = ts * 2.^(0:size(ts,2)-1)';
    trigno  = trigno(trigwh);
 

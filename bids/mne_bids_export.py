@@ -5,10 +5,13 @@ import scipy       as sp
 
 import mne, mne.io, mne_bids
 
+trigchs = range(160, 168)
+def triggers(raw): return np.dot(raw.get_data(trigchs).astype('bool').T, 2 ** np.arange(0,8))
+
 def mne_read_raw_kit(sqd_files, mrk_files, elp_file, hsp_file,
                      subject=None, hsp_points=5000,
                      stim=[160,161,162,163,164,165,166,167],
-                     stim_code='channel', slope='-',
+                     stim_code='channel', slope='+',
                      preload=False, verbose=False):
     '''
     mne_read_raw_kit(sqf_files, mrk_files, elp_file, hsp_file) yields a list of mne
@@ -110,20 +113,23 @@ stim_dir = os.path.join(bids_path, 'stimuli')
 raws = mne_read_raw_kit(sqd_files, mrk_files[0], elp_file, hsp_file, subject=sub)
 
 for ii in range(len(raws)):
-    #bname = mne_bids.make_bids_basename(subject='wlsubj051', session='NYUMEG01', task='bair')
     bname = os.path.split(raws[ii].filenames[0])[1];
     bname = '.'.join(bname.split('.')[:-1])
     bdata = {kk[0]:kk[1] for pp in bname.split('_') for kk in [pp.split('-')] if len(kk) == 2}
     mne_bids.write_raw_bids(raws[ii], bname, bids_path,
                             events_data=None, overwrite=True, verbose=False)
+
     # since mne_bids doesn't correctly write out our events data...
     pnm = mne_bids.make_bids_folders(subject=bdata['sub'], kind='meg', session=bdata['ses'],
                                      make_dir=False, output_path=bids_path)
     edata_in  = os.path.join(meta_path, bname + '.tsv')
     edata_out = os.path.join(pnm, bname + '_events.tsv')
-    shutil.copyfile(edata_in, edata_out)
-    # we need to make the stimulus directory also...
+    edata = pandas.read_csv(edata_in, sep='\t')
+    ts = triggers(raws[ii])
+    wh = np.where(ts > 0)[0]
+    edata.to_csv(edata_out, sep='\t', index=False)
 
+    # we need to make the stimulus directory also...
     if not os.path.isdir(stim_dir): os.makedirs(stim_dir)
     mdata_in = os.path.join(meta_path, bname + '.mat')
     mdata_out = os.path.join(stim_dir, bname + '.mat')
