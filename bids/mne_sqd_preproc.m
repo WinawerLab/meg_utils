@@ -21,6 +21,15 @@ function filenames = mne_sqd_preproc(sub, ses, raw_path, meta_path, out_path)
 
 if ~exist('out_path', 'var'), out_path = raw_path; end
 
+if isempty(which('sqdwrite'))
+    ftwd = which('ft_write_data');
+    if isempty(ftwd)
+        error('Could not find sqdwrite or fieldtrip');
+    end
+    pth = fullfile(fileparts(fileparts(ftwd)), 'external', 'sqdproject');
+    addpath(pth);
+end
+
 %% Step 1
 %  Go through the raw directory and collect the files we know about.
 hsp_files = {};
@@ -40,6 +49,7 @@ for ii = 1:numel(d)
     elseif endsWith(nm, '.sqd')
         if contains(nm, '_marker'),        mrk_files{end+1} = name;
         elseif contains(nm, '_emptyroom'), continue;
+        elseif startsWith(nm, 'sub-'),     continue;
         else                               dat_files{end+1} = name;
         end
     else warning(sprintf('Unrecognized file: %s', name));
@@ -77,7 +87,6 @@ end
 matfiles = matfiles(ind);
 mattrigs = mattrigs(ind);
 
-
 %% Step 3
 %  Walk through the data files, fixing the triggers and splitting them into
 %  individual runs from the 
@@ -103,25 +112,24 @@ for pp = 1:size(all_perms, 1)
     % okay, go through each data file to fix triggers then split them
     for ii = 1:numel(datfls)
         flnm = datfls{ii};
-        fprintf('* %s (%d / %d)\n', flnm, ii, pp);
         sqd = sqdread(flnm);
         [ts,tnos,twh] = fix_triggers(sqd(:,trigchs));
         % fix the trigger channels to be digital:
         sqd(:,trigchs) = ts;
         % okay, now we line up triggers with the file contents...
         ntrigs = numel(tnos);
-        fprintf('    - %d triggers\n', ntrigs);
         % we now need to go through however many matfiles/mattrigs are in
         % the data file...
-        while numel(tnos) > 0
+        while mti <= numel(mattrigs) && numel(tnos) > 0
             mts  = mattrigs{mti}(:);
             nmts = numel(mts);
             % These should start and end with 256
-            if mts(1) < 255 || mts(end) < 255
-                error('file %s: trigSeq does not start/end with 255+', ...
-                      matfiles{mti});
+            if mts(1) ~= 256 || mts(end) ~= 256
+                error('file %s: trigSeq does not start/end with 256', ...
+                      matfiles(mti).filename);
             elseif nmts > ntrigs
-                warning('file %s: trigSeq size mismatch', matfiles{mti});
+                warning('file %s: trigSeq size mismatch', ...
+                        matfiles(mti).filename);
                 mti = 0;
                 break;
             elseif tnos(1) < 255 || tnos(nmts) < 255
@@ -140,6 +148,7 @@ for pp = 1:size(all_perms, 1)
             oflnm = matfiles(mti).basename;
             oflnm = [oflnm(1:end-3) 'sqd'];
             oflnm = fullfile(out_path, oflnm);
+            if exist(oflnm, 'file'), delete(oflnm); end
             sqdw = sqdwrite(flnm, oflnm, sqdblock);
             if sqdw == -1
                 error(sprintf('Complete failure to write file %s', oflnm));
@@ -148,13 +157,6 @@ for pp = 1:size(all_perms, 1)
                 mti  = mti  + 1;
                 tnos = tnos(nmts+1:end);
                 twh  = twh(nmts+1:end);
-                % make sure to skip sequences of 255s...
-                % Possibly, this may be a bad idea--if bugs seem to arise
-                % around 255's, this will need to be reconsidered
-                while numel(tnos) > 2 && tnos(1) == 255 && tnos(2) == 255
-                    tnos = tnos(2:end)
-                    twh = twh(2:end)
-                end
                 filenames{end+1} = oflnm;
             end
         end
