@@ -43,14 +43,16 @@ for ii = 1:numel(d)
     nm = lower(name);
     if nm(1) == '.', continue; end
     name = fullfile(raw_path, name);
-    if endsWith(nm, '_hs.txt'),            hsp_files{end+1} = name;
+    if     endsWith(nm, '_hs.txt'),        hsp_files{end+1} = name;
     elseif endsWith(nm, '_points.txt'),    pts_files{end+1} = name;
     elseif endsWith(nm, '.fsn'),           fsn_files{end+1} = name;
+    elseif exist(name, 'dir'),             continue;
     elseif endsWith(nm, '.sqd')
-        if contains(nm, '_marker'),        mrk_files{end+1} = name;
+        if     contains(nm, '_marker'),    mrk_files{end+1} = name;
         elseif contains(nm, '_emptyroom'), continue;
         elseif startsWith(nm, 'sub-'),     continue;
         else                               dat_files{end+1} = name;
+            fprintf(' * %s\n', name);
         end
     else warning(sprintf('Unrecognized file: %s', name));
     end
@@ -124,7 +126,7 @@ for pp = 1:size(all_perms, 1)
             mts  = mattrigs{mti}(:);
             nmts = numel(mts);
             % These should start and end with 256
-            if mts(1) ~= 256 || mts(end) ~= 256
+            if (mts(1) ~= 256 && mts(1) ~= 255) || (mts(end) ~= 256 && mts(end) ~= 255)
                 error('file %s: trigSeq does not start/end with 256', ...
                       matfiles(mti).filename);
             elseif nmts > ntrigs
