@@ -52,7 +52,6 @@ for ii = 1:numel(d)
         elseif contains(nm, '_emptyroom'), continue;
         elseif startsWith(nm, 'sub-'),     continue;
         else                               dat_files{end+1} = name;
-            fprintf(' * %s\n', name);
         end
     else warning(sprintf('Unrecognized file: %s', name));
     end
@@ -145,8 +144,8 @@ for pp = 1:size(all_perms, 1)
             end
             % okay, we have a file block
             sqdblock = sqd(twh(1):twh(nmts),:);
-            %sqdblock(1,   trigchs) = 0;
-            %sqdblock(end, trigchs) = 0;
+            sqdblock(1,   trigchs) = 0;
+            sqdblock(end, trigchs) = 0;
             oflnm = matfiles(mti).basename;
             oflnm = [oflnm(1:end-3) 'sqd'];
             oflnm = fullfile(out_path, oflnm);
