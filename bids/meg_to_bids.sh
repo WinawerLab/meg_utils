@@ -90,7 +90,7 @@ EOF
 echo "  * Running Matlab script..."
 echo ""
 echo "________________________________________________________________________________"
-matlab <<EOF
+matlab -nodesktop -nodisplay -nosplash <<EOF
 tbUse fieldtrip
 addpath('$spth');
 flnms = mne_sqd_preproc('$subj', '$sess', '$rawp', '$metp', '$tmpp');
