@@ -1,6 +1,6 @@
 function [amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right ...
     ,amps_off_left] = sseeg_fourier(t, num_epoch_time_pts, ts, conditions, ...
-   num_epochs, data_channels, channels_to_plot, produce_figures)
+    data_channels, channels_to_plot, produce_figures)
 
 %% Function description
 % This function will calculate the FFT of the different input timeseries.
@@ -13,7 +13,7 @@ function [amps_on_full,amps_on_right,amps_on_left, amps_off_full,amps_off_right 
 % ts:                   Timeseries (1000 x 180 x 192) for flicker
 %                       periods (6 different conditions concatenated)
 % conditions:           Vector of conditions concatenated across all runs
-% num_epochs:           Number of epochs per condition
+% data_channels:        Physiological channels
 % channels_to_plot:     Channels to be plotted 
 
 % OUTPUTS:
@@ -25,7 +25,7 @@ addpath(genpath('/Volumes/server/Projects/MEG/SSMEG/code/'));
 
 
 freq                = (0:num_epoch_time_pts-1)/(num_epoch_time_pts/1000); 
-off_conditions      = find(conditions ==3);
+off_conditions      = find(conditions == 3);
 a                   = size(off_conditions,2)/3;
 
 % find and extract the six different conditions from the timeseries

@@ -35,7 +35,8 @@ bad_channel_threshold = 0.2;      % if more than 20% of epochs are bad for a cha
 bad_epoch_threshold   = 0.2;      % if more than 20% of channels are bad for an epoch, eliminate that epoch
 data_channels         = 1:128;
 verbose               = true;
-which_subject         = 'wlsubj001';
+which_subject         = 'wlsubj019';
+interp_bad_channels   = true;
 
 late_timing_thresh    = 1000;     % if diff between two epoch onsets is > this value, toss the epoch
 early_timing_thresh   = 992;      % if diff between two epoch onsets is < this value, toss the epoch
@@ -45,17 +46,17 @@ early_timing_thresh   = 992;      % if diff between two epoch onsets is < this v
 
 switch which_subject
     case 'wlsubj019'
-        session_name   = 'Session_20150417_wlsubj019';
+        session_name   = 'Session_20150417_wl_subj019';
         session_prefix = 'Session_20150417_1351';
         runs           = 1:15;  % In case there are irrelevant runs recorderd to check stimulus code for presentation
     case 'wlsubj004'
-        session_name   = 'SSEEG_20150403_wl_subj004';
+        session_name   = 'Session_20150403_wl_subj004';
         session_prefix = 'Session_20150403_1145';
         runs           = [2:11 13:17]; 
     case 'wlsubj001' 
-        session_name   = 'Pilot_SSEEG_20150129_wl_subj001';
+        session_name   = 'Session_20150129_wl_subj001';
         session_prefix = 'Session_20150129_1007_pt2';
-        runs           = [2:9];
+        runs           = 2:9;
 end
 %% Get EEG data
 nr_runs = length(runs);   % number of runs in a session
@@ -83,8 +84,8 @@ clear el_data;
 %% Extract conditions and initializing sequence from behavioral matfiles
 
 directory_name = fullfile(project_path, 'Data', session_name, 'behavior_matfiles');
-dir = what(directory_name);
-which_mats = dir.mat(runs);
+direct = what(directory_name);
+which_mats = direct.mat(runs);
 
 conditions  = cell(1,nr_runs);
 for ii = 1:nr_runs
@@ -109,8 +110,8 @@ end
 %  (or in ms if you have sampled at 1000Hz)
 
 % for eline's data only
-init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
-init_ts = init.init_seq.old;
+% init = load('/Users/winawerlab/matlab/git/meg_utils/experiments/sseeg/regular_init');
+% init_ts = init.init_seq.old;
 
 ev_pth = fullfile(project_path,'Data', session_name, 'raw', [session_prefix '.evt']);
 
@@ -131,16 +132,16 @@ which_mats = thisdir.mat(runs);
 
 clear ev_pth init_ts;
 %% Remove epochs with timing errors
-
+time_errors = cell(1,nr_runs);
 for ii = 1:nr_runs
     lag_epochs      = find(diff(epoch_starts{ii}) > late_timing_thresh)+1;
     early_epochs    = find(diff(epoch_starts{ii}) < early_timing_thresh)+1;
-    time_errors     = cat(2, lag_epochs, early_epochs);
-    epoch_starts{ii}(time_errors) = [];
-    conditions{ii}(time_errors) = [];
+    time_errors{ii} = sort(cat(2, lag_epochs, early_epochs));
+    epoch_starts{ii}(time_errors{ii}) = [];
+    conditions{ii}(time_errors{ii})   = [];
 end
-
-clear lag_epochs early_epochs time_errors;
+sprintf('%d epochs were removed due to timing errors',sum(cellfun(@numel, time_errors)))
+clear lag_epochs early_epochs;
 %% Epoch the EEG data
 n_samples = cellfun(@length, ev_ts);
 onsets    = make_epoch_ts(conditions, epoch_starts, n_samples);
@@ -153,15 +154,21 @@ for ii = 1:nr_runs
     conditions  = cat(2, conditions, this_conditions);
 end
 
-%% PREPROCESS DATA
+% remove first epoch of every six in a condition block
+cond_transitions = false(size(conditions));
+cond_transitions(find(diff(conditions))+1) = true;
+conditions = conditions(~cond_transitions);
+ts = ts(:, ~cond_transitions, :);
+
+%% Preprocess data
 [sensorData, badChannels, badEpochs] = meg_preprocess_data(ts(:,:,data_channels), ...
     var_threshold, bad_channel_threshold, bad_epoch_threshold, 'eeg128xyz', verbose);
-
 
 % this removes the bad epochs and bad channels from the sensorData matrix
 sensorData = sensorData(:,~badEpochs,~badChannels);
 
-%% ********* Prepare and solve GLM *********
+
+%% Prepare and solve GLM
 
 % add denoiseproject path
 addpath(genpath('/Users/winawerlab/matlab/git/denoiseproject/'));
@@ -169,8 +176,8 @@ addpath(genpath('/Users/winawerlab/matlab/git/denoiseproject/'));
 % Make design matrix
 design = zeros(length(conditions), 3);
 design(conditions==1,1) = 1; % condition 1 is full field
-design(conditions==5,2) = 1; % condition 5 is right (??)
-design(conditions==7,3) = 1; % condition 7 is left (??)
+design(conditions==5,2) = 1; % condition 5 is LEFT
+design(conditions==7,3) = 1; % condition 7 is RIGHT
 
 design = design(~badEpochs,:);
 
@@ -181,16 +188,16 @@ freq = megGetSLandABfrequencies((0:150)/T, T, 12/T);
 
 % denoise parameters (see denoisedata.m)
 opt.pcchoose          = 1.05;
-opt.npoolmethod       = {'r2','n',60};
+opt.npcs2try          = 10;
+opt.npoolmethod       = {'r2','n',40};
 opt.verbose           = true;
 opt.pcn               = 10;
 opt.savepcs           = 0;
 optsl = opt;
 optbb = opt;
-optbb.preprocessfun   = @(x) hpf(x, freq.sl);      % preprocess data with a high pass filter for broadband analysis
+optbb.preprocessfun   = @(x)hpf(x, freq.sl);       % preprocess data with a high pass filter for broadband analysis
 evokedfun             = @(x)getstimlocked(x,freq); % function handle to determine noise pool
 evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite broadband
-
 
 % The denoise algorithm needs:
 % data      : time series [channel x time samples x epoch]
@@ -199,91 +206,106 @@ evalfun               = @(x)getbroadband(x,freq);  % function handle to compuite
 % Permute sensorData for denoising
 sensorData = permute(sensorData, [3 1 2]);
 
-%% ********* Denoise the broadband data *********
+%% Denoise the broadband data
 
-%   Denoise for broadband analysis
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evalfun,optbb);
-
-%% Plot broadband results
-fH = figure(1); clf, set(fH, 'Name', 'Denoised')
-subplot(2,3,1)
-data_to_plot = zeros(1, 128);
-data_to_plot(~badChannels) = results.origmodel.r2;
-plotOnEgi(data_to_plot), title('original R2'), colorbar
-subplot(2,3,2)
-data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot), title('final R2'), colorbar
-subplot(2,3,3)
-data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
-plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar
-
-for ii = 1:3
-    subplot(2,3,3+ii)
-    data_to_plot = zeros(1, 128);
-    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
-       results.finalmodel.beta_se(ii,:)  ;
-    plotOnEgi(data_to_plot), title(sprintf('SNR, condition %d ', ii))
-    set(gca, 'CLim', [-3 3])
-    colorbar
-end
 
 % If requested: Save data
 if save_data
     fname = fullfile(project_path, 'Data',session_name,'processed',[session_prefix '_denoisedData']);
-    parsave([fname '_bb.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs, 'opt', optbb)
+    parsave([fname '_bb60.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,... 
+        'conditions', conditions, 'badChannels', badChannels,...
+        'badEpochs', badEpochs, 'opt', optbb)
 end
 
 %%  Denoise for stimulus-locked analysis
+
 [results,evalout,denoisedspec,denoisedts] = denoisedata(design,sensorData,evokedfun,evokedfun,optsl);
-
-%% Plot stimulus locked results
-
-fH = figure(1); clf, set(fH, 'Name', 'Denoised')
-subplot(2,3,1)
-data_to_plot = zeros(1, 128);
-data_to_plot(~badChannels) = results.finalmodel.r2;
-plotOnEgi(data_to_plot), title('R2'), colorbar
-
-for ii = 1:3
-    subplot(2,3,1+ii)
-    data_to_plot = zeros(1, 128);
-    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
-       results.finalmodel.beta_se(ii,:)  ;
-    plotOnEgi(data_to_plot), title(sprintf('SNR, condition %d ', ii))
-    set(gca, 'CLim', [-3 3])
-    colorbar
-end
 
 % save data
 if save_data
-    parsave([fname '_sl.mat'], 'results', results, 'evalout', evalout, ...
-        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,...
-        'badChannels', badChannels, 'badEpochs', badEpochs,  'opt', optsl)
+    parsave([fname '_sl40.mat'], 'results', results, 'evalout', evalout, ...
+        'denoisedspec', denoisedspec, 'denoisedts', denoisedts,... 
+        'conditions', conditions, 'badChannels', badChannels,...
+        'badEpochs', badEpochs, 'opt', optsl)
 end
 
-%% Visualize results and noise pool
-% what was your noise pool?
+%% Plot broadband results
+% keeping this here for now in case we dont want to save the our denoising
+% results but we do want to visualize them. 
+
+fH = figure(6); clf, set(fH, 'name', 'Denoised Broadband 60 noise channels')
+
+subplot(3,3,1)
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.origmodel.r2;
+plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+
+subplot(3,3,4)
+data_to_plot(~badChannels) = results.finalmodel.r2;
+plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+
+subplot(3,3,7)
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
+plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
+
+a = [2 5 8];
+cond = {'Full', 'Right', 'Left'};
+for ii = 1:3
+    subplot(3,3,a(ii))
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+        results.origmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii}));
+    colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
+
+    subplot(3,3,a(ii)+1);
+    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
+        results.finalmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii})); 
+        colorbar; set(colorbar, 'Limits', [-2.5 2.5]);
+    caxis([-2.5 2.5]);
+end
+
+
+%% Plot stimulus locked results
+
+fH = figure(10); clf, set(fH, 'name', 'Denoised Stimulus Locked')
+
+subplot(3,3,1)
+data_to_plot = zeros(1, 128);
+data_to_plot(~badChannels) = results.origmodel.r2;
+plotOnEgi(data_to_plot), title('original R2'), colorbar; clim = get(subplot(3,3,1), 'CLim');
+
+subplot(3,3,4)
+data_to_plot(~badChannels) = results.finalmodel.r2;
+plotOnEgi(data_to_plot), title('final R2'), colorbar; set(subplot(3,3,4), 'CLim', clim);
+
+subplot(3,3,7)
+data_to_plot(~badChannels) = results.finalmodel.r2 - results.origmodel.r2;
+plotOnEgi(data_to_plot), title('final R2 - original R2'), colorbar; set(subplot(3,3,7), 'CLim', clim);
+
+a = [2 5 8];
+cond = {'Full', 'Right', 'Left'};
+for ii = 1:3
+    subplot(3,3,a(ii))
+    data_to_plot(~badChannels) = results.origmodel.beta_md(ii,:) ./ ...
+        results.origmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR original %s ', cond{ii})); 
+    colorbar; clim = get(subplot(3,3,a(ii)), 'CLim');
+    
+    subplot(3,3,a(ii)+1);
+    data_to_plot(~badChannels) = results.finalmodel.beta_md(ii,:) ./ ...
+        results.finalmodel.beta_se(ii,:);
+    plotOnEgi(data_to_plot), title(sprintf('SNR final %s ', cond{ii}));
+    colorbar; set(subplot(3,3,a(ii)+1), 'CLim', clim);
+end
+
+%% Visualize noise pool and impedances
+
 noise_pool = zeros(1,128);
-noise_pool(results.noisepool) = true;
-figure; plotOnEgi(noise_pool); title('Noise pool');
+noise_pool(results_50_noise.noisepool) = true;
+figure(4); plotOnEgi(noise_pool); title('Noise pool');
 
-%% Visualize
-% sseegMakePrePostHeadplot(project_path,session_name,session_prefix,true)
-
-%% Visually compare EEG data from before and after denoising
-
-visual_channels = 55:95;
-ts_cat = [];
-denoised_ts_cat = [];
-
-for ii = 1:24
-    ts_cat          = cat(2, ts_cat, sensorData(visual_channels, :, ii));
-    denoised_ts_cat = cat(2, denoised_ts_cat, denoisedts{1}(visual_channels, :, ii));
-end
-
-figure(13); plot(ts_cat'); title('Original');
-figure(14); plot(denoised_ts_cat'); title('Denoised');
-
-
+figure; plotOnEgi(impedances{1}(1:128)); title('Impedances'); colorbar;

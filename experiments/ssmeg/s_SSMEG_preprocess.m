@@ -4,6 +4,7 @@
 
 %% Set analysis variables
 project_pth                   = '/Volumes/server/Projects/MEG/SSMEG/';
+
 which_subjects                = 1;
 denoise_with_nonphys_channels = false;       % Regress out time series from 3 nuissance channels
 remove_bad_epochs             = true;        % Remove epochs whose variance exceeds some threshold
@@ -13,7 +14,6 @@ produce_figures               = false;        % If you want figures in case of d
 save_tseries                  = true;        % Save epoched time series?
 
 denoise_via_pca               = false;        % Do you want to use PCA on a noise pool of channels to
-% denoise the signal
 experiment_name               = 'Default';   % Define condition of experiment, to define triggers (Choose between Attention or Default)
 
 data_channels                 = 1:157;
@@ -34,8 +34,8 @@ addpath(fullfile(project_pth, 'code'));
 % Find subjects for this project
 subject_pths = dir(fullfile(project_pth, '*SSMEG_*'));
 
-% Make sure there are exactly 8 subjects
-assert(length(subject_pths)==8)
+% Make sure there are exactly 8 subjects and one validation dataset
+assert(length(subject_pths)==8+1)
 
 %% -------------------------------------
 % ------- STRUCTURE THE RAW DATA -------
@@ -43,7 +43,8 @@ assert(length(subject_pths)==8)
 %% Load in data
 
 data_pth = fullfile(project_pth, subject_pths(which_subjects).name, 'raw');
-[ts, meg_files] = meg_load_sqd_data(data_pth, '*SSMEG_*');
+
+[ts, meg_files] = meg_load_sqd_data(data_pth, '*SSMEG*');
 %% Fix triggers
 
 if which_subjects == 5
@@ -54,7 +55,7 @@ if which_subjects == 5
     
     % This function is specifically made for session 8, look inside the
     % code if you want to use it for a different session!
-    [t, epochs_on,epochs_off] = ssmeg_get_triggers_from_photodiode(pd_chan, Fs, num_runs, ts);
+    [trigger] = ssmeg_get_triggers_from_photodiode(pd_chan, Fs, num_runs, ts);
     
 else
       
@@ -62,7 +63,7 @@ else
     
 end
 
-onsets = ssmeg_trigger_2_onsets(trigger);
+onsets = ssmeg_trigger_2_onsets(trigger, which_subjects, 'meg');
 [sensorData, conditions] = meg_make_epochs(ts, onsets, epoch_time, fs);
 
 if save_tseries
@@ -70,6 +71,7 @@ if save_tseries
     save(sprintf('s%02d_conditions', which_subjects), 'conditions');    
 end
 
+return
 %% -------------------------------------
 % ------- PREPROCESS -------------------
 % --------------------------------------

@@ -1,4 +1,4 @@
-function varargout = plotOnEgi(data)
+function varargout = plotOnEgi(data, showNumbers)
 %plotOnEgi - Plots data on a standarized EGI net mesh
 %function meshHandle = plotOnEgi(data)
 %
@@ -8,6 +8,9 @@ function varargout = plotOnEgi(data)
 %Data must be a 128 dimensional vector, but can have singleton dimensions,
 %
 %
+
+if ~exist('showNumbers', 'var'), showNumbers = false; end
+
 data = squeeze(data);
 datSz = size(data);
 
@@ -44,10 +47,9 @@ end
 patchList = findobj(gca,'type','patch');
 netList   = findobj(patchList,'UserData','plotOnEgi');
 
-
 if isempty(netList),    
     handle = patch( 'Vertices', [ tEpos(1:nChan,1:2), zeros(nChan,1) ], ...
-        'Faces', tEGIfaces,'EdgeColor', [ 0.5 0.5 0.5 ], ...
+        'Faces', tEGIfaces,'EdgeColor', [0.5 0.5 0.5],  ...
         'FaceColor', 'interp');
     axis equal;
     axis off;
@@ -59,6 +61,11 @@ set(handle,'facevertexCdata',data,'linewidth',1,'markersize',20,'marker','.');
 set(handle,'userdata','plotOnEgi');
 
 % colormap(jmaColors('usadarkblue'));
+
+if showNumbers,
+    for ii = 1:size(tEpos,1); text(tEpos(ii,1), tEpos(ii,2), num2str(ii), 'FontSize', 10); end
+end
+
 
 if nargout >= 1
 varargout{1} = handle;

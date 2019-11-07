@@ -60,7 +60,7 @@ DataDemean = data - repmat(mean(data,2),1,size(data,2));
 [EigenVectors,EigenValues]=pcsquash(DataDemean);            % pca eigenvectors from eeglab
 WorkFlow.PCAmixing = EigenVectors';
 
-ft_data.trial{1} = DataDemean;
+ft_data.trial{1} = DataDemean; %is the whole experiment. 
 ft_PCA = ft_componentanalysis(struct('demean','no','unmixing',EigenVectors','topolabel',{ft_data.label}),ft_data);
 
 % view PCA
@@ -154,4 +154,5 @@ ft_cleandata = ft_rejectcomponent(struct('component',[],'demean','no'),ft_PCA_IC
 %% view cleandata (blue) and original data (red)
 % windowSize = [1 5 2560 1392];
 % eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',data./1e-13);
+
 
