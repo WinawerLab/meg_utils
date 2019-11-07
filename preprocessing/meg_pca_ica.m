@@ -24,6 +24,9 @@ function [ft_cleandata, WorkFlow] = meg_pca_ica(dataset, badChannels, trialDef)
 % trialDef.trig = 161:167;
 % trialDef.nTrigsExpected = 100;
 
+%% add paths
+addpath('/e/1.3/p1/denison/Software/fieldtrip-20170510/external/eeglab')
+
 %% store the inputs
 WorkFlow.dataset = dataset;
 WorkFlow.badChannels = badChannels;
@@ -39,17 +42,13 @@ data = ft_data.trial{1};
 data(badChannels,:) = 0;
 
 % extract trials
+cfg.trialdef.prestim    = trialDef.prestim;
+cfg.trialdef.poststim   = trialDef.poststim;
+cfg.trialdef.trig       = trialDef.trig;
+threshold               = trialDef.threshold;
+nTrigsExpected          = trialDef.nTrigsExpected;
 
-% ------ HACK  ------
-threshold = 50;
-cfg.trialdef.nTrigsExpected = 1080;
-cfg.trialdef.trig = 161:167;
-cfg.trialdef.prestim = 0;
-cfg.trialdef.poststim = 1;
-
-% ------ HACK  ------
-
-[trl,Events] = trialDef.trialFunHandle(cfg,threshold,cfg.trialdef.nTrigsExpected);
+[trl,Events] = trialDef.trialFunHandle(cfg, threshold, nTrigsExpected);
 
 % data inclusion
 WorkFlow.data_continuous_block = [1 length(data)];
@@ -68,14 +67,20 @@ ft_PCA = ft_componentanalysis(struct('demean','no','unmixing',EigenVectors','top
 layout = ft_prepare_layout(ft_data.cfg,ft_data);
 WorkFlow.layout = layout;
 
-figure(1);Aft_plot_component_rd(ft_PCA,1:5,layout,trl,WorkFlow.data_continuous_block(1)-1,1000,3,[1 5 800 1364]);
+fs = 1000;
+NSec = 4;
+figPos = [1 5 800 1364];
+figure
+Aft_plot_component_rd(ft_PCA,1:5,layout,trl,WorkFlow.data_continuous_block(1)-1,fs,NSec,figPos);
 
 saveas(gcf,'output','jpg');
 WorkFlow.PCA_screenshot = imread('output.jpg');
 %ft_databrowser(struct('viewmode','component','layout',layout), ft_PCA);
 
 %  reject components (or  not)
-reject_PCA_comps = input('\nInput PCA components to reject (e.g. [1 4] or []): ');
+% reject_PCA_comps = input('\nInput PCA components to reject (e.g. [1 4] or []): ');
+reject_PCA_comps = 1;
+fprintf('\nAutomatically rejecting 1st PC\n')
 if ~isempty(reject_PCA_comps)
     PCA_postreject = ft_rejectcomponent(struct('component',reject_PCA_comps,'demean','no'),ft_PCA);
     %retun PCA after rejection
@@ -112,22 +117,25 @@ WorkFlow.ICA_topo = ft_ICA.topo;
 
 % ft_databrowser(struct('viewmode','component','layout',layout), ft_ICA);
 % close all;
-Pos1 = [1 5 800 1364];
+figPos = [1 5 800 1364];
 Nsec = 4;
 ER_shift = WorkFlow.data_continuous_block(1)-1;
 compSets = {1:6,7:12,13:18,19:24,25:30,31:32};
 latestFig = gcf;
 for i = numel(compSets):-1:1
-    figure(i+latestFig)
-    Aft_plot_component_rd(ft_ICA,compSets{i},layout,trl,ER_shift,1000,Nsec,Pos1);
+    figure(i+latestFig.Number)
+    Aft_plot_component_rd(ft_ICA,compSets{i},layout,trl,ER_shift,fs,Nsec,figPos);
 end
 
 %%  ica reject components (or  not)
 % select and visualize components to reject
-reject_ICA_comps = input('\nInput ICA components to reject (e.g. [1 4] or []): ');
+% reject_ICA_comps = input('\nInput ICA components to reject (e.g. [1 4] or []): ');
+reject_ICA_comps = [];
+fprintf('\nAutomatically not rejecting any ICs\n')
 
 if ~isempty(reject_ICA_comps)
-    figure(3);Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,Pos1);
+    figure
+    Aft_plot_component_rd(ft_ICA,reject_ICA_comps,layout,trl,ER_shift,1000,Nsec,figPos);
     saveas(gcf,'output','jpg');
     WorkFlow.ICA_rejected_screenshot = imread('output.jpg');
 end
@@ -144,6 +152,6 @@ ft_PCA_ICA.trial{1}(1:ncomps,:) = ICA_postreject;
 ft_cleandata = ft_rejectcomponent(struct('component',[],'demean','no'),ft_PCA_ICA);
 
 %% view cleandata (blue) and original data (red)
-windowSize = [1 5 2560 1392];
-eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',ft_data.trial{1}./1e-13);
+% windowSize = [1 5 2560 1392];
+% eegplot(ft_cleandata.trial{1}./1e-13,'srate',ft_cleandata.fsample,'winlength',5,'dispchans',50,'position',windowSize,'data2',data./1e-13);
 
