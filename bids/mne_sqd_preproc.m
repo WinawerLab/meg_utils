@@ -40,8 +40,8 @@ dat_files = {};
 d = dir(raw_path);
 for ii = 1:numel(d)
     name = d(ii).name;
+    if name(1) == '.', continue; end
     nm = lower(name);
-    if nm(1) == '.', continue; end
     name = fullfile(raw_path, name);
     if     endsWith(nm, '_hs.txt'),        hsp_files{end+1} = name;
     elseif endsWith(nm, '_points.txt'),    pts_files{end+1} = name;
@@ -223,3 +223,13 @@ function parts = bidsfile_split(filename)
        ss = strsplit(spl{ii}, '-');
        parts = setfield(parts, ss{1}, ss{2});
    end
+
+function bads = find_badchannels(data)
+   % This function accepts a block of SQD data (a matrix of size T x S where
+   % T is the number of time-points and S is the number of sensors) and returns
+   % a list of the bad channels in the data block.
+   sd        = nanstd(data,0); % sd will have size (channels,1)
+   sd_median = nanmedian(sd); % median sd for each channel
+   bads      = (sd_median < 0.1 * sd_median) | (sd_median > 10 * sd_median);
+   bads      = find(bads);
+
