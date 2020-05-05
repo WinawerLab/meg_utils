@@ -79,8 +79,8 @@ EOF
 # Run the Matlab Preprocessing...
 
 # make a temp dir
-#tmpp=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
-tmpp="$rawp"
+tmpp=`mktemp -d "$PWD/temp_XXXXXX" 2>/dev/null || mktemp -d -t 'mytmpdir'`
+#tmpp="$rawp"
 cat <<EOF
 --------------------------------------------------------------------------------
 Step 1: Preprocessing Data (Matlab)
@@ -91,7 +91,7 @@ echo "  * Running Matlab script..."
 echo ""
 echo "________________________________________________________________________________"
 matlab -nodesktop -nodisplay -nosplash <<EOF
-tbUse fieldtrip
+tbUse fieldtrip;
 addpath('$spth');
 flnms = mne_sqd_preproc('$subj', '$sess', '$rawp', '$metp', '$tmpp');
 for ii = 1:numel(flnms)
@@ -120,12 +120,13 @@ EOF
 
 echo "  * Checking Python docker... "
 lns=`docker images winawerlab/meg-bids | wc -l`
-if [ $lns -lt 2 ]
+#lns="0"
+if [ "$lns" -lt 2 ]
 then echo "  * Building Python docker... "
-     #curpth="$PWD"
-     #cd "$spth"/docker
+     curpth="$PWD"
+     cd "$spth"/docker
      docker build --no-cache --tag winawerlab/meg-bids "$spth"/docker
-     #cd "$curpth"
+     cd "$curpth"
 fi
 
 echo "  * Running Python script..."
