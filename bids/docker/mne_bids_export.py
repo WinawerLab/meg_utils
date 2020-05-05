@@ -64,6 +64,18 @@ def mne_read_raw_kit(sqd_files, mrk_files, elp_file, hsp_file,
             raw.set_channel_types(chfix)
     return raws
 
+def find_bad_channels(raw):
+    '''
+    find_bad_channels(raw) yields a list of the channel names for the given raw data file that 
+      should be excluded from the file as bad. This is deduced by marking as bad any channel whose
+      standard deviation is less than 1/10th or more than 10 times the median standard deviation
+      across channels.
+    '''
+    dat = raw.get_data(np.arange(trigchs[0]))
+    sd = np.std(dat, axis=1)
+    md = np.median(sd)
+    return [raw.ch_names[ii] for ii in np.where((sd > 10*md) | (sd < 0.1*md))[0]]
+
 syntax_msg = '''
 SYNTAX: python mne_bids_export.py <subject-id> <session-id> <raw-path> <meta-path> <bids-path>
 
@@ -130,6 +142,10 @@ for ii in range(len(raws)):
     bname = os.path.split(raws[ii].filenames[0])[1];
     bname = '.'.join(bname.split('.')[:-1])
     bdata = {kk[0]:kk[1] for pp in bname.split('_') for kk in [pp.split('-')] if len(kk) == 2}
+    # Mark the bad channels as bad...
+    bad_chs = find_bad_channels(raws[ii])
+    raws[ii].info['bads'] = bad_chs
+    # Write out the raw bids via MNE
     mne_bids.write_raw_bids(raws[ii], bname, bids_path,
                             events_data=None, overwrite=True, verbose=False)
 
