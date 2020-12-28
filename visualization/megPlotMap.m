@@ -86,25 +86,39 @@ tmp_lay = [];
 % check for input options (in paired parameter name / value)
 if exist('varargin', 'var')
     for ii = 1:2:length(varargin)
+        
         % paired parameter and value
         parname = varargin{ii};
         val     = varargin{ii+1};
         
-        % check wehther this parameter exists in the defaults
-        existingparnames = opt(1:2:end);
-        tmp = strfind(existingparnames, parname);
-        idx = find(cellfun(@(x) ~isempty(x), tmp));
-        
-        % if so, replace it; if not add it to the end of opt
-        if ~isempty(idx), opt{idx+1} = val; 
-        else  % if any of the highlight arguments, save in tmp_lay as a ft_plot_lay argument
-            if strcmp(parname,'chanindx') || strcmp(parname,'pointsymbol') || strcmp(parname,'pointsize')
-                tmp_lay{end+1} = parname; tmp_lay{end+1} = val;
-            else % add to the end of topo opt
-                opt{end+1} = parname; opt{end+1} = val;
-            end
+        switch parname
+            case 'interpmethod';    opt{2} = val;
+            case 'interplim';       opt{4} = val;
+            case 'gridscale';       opt{6} = val;
+            case 'outline';         opt{8} = val;
+            case 'shading';         opt{10} = val;
+            case 'mask';            opt{12} = val;
+            case 'datmask';         opt{14} = val;
+            otherwise
+                opt{end+1} = parname;
+                opt{end+1} = val;
         end
     end
+    
+    %         % check wehther this parameter exists in the defaults
+    %         existingparnames = opt(1:2:end);
+    %         tmp = strfind(existingparnames, parname);
+    %         idx = find(cellfun(@(x) ~isempty(x), tmp));
+    %
+    %         % if so, replace it; if not add it to the end of opt
+    %         if ~isempty(idx), opt{idx+1} = val;
+    %         else  % if any of the highlight arguments, save in tmp_lay as a ft_plot_lay argument
+    %             if strcmp(parname,'chanindx') || strcmp(parname,'pointsymbol') || strcmp(parname,'pointsize')
+    %                 tmp_lay{end+1} = parname; tmp_lay{end+1} = val;
+    %             else % add to the end of topo opt
+    %                 opt{end+1} = parname; opt{end+1} = val;
+    %             end
+    %         end
 end
 
 %% Do the plotting
