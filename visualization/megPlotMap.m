@@ -1,20 +1,21 @@
 function [fH,ch] = megPlotMap(sensorData,clims,fH,cm,ttl,data_hdr,cfg, varargin)
 
-if notDefined('cm'),       cm = 'parula';    end  % colormap
-if notDefined('ttl');      ttl = '';      end  % title string
-if notDefined('fH'),       fH = gcf;      end
-% if notDefined('data_hdr'), data_hdr = load('meg160_example_hdr.mat'); data_hdr = data_hdr.hdr; end
-if notDefined('cfg'),      cfg = []; end
-
-% Define other params
-fs = 14; % font size
-renderer = 'zbuffer';
+if notDefined('cm'),       cm = 'parula'; end    % colormap
+if notDefined('ttl');      ttl = '';      end    % title string
+if notDefined('fH'),       fH = gcf;      end    % figure handle
+if notDefined('data_hdr'), data_hdr = []; end    % FieldTrip raw file header info
+if notDefined('cfg'),      cfg = [];      end    % Fieldtrip layout config
 
 %% Handle data header
 % If more than 157, it is the uncombined Neuromag dataset, or less it is
 % the combined Neuromag
 if isempty(cfg)
-
+    
+    % check for varargin inputs 'mask', as this is an input for ft_prepare_layout
+    maskIdx = find(strcmp(varargin, 'mask'));
+    if ~isempty(maskIdx)
+        cfg.mask = varargin{maskIdx+1};
+    end
     
     if length(sensorData) <= 102 % Combined NeuroMag 204 channel MEG
 %         data_hdr = load('neuromag360_sample_hdr_combined.mat'); data_hdr = data_hdr.hdr;
@@ -37,6 +38,66 @@ if isempty(cfg)
     end
     
 end
+
+% Set defaults options for plotting
+opt = {'interpmethod','v4',... How to interpolate the data?
+    'interplim','mask',... Mask the data such that it doesn't exceed the outline
+    'gridscale',170,... How fine do you want the grid?
+    'outline', cfg.layout.outline,... Create the lines of the head, nose and ears
+    'shading','flat', ... ?
+    'mask', cfg.layout.mask,...
+    'datmask', []}; %, ...
+
+tmp_lay = [];    
+% check for input options (in paired parameter name / value)
+if exist('varargin', 'var')
+    for ii = 1:2:length(varargin)
+        
+        % paired parameter and value
+        parname = varargin{ii};
+        val     = varargin{ii+1};
+        
+        switch parname
+            % ft_plot_topo opts
+            case 'interpmethod';    opt{2} = val;
+            case 'interplim';       opt{4} = val;
+            case 'gridscale';       opt{6} = val;
+            case 'outline';         opt{8} = val;
+            case 'shading';         opt{10} = val;
+            case 'datmask';         opt{14} = val;
+            % ft_plot_lay opts
+            case 'pointsymbol';     tmp_lay{end+1} = parname;
+                                    tmp_lay{end+1} = val;
+            case 'pointsize';       tmp_lay{end+1} = parname;
+                                    tmp_lay{end+1} = val;
+            otherwise
+                opt{end+1} = parname;
+                opt{end+1} = val;
+        end
+    end
+end
+
+% If not defined as an input argument, then define default
+if ~any(strcmp(tmp_lay,'pointsymbol'))
+    tmp_lay{end+1} = 'pointsymbol'; tmp_lay{end+1} = '.';
+end
+
+if ~any(strcmp(tmp_lay,'pointsize'))
+    tmp_lay{end+1} = 'pointsize'; tmp_lay{end+1} = 8;
+end
+
+% Define other params
+fs = 14; % font size
+renderer = 'zbuffer';
+
+% Get channel X,Y positions
+chanX  = cfg.layout.pos(1:length(sensorData),1);
+chanY  = cfg.layout.pos(1:length(sensorData),2);
+
+% Scale the outline such that the sensors are closer to the line, this
+% avoid large areas of interpolation outside the electrodes near the edges.
+cfg.layout.width = 0.9;
+cfg.layout.height = 0.9; 
 
 
 %% Check data for NaNs and interpolate
@@ -67,71 +128,8 @@ cfg.data = sensorData;
 % cfg.data(isnan(cfg.data)) = nanmedian(sensorData);
 % cfg.data(isinf(cfg.data)) = max(sensorData);
 
-%% Handle configuration
-% Get channel X,Y positions
-chanX  = cfg.layout.pos(1:length(sensorData),1);
-chanY  = cfg.layout.pos(1:length(sensorData),2);
-
-% Define options for plotting
-opt = {'interpmethod','v4',... How to interpolate the data?
-    'interplim','mask',... Mask the data such that it doesn't exceed the outline
-    'gridscale',170,... How fine do you want the grid?
-    'outline', cfg.layout.outline,... Create the lines of the head, nose and ears
-    'shading','flat', ... How to interpolate the in the outline
-    'mask', cfg.layout.mask,...
-    'datmask', []}; %, ...
-    %'default_interpmethod', 'v4'};
-
-tmp_lay = [];    
-% check for input options (in paired parameter name / value)
-if exist('varargin', 'var')
-    for ii = 1:2:length(varargin)
-        
-        % paired parameter and value
-        parname = varargin{ii};
-        val     = varargin{ii+1};
-        
-        switch parname
-            case 'interpmethod';    opt{2} = val;
-            case 'interplim';       opt{4} = val;
-            case 'gridscale';       opt{6} = val;
-            case 'outline';         opt{8} = val;
-            case 'shading';         opt{10} = val;
-            case 'mask';            opt{12} = val;
-            case 'datmask';         opt{14} = val;
-            otherwise
-                opt{end+1} = parname;
-                opt{end+1} = val;
-        end
-    end
-    
-    %         % check wehther this parameter exists in the defaults
-    %         existingparnames = opt(1:2:end);
-    %         tmp = strfind(existingparnames, parname);
-    %         idx = find(cellfun(@(x) ~isempty(x), tmp));
-    %
-    %         % if so, replace it; if not add it to the end of opt
-    %         if ~isempty(idx), opt{idx+1} = val;
-    %         else  % if any of the highlight arguments, save in tmp_lay as a ft_plot_lay argument
-    %             if strcmp(parname,'chanindx') || strcmp(parname,'pointsymbol') || strcmp(parname,'pointsize')
-    %                 tmp_lay{end+1} = parname; tmp_lay{end+1} = val;
-    %             else % add to the end of topo opt
-    %                 opt{end+1} = parname; opt{end+1} = val;
-    %             end
-    %         end
-end
-
 %% Do the plotting
 ft_plot_topo(chanX,chanY,cfg.data, opt{:});
-
-% If not defined as an input argument, then define default
-if ~any(strcmp(tmp_lay,'pointsymbol'))
-    tmp_lay{end+1} = 'pointsymbol'; tmp_lay{end+1} = '.';
-end
-
-if ~any(strcmp(tmp_lay,'pointsize'))
-    tmp_lay{end+1} = 'pointsize'; tmp_lay{end+1} = 8;
-end
 
 % Make plot pretty
 ft_plot_lay(cfg.layout,tmp_lay{:}, ...
@@ -140,7 +138,7 @@ ft_plot_lay(cfg.layout,tmp_lay{:}, ...
     'point','yes', ...     
     'pointcolor','k',...     
     'colorbar', 'yes', ...
-    'style','straight_imsat', ...
+    'style','imsat', ...
     'maplimits', 'maxmin', ...
     'verbose', 'no');
 
