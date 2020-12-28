@@ -75,10 +75,11 @@ fs_vertices = cs_convert(sMri, 'mri', 'scs', fs_vertices);
 % First, find the pial matter surface:
 pial_surf_id = -1;
 if nargin > 4
-    % white matter surface was provided
-    wm_surf_name = varargin{5};
+    % if other surface was provided
+    alternative_surf_name = varargin{1};
     for i = 1:numel(sub.Surface)
-        if strcmp(sub.Surface(i).Comment, wm_surf_name)
+        fn = strsplit(sub.Surface(i).FileName, '/'); % check file names
+        if strcmp(fn{2}, [alternative_surf_name '.mat'])
             pial_surf_id = i;
             break;
         end
